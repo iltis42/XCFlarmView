@@ -12,11 +12,18 @@
 #include "esp_system.h"
 #include "esp_flash.h"
 #include "Arduino.h"
+#include "SetupNG.h"
+#include <HardwareSerial.h>
+
+HardwareSerial Flarm(1); // Uart 1 for serial interface to Flarm
 
 extern "C" void app_main(void)
 {
     printf("Hello world!\n");
     initArduino();
+    bool setupPresent;
+    SetupCommon::initSetup( setupPresent );
+    printf("Setup present: %d speed: %d\n", setupPresent, serial1_speed.get() );
 
     /* Print chip information */
     esp_chip_info_t chip_info;
@@ -42,10 +49,19 @@ extern "C" void app_main(void)
 
     printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
 
-    for (int i = 10; i >= 0; i--) {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
+    // begin(unsigned long baud, uint32_t config=SERIAL_8N1, int8_t rxPin=-1, int8_t txPin=-1)
+    Flarm.begin( 4800, SERIAL_8N1, 38, 37 );
+
+    while( 1 ){
+    	char buf[81];
+    	if (Flarm.available()) {
+    		size_t num = Flarm.readBytes( buf, 81 );
+    		printf("num=%d, %s", num, buf );
+    	}
+    	delay(10);
+     }
+
+    vTaskDelay(1000000 / portTICK_PERIOD_MS);
     printf("Restarting now.\n");
     fflush(stdout);
     esp_restart();
