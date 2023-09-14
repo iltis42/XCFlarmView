@@ -13,7 +13,7 @@ static esp32_hal_config_t *config;
 static void einit(eglib_t *eglib) {
 	ESP_LOGI("ILI9341","init()");
 	config = (esp32_hal_config_t *)eglib_GetHalConfig(eglib);
-	// SPI.begin( config->gpio_scl, config->gpio_sdo, config->gpio_sda, config->gpio_cs );  // done already by sensors and CS handled in here
+	SPI.begin( config->gpio_scl, config->gpio_sdo, config->gpio_sda, config->gpio_cs );  // done already by sensors and CS handled in here
 	// init GPIO pins of 4 WIRE SPI bus
 	gpio_reset_pin(config->gpio_cs);
 	gpio_reset_pin(config->gpio_rs);

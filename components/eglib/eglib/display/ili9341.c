@@ -351,6 +351,111 @@ static void send_pixel(eglib_t *eglib, color_t color) {
 // Display
 //
 
+/*
+
+Sample Code for 172x320 Display
+void lcd_Initial(void)
+{
+  	CS=1;
+	delayms(5);
+	RES=0;
+	delayms(10);
+	RES=1;
+	delayms(120);
+
+
+	Write_Cmd(0x11);
+//	delay_ms(120);
+
+//	Write_Cmd(0x36);
+//	if(USE_HORIZONTAL==0)Write_Cmd_Data(0x00);
+//	else if(USE_HORIZONTAL==1)Write_Cmd_Data(0xC0);
+//	else if(USE_HORIZONTAL==2)Write_Cmd_Data(0x70);
+//	else Write_Cmd_Data(0xA0);
+ *
+ *
+ 	Write_Cmd(0x3A);
+ 	Write_Cmd_Data(0x05);
+
+	Write_Cmd(0xB2);       // Poch setting, this is defaults, can omit
+	Write_Cmd_Data(0x0C);
+	Write_Cmd_Data(0x0C);
+	Write_Cmd_Data(0x00);
+	Write_Cmd_Data(0x33);
+	Write_Cmd_Data(0x33);
+
+	Write_Cmd(0xB7);        // Gate Control
+	Write_Cmd_Data(0x35);
+
+	Write_Cmd(0xBB);        //  VCOM 0..1H
+	Write_Cmd_Data(0x35);
+
+	Write_Cmd(0xC0);       // LMC Control, 2C is default
+	Write_Cmd_Data(0x2C);
+
+	Write_Cmd(0xC2);      // defaults VRH control enable
+	Write_Cmd_Data(0x01);
+
+	Write_Cmd(0xC3);      // VRH, default    0x0B
+	Write_Cmd_Data(0x13);
+
+	Write_Cmd(0xC4);      // VDVS, default
+	Write_Cmd_Data(0x20);
+
+	Write_Cmd(0xC6);      //
+	Write_Cmd_Data(0x0F);
+
+	Write_Cmd(0xD0);    // POWER CONTROL
+	Write_Cmd_Data(0xA4);
+	Write_Cmd_Data(0xA1);
+
+	Write_Cmd(0xD6);    // ????
+	Write_Cmd_Data(0xA1);
+
+	Write_Cmd(0xE0);
+	Write_Cmd_Data(0xF0);
+	Write_Cmd_Data(0x00);
+	Write_Cmd_Data(0x04);
+	Write_Cmd_Data(0x04);
+	Write_Cmd_Data(0x04);
+	Write_Cmd_Data(0x05);
+	Write_Cmd_Data(0x29);
+	Write_Cmd_Data(0x33);
+	Write_Cmd_Data(0x3E);
+	Write_Cmd_Data(0x38);
+	Write_Cmd_Data(0x12);
+	Write_Cmd_Data(0x12);
+	Write_Cmd_Data(0x28);
+	Write_Cmd_Data(0x30);
+
+	Write_Cmd(0xE1);
+	Write_Cmd_Data(0xF0);
+	Write_Cmd_Data(0x07);
+	Write_Cmd_Data(0x0A);
+	Write_Cmd_Data(0x0D);
+	Write_Cmd_Data(0x0B);
+	Write_Cmd_Data(0x07);
+	Write_Cmd_Data(0x28);
+	Write_Cmd_Data(0x33);
+	Write_Cmd_Data(0x3E);
+	Write_Cmd_Data(0x36);
+	Write_Cmd_Data(0x14);
+	Write_Cmd_Data(0x14);
+	Write_Cmd_Data(0x29);
+	Write_Cmd_Data(0x32);
+
+	Write_Cmd(0x21);  // invert display
+
+	Write_Cmd(0x11);  // sleep out
+	delayms(120);
+	Write_Cmd(0x29);  // Display on
+	delayms(10);
+
+
+
+}
+*/
+
 static void init(eglib_t *eglib) {
 	// Hardware reset
 	eglib_SetReset(eglib, 0);
@@ -378,10 +483,17 @@ static void init(eglib_t *eglib) {
 	set_memory_data_access_control(eglib);
 
 	// we need invers, datasheet says oposite
-	eglib_SendCommandByte(eglib, ILI9341_DISPLAY_INVERSION_OFF);
+	eglib_SendCommandByte(eglib, ILI9341_DISPLAY_INVERSION_ON); // 0809 was OFF
 	// after sw reset, but unless we explicitly set it,
 	// ILI9341_DISPLAY_INVERSION_ON will have no effect.
 	eglib_SendCommandByte(eglib, ILI9341_NORMAL_DISPLAY_MODE_ON);
+
+	// Frame Rate C6
+	eglib_SendCommandByte(eglib, 0xC6);
+	eglib_SendDataByte(eglib, 0x15);     // F = 60 Hz  1F = 39 Hz
+
+	eglib_SendCommandByte(eglib, 0xB7);  // GATE Control
+	eglib_SendDataByte(eglib, 0x35);     // defaults 35h HN:VGH,  LN:VGL  0..7
 
     // UCG_C11(0x03a, 0x066),                /* set pixel format to 18 bit */
 	eglib_SendCommandByte(eglib, ILI9341_INTERFACE_PIXEL_FORMAT);
@@ -402,14 +514,30 @@ static void init(eglib_t *eglib) {
 	eglib_SendCommandByte(eglib, 0xc1 );
 	eglib_SendDataByte(eglib,0x02 );
 
-	// UCG_C11(0x0c7, 0x0c0),                /* VCOM control 2, enable VCOM control 1 */
-	eglib_SendCommandByte(eglib, 0xc7 );
-	eglib_SendDataByte(eglib,0xc0 );
+	//   VRH (C3):  08 (4.1V) default -> 13 (4.5V) in sample  0..3F
+	eglib_SendCommandByte(eglib, 0xc3 );
+	eglib_SendDataByte(eglib,0x00 );
 
-	// UCG_C12(0x0c5, 0x031, 0x03c),         /* VCOM control 1, POR=31,3C */
+	//   VRL (C4):  20 (0V) default -> none in sample        0..3F
+	eglib_SendCommandByte(eglib, 0xc4 );
+	eglib_SendDataByte(eglib,0x30 );
+
+	// CABCCTRL
+	eglib_SendCommandByte(eglib, 0xc7 );
+	eglib_SendDataByte(eglib,0x00 );  // not set in example, 00 -> default
+
+	// C5 VCOMOFFEST  0x20 default   0..3Fh
 	eglib_SendCommandByte(eglib, 0xc5 );
-	eglib_SendDataByte(eglib,0x31 );
-	eglib_SendDataByte(eglib,0x3c );
+	eglib_SendDataByte(eglib,0x20 );
+
+	// VCOM 77
+	eglib_SendCommandByte(eglib, 0xBB );
+	eglib_SendDataByte(eglib,0x35 );        // 0..3Fh, default 20
+
+	// POWER CONTROL
+	eglib_SendCommandByte(eglib, 0xD0 );
+	eglib_SendDataByte(eglib,0xA4 );
+	eglib_SendDataByte(eglib,0xA1 );
 
 	// UCG_C15(0x0cb, 0x039, 0x02c, 0x000, 0x034, 0x002),    /* power control A (POR values) */
 	eglib_SendCommandByte(eglib, 0xcb );
@@ -432,29 +560,62 @@ static void init(eglib_t *eglib) {
 	uint8_t seqcp[] = { 0x066, 0x000  };
 	eglib_Send(eglib, HAL_DATA, seqcp, sizeof(seqcp) );
 
-	// UCG_C10(0x029),                               /* display on */
-	eglib_SendCommandByte(eglib, ILI9341_DISPLAY_ON );
+
 
 	//  UCG_C14(  0x02a, 0x000, 0x000, 0x000, 0x0ef),              /* Horizontal GRAM Address Set */
 	eglib_SendCommandByte(eglib, ILI9341_COLUMN_ADDRESS_SET );
-	uint8_t seqga[] = { 0x000, 0x000, 0x000, 0x0ef };
+	uint8_t seqga[] = { 0x000, 0x000, 0x000, 0x0ab};               // AB = 171
 	eglib_Send(eglib, HAL_DATA, seqga, sizeof(seqga) );
 
 	//  UCG_C14(  0x02b, 0x000, 0x000, 0x001, 0x03f),              /* Vertical GRAM Address Set */
 	eglib_SendCommandByte(eglib, ILI9341_ROW_ADDRESS_SET );
-	uint8_t seqra[] = {0x000, 0x000, 0x001, 0x03f };
+	uint8_t seqra[] = {0x000, 0x000, 0x001, 0x03f };               // 13F = 319
 	eglib_Send(eglib, HAL_DATA, seqra, sizeof(seqra) );
+
+
+	// Gamma PVGAMCTRL
+	eglib_SendCommandByte(eglib, 0xE0 );
+	eglib_SendDataByte(eglib, 0xF0 );
+	eglib_SendDataByte(eglib, 0x00 );
+	eglib_SendDataByte(eglib, 0x04 );
+	eglib_SendDataByte(eglib, 0x04 );
+	eglib_SendDataByte(eglib, 0x04 );
+	eglib_SendDataByte(eglib, 0x05 );
+	eglib_SendDataByte(eglib, 0x29 );
+	eglib_SendDataByte(eglib, 0x33 );
+	eglib_SendDataByte(eglib, 0x3E );
+	eglib_SendDataByte(eglib, 0x38 );
+	eglib_SendDataByte(eglib, 0x12 );
+	eglib_SendDataByte(eglib, 0x12 );
+	eglib_SendDataByte(eglib, 0x28 );
+	eglib_SendDataByte(eglib, 0x30 );
+
+	// Gamma NVGAMCTRL
+	eglib_SendCommandByte(eglib, 0xE1 );
+	eglib_SendDataByte(eglib, 0xF0 );
+	eglib_SendDataByte(eglib, 0x07 );
+	eglib_SendDataByte(eglib, 0x0A );
+	eglib_SendDataByte(eglib, 0x0D );
+	eglib_SendDataByte(eglib, 0x0B );
+	eglib_SendDataByte(eglib, 0x07 );
+	eglib_SendDataByte(eglib, 0x28 );
+	eglib_SendDataByte(eglib, 0x33 );
+	eglib_SendDataByte(eglib, 0x3E );
+	eglib_SendDataByte(eglib, 0x36 );
+	eglib_SendDataByte(eglib, 0x14 );
+	eglib_SendDataByte(eglib, 0x14 );
+	eglib_SendDataByte(eglib, 0x29 );
+	eglib_SendDataByte(eglib, 0x32 );
 
 	// UCG_C10(  0x02c),               /* Write Data to GRAM */
 	eglib_SendCommandByte(eglib, ILI9341_MEMORY_WRITE );
 
-	// Clear RAM
-	// clear_memory(eglib);
-
-	// Main screen turn on
-	// eglib_SendCommandByte(eglib, ILI9341_DISPLAY_ON);
+	// UCG_C10(0x029),                               /* display on */
+	eglib_SendCommandByte(eglib, ILI9341_DISPLAY_ON );
 
 	eglib_CommEnd(eglib);
+
+	ESP_LOGI("ili", "init()");
 };
 
 static void sleep_in(eglib_t *eglib) {
@@ -508,6 +669,7 @@ static void draw_pixel_color(
 	coordinate_t x, coordinate_t y, color_t color
 ) {
 	eglib_CommBegin(eglib);
+	x+=34;
 
 	set_column_address(eglib, x, x);
 	set_row_address(eglib, y, y);
@@ -527,13 +689,14 @@ static void draw_line(
 	coordinate_t length,
 	color_t (*get_next_color)(eglib_t *eglib)
 ) {
-	// ESP_LOGI("ili DL","x:%d y:%d dir:%d len:%d", x, y, direction, length );
+	ESP_LOGI("ili DL","x:%d y:%d dir:%d len:%d", x, y, direction, length );
 	static uint8_t *buffer;
 	eglib_CommBegin(eglib);
+	x+=34;
 	if(direction == DISPLAY_LINE_DIRECTION_RIGHT) {
 		// ESP_LOGI("DL","x:%d y:%d RIGHT %d", x, y, length  );
 		set_column_address(eglib, x, x + length );
-		set_row_address(eglib, y, y );
+		set_row_address(eglib, y-1, y+1 );
 	}
 	else if(direction == DISPLAY_LINE_DIRECTION_DOWN) {
 		// ESP_LOGI("DL","x:%d y:%d DOWN %d", x, y, length  );
@@ -548,7 +711,7 @@ static void draw_line(
 	else if(direction == DISPLAY_LINE_DIRECTION_LEFT) {
 		// ESP_LOGI("DL","x:%d y:%d LEFT %d", x, y, length );
 		set_column_address(eglib, x-length, x );  // fake right direction
-		set_row_address(eglib, y, y );
+		set_row_address(eglib, y-1, y );
 	}
 	else{
 		ESP_LOGW("draw_line","draw_line method not implemented");
@@ -578,6 +741,7 @@ static void send_buffer(
 	// if((uint32_t)x * get_bits_per_pixel(eglib) % 8)
 	//	x -= 1;
 	eglib_CommBegin(eglib);
+	x+=34;
     set_column_address(eglib, x, x + width -1);
     set_row_address(eglib, y-height -1, y );
     eglib_SendCommandByte(eglib, ILI9341_MEMORY_WRITE);
