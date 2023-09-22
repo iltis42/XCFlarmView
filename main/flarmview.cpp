@@ -68,17 +68,21 @@ extern "C" void app_main(void)
     egl->setColor( 255, 0, 0 );   // RED
     egl->drawFrame(50,250,10,10);
     egl->setColor( 255, 255, 255 );
-    egl->drawLine( 0, 100, 170, 100 );
-    egl->drawLine( 10, 102, 170, 102 );
-    egl->drawLine( 20, 104, 170, 104 );
+    egl->drawLine( 0, 100, 70, 100 );
+    egl->drawLine( 10, 102, 70, 102 );
+    egl->drawLine( 20, 104, 70, 104 );
 
-    egl->drawLine( 0, 110, 170, 110 );
-    egl->drawLine( 10, 112, 170, 112 );
-    egl->drawLine( 20, 114, 170, 114 );
+    egl->drawLine( 0, 110, 70, 110 );
+    egl->drawLine( 10, 112, 70, 112 );
+    egl->drawLine( 20, 114, 70, 114 );
 
-    egl->drawLine( 0, 111, 170, 111 );
-    egl->drawLine( 10, 113, 170, 113 );
-    egl->drawLine( 20, 115, 170, 115 );
+    ESP_LOGI("ili", "drawLine 0/111" );
+    egl->drawLine( 0, 111, 70, 111 );
+    ESP_LOGI("ili", "drawLine 10/111" );
+    egl->drawLine( 10, 113, 70, 113 );
+    ESP_LOGI("ili", "drawLine 20/111" );
+    egl->drawLine( 20, 115, 70, 115 );
+
     egl->setColor( 0, 0, 255 );   // BLUE
     egl->drawCircle( 100,100, 40 );
     egl->setFont( ucg_font_fub20_hr );

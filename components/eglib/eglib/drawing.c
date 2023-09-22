@@ -80,6 +80,7 @@ bool eglib_inClipArea(eglib_t * eglib, coordinate_t x, coordinate_t y ){
 		return true;
 	}
 	else{
+		ESP_LOGI("ili", "outside clip %d %d", x,y );
 		return false;
 	}
 }
@@ -788,6 +789,7 @@ void eglib_DrawRoundBox(
 }
 
 void eglib_ClearScreen(eglib_t *eglib) {
+
   eglib_DrawBox(eglib, 0, 0, eglib_GetWidth(eglib), eglib_GetHeight(eglib));
 }
 
@@ -1224,7 +1226,7 @@ void eglib_DrawGlyph(eglib_t *eglib, coordinate_t x, coordinate_t y, const struc
 	int lenx = 0;
 	int leny = 0;
 
-	buffer = malloc( height*width*3 );
+	buffer = malloc( height*width*2 );
 	int y1 = 0;
 	if( eglib->drawing.filled_mode == false ){
 		y1 =  height/8;   // WA as fonts bounding boxes to high over the top
@@ -1252,7 +1254,7 @@ void eglib_DrawGlyph(eglib_t *eglib, coordinate_t x, coordinate_t y, const struc
 						// line[u] = 'X';
 					}
 				}
-				pos3 +=3;
+				pos3 +=2;
 			}
 		}
 		// line[width] = 0;

@@ -180,7 +180,7 @@
 
 static void set_interface_pixel_format(eglib_t *eglib) {
 	ili9341_config_t *display_config;
-	uint8_t interface_pixel_format;
+	uint8_t interface_pixel_format = 0;
 
 	display_config = eglib_GetDisplayConfig(eglib);
 
@@ -254,7 +254,7 @@ static void set_memory_data_access_control(eglib_t *eglib) {
 
 static void set_column_address(eglib_t *eglib, uint16_t x_start, uint16_t x_end) {
 	uint8_t buff[4];
-
+	ESP_LOGI("ili", "set_column_address %d %d", x_start, x_end );
 	eglib_SendCommandByte(eglib, ILI9341_COLUMN_ADDRESS_SET);
 	buff[0] = (x_start&0xFF00)>>8;
 	buff[1] = x_start&0xFF;
@@ -265,7 +265,7 @@ static void set_column_address(eglib_t *eglib, uint16_t x_start, uint16_t x_end)
 
 static void set_row_address(eglib_t *eglib, uint16_t y_start, uint16_t y_end) {
 	uint8_t buff[4];
-
+	ESP_LOGI("ili", "set_row_address %d %d", y_start, y_end );
 	eglib_SendCommandByte(eglib, ILI9341_ROW_ADDRESS_SET);
 	buff[0] = (y_start&0xFF00)>>8;
 	buff[1] = y_start&0xFF;
@@ -288,6 +288,24 @@ static uint8_t get_bits_per_pixel(eglib_t *eglib) {
 			break;
 		case ILI9341_COLOR_18_BIT:
 			return 24;
+			break;
+		default:
+			while(true);
+	}
+}
+
+static uint8_t get_bytes_per_pixel(eglib_t *eglib) {
+	ili9341_config_t *display_config;
+	display_config = eglib_GetDisplayConfig(eglib);
+	switch(display_config->color) {
+		case ILI9341_COLOR_12_BIT:
+			return 2;
+			break;
+		case ILI9341_COLOR_16_BIT:
+			return 2;
+			break;
+		case ILI9341_COLOR_18_BIT:
+			return 3;
 			break;
 		default:
 			while(true);
@@ -476,9 +494,6 @@ static void init(eglib_t *eglib) {
 	eglib_SendCommandByte(eglib, ILI9341_SLEEP_OUT);
 	eglib_DelayMs(eglib, ILI9341_SLEEP_OUT_DELAY_MS);
 
-	// Set color mode
-	set_interface_pixel_format(eglib);
-
 	// Memory Data Access Control
 	set_memory_data_access_control(eglib);
 
@@ -495,9 +510,8 @@ static void init(eglib_t *eglib) {
 	eglib_SendCommandByte(eglib, 0xB7);  // GATE Control
 	eglib_SendDataByte(eglib, 0x35);     // defaults 35h HN:VGH,  LN:VGL  0..7
 
-    // UCG_C11(0x03a, 0x066),                /* set pixel format to 18 bit */
-	eglib_SendCommandByte(eglib, ILI9341_INTERFACE_PIXEL_FORMAT);
-	eglib_SendDataByte(eglib, ILI9341_INTERFACE_PIXEL_FORMAT_RGB_INTERFACE_262K | ILI9341_INTERFACE_PIXEL_FORMAT_COLOR_18BIT );
+    // set pixel format
+	set_interface_pixel_format(eglib);
 
 	// UCG_C14(0x0b6, 0x00a, 0x082 | (1<<5), 0x027, 0x000),  /* display function control (POR values, except for shift direction bit) */
 	eglib_SendCommandByte(eglib, 0xb6 );
@@ -690,13 +704,12 @@ static void draw_line(
 	color_t (*get_next_color)(eglib_t *eglib)
 ) {
 	ESP_LOGI("ili DL","x:%d y:%d dir:%d len:%d", x, y, direction, length );
-	static uint8_t *buffer;
 	eglib_CommBegin(eglib);
 	x+=34;
 	if(direction == DISPLAY_LINE_DIRECTION_RIGHT) {
 		// ESP_LOGI("DL","x:%d y:%d RIGHT %d", x, y, length  );
 		set_column_address(eglib, x, x + length );
-		set_row_address(eglib, y-1, y+1 );
+		set_row_address(eglib, y, y );
 	}
 	else if(direction == DISPLAY_LINE_DIRECTION_DOWN) {
 		// ESP_LOGI("DL","x:%d y:%d DOWN %d", x, y, length  );
@@ -711,21 +724,40 @@ static void draw_line(
 	else if(direction == DISPLAY_LINE_DIRECTION_LEFT) {
 		// ESP_LOGI("DL","x:%d y:%d LEFT %d", x, y, length );
 		set_column_address(eglib, x-length, x );  // fake right direction
-		set_row_address(eglib, y-1, y );
+		set_row_address(eglib, y, y );
 	}
 	else{
 		ESP_LOGW("draw_line","draw_line method not implemented");
 	}
 	eglib_SendCommandByte(eglib, ILI9341_MEMORY_WRITE);
-	color_t c = eglib->drawing.color_index[0];
-	buffer = malloc( length*3 );
-	for( int i=0; i<length*3; i+=3 ){
-		buffer[i]   = c.r;
-		buffer[i+1] = c.g;
-		buffer[i+2] = c.b;
+	color_t color = eglib->drawing.color_index[0];
+	int len_pix=get_bytes_per_pixel(eglib);  // max 3
+	uint8_t buf[4] = { 0,0,0,0 };
+	ili9341_config_t *display_config = eglib_GetDisplayConfig(eglib);
+	switch(display_config->color) {
+	case ILI9341_COLOR_12_BIT:
+		buf[0] = color.r & 0xf0;
+		buf[0] |= (color.g & 0xf0) >> 4;
+		buf[1] = color.b & 0xf0;
+		break;
+	case ILI9341_COLOR_16_BIT:
+		buf[0] = color.r & 0xf8;
+		buf[0] |= color.g >> 5;
+		buf[1] = (color.g >> 2) << 5;
+		buf[1] |= color.b >> 3;
+		break;
+	case ILI9341_COLOR_18_BIT:
+		buf[0] = color.r & ~0x03;
+		buf[1] = color.g & ~0x03;
+		buf[2] = color.b & ~0x03;
+		break;
+	default:
+		while(true);
 	}
-	eglib_SendData(eglib, buffer, length*3  );
-	free( buffer );
+	for( int i=0; i<length; i++ ){
+		for(int i=0;i < len_pix; i++)
+			eglib_SendDataByte(eglib, buf[i]);
+	}
 	eglib_CommEnd(eglib);
 }
 
@@ -745,7 +777,7 @@ static void send_buffer(
     set_column_address(eglib, x, x + width -1);
     set_row_address(eglib, y-height -1, y );
     eglib_SendCommandByte(eglib, ILI9341_MEMORY_WRITE);
-    eglib_SendData( eglib, buffer, width*height*3 );
+    eglib_SendData( eglib, buffer, width*height*get_bytes_per_pixel(eglib) );
 	eglib_CommEnd(eglib);
 }
 
