@@ -8,11 +8,11 @@
 #define HSPI 2
 
 // Display 4 Wire SPI and Display CS
-#define SPI_DC         GPIO_NUM_3       // SPI Data/Command pin
-#define CS_Display     GPIO_NUM_4      // CS pin for Display
-#define SPI_SCLK       GPIO_NUM_5      // SPI Clock pin
-#define SPI_MOSI       GPIO_NUM_6      // SPI SDO Master Out Slave In pin
-#define RESET_Display  GPIO_NUM_7      // Reset pin for Display
+#define SPI_DC         GPIO_NUM_4       // SPI Data/Command pin
+#define CS_Display     GPIO_NUM_5      // CS pin for Display
+#define SPI_SCLK       GPIO_NUM_6      // SPI Clock pin
+#define SPI_MOSI       GPIO_NUM_7      // SPI SDO Master Out Slave In pin
+#define RESET_Display  GPIO_NUM_8      // Reset pin for Display
 
 #define SPI_MISO       GPIO_NUM_10     // dummy, not applicable to ER-TFT1.47
 
