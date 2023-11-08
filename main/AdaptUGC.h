@@ -140,7 +140,7 @@ private:
 
 	int16_t eglib_print_xpos = 0, eglib_print_ypos = 0;
 	int8_t eglib_font_pos = UCG_FONT_POS_BOTTOM;
-	uint8_t eglib_print_dir = UCG_PRINT_DIR_LR;
+	uint8_t eglib_print_dir = UCG_PRINT_DIR_TD;
 	eglib_t * eglib;
 	bool twistRB;
 	bool invertDisp;

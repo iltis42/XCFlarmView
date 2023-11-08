@@ -15,12 +15,45 @@
 #include "SetupNG.h"
 #include <HardwareSerial.h>
 #include <AdaptUGC.h>
+#include <cmath>
 
 HardwareSerial Flarm(1); // Uart 1 for serial interface to Flarm
 
 AdaptUGC *egl = 0;
 
+void drawAirplane( int x, int y, bool fromBehind=false, bool smallSize=false ){
+	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
+	egl->setColor( 255, 255, 255 );
+	if( fromBehind ){
+		egl->drawTetragon( x-30,y-2, x-30,y+2, x+30,y+2, x+30,y-2 );
+		egl->drawTetragon( x-2,y-2, x-2,y-10, x+2,y-10, x+2,y-2 );
+		egl->drawTetragon( x-8,y-12, x-8,y-16, x+8,y-16, x+8,y-12 );
+		egl->drawDisc( x,y, 4, UCG_DRAW_ALL );
+	}else{
+		if( smallSize ){
+			egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
+			egl->drawTetragon( x-1,y+10, x-1,y-3, x+1,y-3, x+1,y+10 ); // fuselage
+			egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
 
+		}else{
+			egl->drawTetragon( x-30,y-2, x-30,y+2, x+30,y+2, x+30,y-2 );  // wings
+			egl->drawTetragon( x-2,y+25, x-2,y-10, x+2,y-10, x+2,y+25 ); // fuselage
+			egl->drawTetragon( x-8,y+25, x-8,y+21, x+8,y+21, x+8,y+25 ); // elevator
+		}
+	}
+}
+
+void drawFlarmTarget( int x, int y, float bearing, int sideLength ){
+	 float radians = (bearing-90.0) * M_PI / 180;
+	  // Calculate the triangle's vertices
+	  int x0 = x + sideLength * cos(radians);
+	  int y0 = y + sideLength * sin(radians);
+	  int x1 = x + sideLength/2 * cos(radians + 2 * M_PI / 3);
+	  int y1 = y + sideLength/2 * sin(radians + 2 * M_PI / 3);
+	  int x2 = x + sideLength/2 * cos(radians - 2 * M_PI / 3);
+	  int y2 = y + sideLength/2 * sin(radians - 2 * M_PI / 3);
+	  egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
+}
 
 extern "C" void app_main(void)
 {
@@ -57,42 +90,74 @@ extern "C" void app_main(void)
     // begin(unsigned long baud, uint32_t config=SERIAL_8N1, int8_t rxPin=-1, int8_t txPin=-1)
     Flarm.begin( 4800, SERIAL_8N1, 38, 37 );
 
-    delay(1000);
+    delay(100);
     egl = new AdaptUGC();
     egl->begin();
     egl->clearScreen();
     egl->setRedBlueTwist( true );
-    egl->setColor( 255, 255, 255 );   // 255 is white   B,G,R
-    // egl->setColor( 0, 0, 0 );
-    egl->drawFrame(50,50,10,10);
+
     egl->setColor( 255, 0, 0 );   // RED
-    egl->drawFrame(50,250,10,10);
+    drawFlarmTarget( 110,60, 100, 30 );
+
+    egl->setColor( 0, 255, 0 );   // GREEN
+    drawFlarmTarget( 250,120, -45, 20 );
+
+
+    egl->setColor( 0, 255, 0 ); // green
+    egl->drawCircle( 160,86, 40 );
+    drawAirplane( 160,86 );
+
+    egl->setFont( ucg_font_fub20_hf );
     egl->setColor( 255, 255, 255 );
-    egl->drawLine( 0, 100, 70, 100 );
-    egl->drawLine( 10, 102, 70, 102 );
-    egl->drawLine( 20, 104, 70, 104 );
-
-    egl->drawLine( 0, 110, 70, 110 );
-    egl->drawLine( 10, 112, 70, 112 );
-    egl->drawLine( 20, 114, 70, 114 );
-
-    ESP_LOGI("ili", "drawLine 0/111" );
-    egl->drawLine( 0, 111, 70, 111 );
-    ESP_LOGI("ili", "drawLine 10/111" );
-    egl->drawLine( 10, 113, 70, 113 );
-    ESP_LOGI("ili", "drawLine 20/111" );
-    egl->drawLine( 20, 115, 70, 115 );
-
-    egl->setColor( 0, 0, 255 );   // BLUE
-    egl->drawCircle( 100,100, 40 );
-    egl->setFont( ucg_font_fub20_hr );
-    egl->setPrintPos( 5, 200 );
-    egl->setColor( 255, 255, 255 );
-    egl->print("Hello Iltis");
-    delay(1000);
+    egl->setPrintPos( 10, 30 );
+    egl->print("778C78");
+    egl->setPrintPos( 200, 30 );
+    egl->print("1.85 km");
+    egl->setPrintPos( 5, 170 );
+    egl->print("-180 m");
+    egl->setPrintPos( 200, 170 );
+    egl->print("+1.1 m/s");
 
     while( 1 ){
+    	egl->setColor( 0, 0, 0 );   // BLACK delete close
+        drawFlarmTarget( 110,60, 100, 40 );
+    	egl->setColor( 0, 255, 0 ); // green
+        egl->drawCircle( 160,86, 40 );  // circle repair
+    	egl->setColor( 0, 255, 0 );   // GREEN more away 1
+    	drawFlarmTarget( 60,50, 100, 25 );
+    	egl->setPrintPos( 200, 30 );
+    	egl->setColor( 255, 255, 255 );
+    	egl->print("1.85 km  ");
+    	egl->setPrintPos( 5, 170 );
+    	egl->print("-180 m  ");
     	delay(1000);
+    	egl->setColor( 0, 0, 0 );   // del GREEN more away 1
+    	drawFlarmTarget( 60,50, 100, 25 );
+        egl->setColor( 0, 255, 0 );   // GREEN more away 2
+        drawFlarmTarget( 80,55, 100, 30 );
+        egl->setPrintPos( 200, 30 );
+        egl->setColor( 255, 255, 255 );
+        egl->print("0.80 km  ");
+        egl->setPrintPos( 5, 170 );
+        egl->print("-80 m  ");
+        delay(1000);
+        egl->setColor( 0, 0, 0 );   // BLACK delete more away 2
+        drawFlarmTarget( 80,55, 100, 30 );
+        egl->setPrintPos( 200, 30 );
+        egl->setColor( 255, 255, 255 );
+        egl->print("0.49 km  ");
+        egl->setPrintPos( 5, 170 );
+        egl->print("-25 m  ");
+        for( int i=0; i<10; i++ ){
+           egl->setColor( 255, 0, 0 );   // RED print close
+           drawFlarmTarget( 110,60, 100, 40 );
+           delay(100);
+           egl->setColor( 0, 0, 0 );   // RED del
+           drawFlarmTarget( 110,60, 100, 40 );
+           delay(100);
+        }
+
+
     	// egl->drawBox(10,10,5,5);
     }
 

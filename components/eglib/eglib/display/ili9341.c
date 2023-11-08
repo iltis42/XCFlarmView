@@ -254,7 +254,8 @@ static void set_memory_data_access_control(eglib_t *eglib) {
 
 static void set_column_address(eglib_t *eglib, uint16_t x_start, uint16_t x_end) {
 	uint8_t buff[4];
-	ESP_LOGI("ili", "set_column_address %d %d", x_start, x_end );
+	// ESP_LOGI("ili", "set_column_address %d %d", x_start, x_end );
+	set_memory_data_access_control(eglib);
 	eglib_SendCommandByte(eglib, ILI9341_COLUMN_ADDRESS_SET);
 	buff[0] = (x_start&0xFF00)>>8;
 	buff[1] = x_start&0xFF;
@@ -265,7 +266,7 @@ static void set_column_address(eglib_t *eglib, uint16_t x_start, uint16_t x_end)
 
 static void set_row_address(eglib_t *eglib, uint16_t y_start, uint16_t y_end) {
 	uint8_t buff[4];
-	ESP_LOGI("ili", "set_row_address %d %d", y_start, y_end );
+	// ESP_LOGI("ili", "set_row_address %d %d", y_start, y_end );
 	eglib_SendCommandByte(eglib, ILI9341_ROW_ADDRESS_SET);
 	buff[0] = (y_start&0xFF00)>>8;
 	buff[1] = y_start&0xFF;
@@ -516,7 +517,7 @@ static void init(eglib_t *eglib) {
 	// UCG_C14(0x0b6, 0x00a, 0x082 | (1<<5), 0x027, 0x000),  /* display function control (POR values, except for shift direction bit) */
 	eglib_SendCommandByte(eglib, 0xb6 );
 	eglib_SendDataByte(eglib,0x0a );
-	eglib_SendDataByte(eglib, 0x082 | (1<<5) );
+	eglib_SendDataByte(eglib, 0xE2 );  // Bit6: GS,  Bit5: SS  (82 def)
 	eglib_SendDataByte(eglib,0x27 );
 	eglib_SendDataByte(eglib,0x00 );
 
@@ -573,8 +574,6 @@ static void init(eglib_t *eglib) {
 	eglib_SendCommandByte(eglib, 0xea );
 	uint8_t seqcp[] = { 0x066, 0x000  };
 	eglib_Send(eglib, HAL_DATA, seqcp, sizeof(seqcp) );
-
-
 
 	//  UCG_C14(  0x02a, 0x000, 0x000, 0x000, 0x0ef),              /* Horizontal GRAM Address Set */
 	eglib_SendCommandByte(eglib, ILI9341_COLUMN_ADDRESS_SET );
@@ -683,7 +682,7 @@ static void draw_pixel_color(
 	coordinate_t x, coordinate_t y, color_t color
 ) {
 	eglib_CommBegin(eglib);
-	x+=34;
+	y+=34;
 
 	set_column_address(eglib, x, x);
 	set_row_address(eglib, y, y);
@@ -703,9 +702,9 @@ static void draw_line(
 	coordinate_t length,
 	color_t (*get_next_color)(eglib_t *eglib)
 ) {
-	ESP_LOGI("ili DL","x:%d y:%d dir:%d len:%d", x, y, direction, length );
+	// ESP_LOGI("ili DL","x:%d y:%d dir:%d len:%d", x, y, direction, length );
 	eglib_CommBegin(eglib);
-	x+=34;
+	y+=34;
 	if(direction == DISPLAY_LINE_DIRECTION_RIGHT) {
 		// ESP_LOGI("DL","x:%d y:%d RIGHT %d", x, y, length  );
 		set_column_address(eglib, x, x + length );
@@ -773,7 +772,7 @@ static void send_buffer(
 	// if((uint32_t)x * get_bits_per_pixel(eglib) % 8)
 	//	x -= 1;
 	eglib_CommBegin(eglib);
-	x+=34;
+	y+=34;
     set_column_address(eglib, x, x + width -1);
     set_row_address(eglib, y-height -1, y );
     eglib_SendCommandByte(eglib, ILI9341_MEMORY_WRITE);

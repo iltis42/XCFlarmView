@@ -42,14 +42,14 @@ uint8_t PROGMEM ucg_font_fub11_hn[] = { UCG_FONT_FUB11_HN };
 uint8_t PROGMEM eglib_font_free_sansbold_66[] = { EGLIB_FONT_FREE_SANSBOLD_66 };
 
 static ili9341_config_t ili9341_config = {
-		.width = 172,
+		.width = 320,
 		.height = 320,
 		.color = ILI9341_COLOR_16_BIT,
-		.page_address = ILI9341_PAGE_ADDRESS_TOP_TO_BOTTOM,
+		.page_address = ILI9341_PAGE_ADDRESS_BOTTOM_TO_TOP,
 		.colum_address = ILI9341_COLUMN_ADDRESS_LEFT_TO_RIGHT,
-		.page_column_order = ILI9341_PAGE_COLUMN_ORDER_NORMAL,
+		.page_column_order = ILI9341_PAGE_COLUMN_ORDER_REVERSE,
 		.vertical_refresh = ILI9341_VERTICAL_REFRESH_TOP_TO_BOTTOM,
-		.horizontal_refresh = ILI9341_HORIZONTAL_REFRESH_LEFT_TO_RIGHT,
+		.horizontal_refresh = ILI9341_HORIZONTAL_REFRESH_RIGHT_TO_LEFT,
 };
 
 static PROGMEM esp32_hal_config_t esp32_ili9341_config = {
@@ -146,7 +146,7 @@ void  AdaptUGC::begin() {
 	*/
 	ESP_LOGI(FNAME, "eglib_Send() &eglib:%x  hal-driv:%x config:%x\n", (unsigned int)eglib, (unsigned int)&esp32_ili9341, (unsigned int)&esp32_ili9341_config );
 	eglib_Init( &myeglib, &esp32_ili9341, &esp32_ili9341_config, &ili9341, &ili9341_config );
-	setClipRange( 0,0, 172, 320 );
+	setClipRange( 0,0, 320, 320 );
 };
 
 void AdaptUGC::advanceCursor( size_t delta ){
