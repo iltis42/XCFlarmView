@@ -48,8 +48,13 @@ typedef enum e_reset { RESET_NO, RESET_YES } e_reset_t;   // determines if data 
 typedef enum e_volatility { VOLATILE, PERSISTENT, SEMI_VOLATILE } e_volatility_t;  // stored in RAM, FLASH, or into FLASH after a while
 typedef enum e_display_orientation { DISPLAY_NORMAL, DISPLAY_TOPDOWN } e_display_orientation_t;
 typedef enum e_unit_type{ UNIT_NONE, UNIT_TEMPERATURE, UNIT_ALT, UNIT_SPEED, UNIT_VARIO, UNIT_QNH } e_unit_type_t;
+typedef enum e_alt_unit { ALT_UNIT_METER, ALT_UNIT_FT, ALT_UNIT_FL } e_alt_unit_t;
+typedef enum e_dst_unit { DST_UNIT_KM, DST_UNIT_FT, DST_UNIT_MILES } e_dst_unit_t;
+typedef enum e_speed_unit { SPEED_UNIT_KMH, SPEED_UNIT_MPH, SPEED_UNIT_KNOTS } e_speed_unit_t;
+typedef enum e_vario_unit { VARIO_UNIT_MS, VARIO_UNIT_FPM, VARIO_UNIT_KNOTS } e_vario_unit_t;
+typedef enum e_data_monitor { MON_OFF, MON_BLUETOOTH, MON_WIFI_8880, MON_WIFI_8881, MON_WIFI_8882, MON_S1, MON_S2, MON_CAN  }  e_data_monitor_t;
 
-const int baud[] = { 0, 4800, 9600, 19200, 38400, 57600, 115200 };
+
 void change_bal();
 
 typedef struct setup_flags{
@@ -305,15 +310,21 @@ private:
 extern SetupNG<int>  		serial1_speed;
 extern SetupNG<int>  		serial1_rxloop;
 extern SetupNG<int>  		serial1_tx;
-extern SetupNG<int>		serial1_pins_twisted;
+extern SetupNG<int>		    serial1_pins_twisted;
 extern SetupNG<int>  		serial1_tx_inverted;
 extern SetupNG<int>  		serial1_rx_inverted;
 extern SetupNG<int>  		serial1_tx_enable;
 
 extern SetupNG<int>  		software_update;
-extern SetupNG<int>		log_level;
-extern SetupNG<int>             factory_reset;
+extern SetupNG<int>		    log_level;
+extern SetupNG<int>         factory_reset;
 
 extern uint8_t g_col_background;
 extern uint8_t g_col_highlight;
+
+extern SetupNG<int>         ias_unit;
+extern SetupNG<int>         alt_unit;
+extern SetupNG<int>         dst_unit;
+extern SetupNG<int>         vario_unit;
+
 

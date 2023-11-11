@@ -16,8 +16,7 @@
 #include <HardwareSerial.h>
 #include <AdaptUGC.h>
 #include <cmath>
-
-HardwareSerial Flarm(1); // Uart 1 for serial interface to Flarm
+#include <Serial.h>
 
 AdaptUGC *egl = 0;
 
@@ -88,7 +87,9 @@ extern "C" void app_main(void)
     printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
 
     // begin(unsigned long baud, uint32_t config=SERIAL_8N1, int8_t rxPin=-1, int8_t txPin=-1)
-    Flarm.begin( 4800, SERIAL_8N1, 38, 37 );
+
+
+
 
     delay(100);
     egl = new AdaptUGC();
@@ -157,18 +158,12 @@ extern "C" void app_main(void)
            delay(100);
         }
 
-
-    	// egl->drawBox(10,10,5,5);
     }
 
+    // Serial::begin();
     while( 1 ){
-    	char buf[81];
-    	if (Flarm.available()) {
-    		size_t num = Flarm.readBytes( buf, 81 );
-    		printf("num=%d, %s", num, buf );
-    	}
     	delay(10);
-     }
+    }
 
     vTaskDelay(1000000 / portTICK_PERIOD_MS);
     printf("Restarting now.\n");
