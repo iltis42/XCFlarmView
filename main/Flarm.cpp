@@ -17,10 +17,13 @@ float Flarm::gndCourse = 0;
 bool Flarm::myGPS_OK = false;
 char Flarm::ID[20] = "";
 int Flarm::bincom = 0;
-float Flarm::alt_external = 0;
+TaskHandle_t Flarm::pid = 0;
+
+nmea_pflaa_s Flarm::PFLAA;
 
 AdaptUGC* Flarm::ucg;
 
+e_audio_alarm_type_t Flarm::alarm = AUDIO_ALARM_OFF;
 
 extern xSemaphoreHandle spiMutex;
 
@@ -41,32 +44,18 @@ const char *flarm[] = {
 int Flarm::sim_tick=NUM_SIM_DATASETS*2;
 
 
-/* PFLAU,<RX>,<TX>,<GPS>,<Power>,<AlarmLevel>,<RelativeBearing>,<AlarmType>,<RelativeVertical>,<RelativeDistance>,<ID>
-		$PFLAU,3,1,2,1,2,-30,2,-32,755*FLARM is working properly and currently receives 3 other aircraft.
-		The most dangerous of these aircraft is at 11 o’clock, position 32m below and 755m away. It is a level 2 alarm
+void Flarm::begin(){
+	xTaskCreatePinnedToCore(&taskFlarm, "taskFlarm", 4096, NULL, 14, &pid, 0);
+}
 
-
- */
-
-/*  <AcftType>
- *
-0 = unknown
-1 = glider / motor glider
-2 = tow / tug plane
-3 = helicopter / rotorcraft
-4 = skydiver
-5 = drop plane for skydivers
-6 = hang glider (hard)
-7 = paraglider (soft)
-8 = aircraft with reciprocating engine(s)
-9 = aircraft with jet/turboprop engine(s)
-A = unknown
-B = balloon
-C = airship
-D = unmanned aerial vehicle (UAV)
-E = unknown
-F = static object
- */
+void Flarm::taskFlarm(void *pvParameters)
+{
+	while(1){
+		progress();
+		delay(1000);
+		_tick++;
+	}
+}
 
 
 /*
@@ -75,8 +64,95 @@ e.g.
 $PFLAA,0,-1234,1234,220,2,DD8F12,180,,30,-1.4,1*
 
  */
-void Flarm::parsePFLAA( const char *pflaa ){
 
+
+void Flarm::parsePFLAA( const char *pflaa ){
+	/*
+	http://delta-omega.com/download/EDIA/FLARM_DataportManual_v3.02E.pdf
+
+		Periodicity:
+				sent when available and port Baud rate is sufficient, can be sent several times per second with
+				information on several (but maybe not all) targets around.
+
+		PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<Type>
+
+		<AlarmLevel>
+					Alarm level as assessed by FLARM
+					0 = no alarm (pure traffic, limited to 2km range and 500m altitude difference)
+					1 = low-level alarm
+					2 = important alarm
+					3 = urgent alarm
+		<RelativeNorth>
+					Relative position in Meter true north from own position, signed integer
+		<RelativeEast>
+					Relative position in Meter true east from own position, signed integer
+		<RelativeVertical>
+					Relative vertical separation in Meter above own position, negative values indicate
+					the other aircraft is lower, signed integer. Some distance-dependent random noise
+					is applied to altitude data if the privacy for the target is active.
+		<ID-Type>
+					Defines the interpretation of the following field <ID>
+					0 = stateless random-hopping pseudo-ID (chosen by FLARM)
+					1 = official ICAO aircraft address
+					2 = stable FLARM pseudo-ID (chosen by FLARM)
+		<ID>
+					6-digit hex value (e.g. "5A77B1") as configured in the target's PFLAC,ID sentence.
+					The interpretation is delivered in <ID-Type>
+		<Track>
+					The target's true ground track in degrees. Integer between 0 and 359. The value 0
+					indicates a true north track. This field is empty if the privacy for the target is active.
+		<TurnRate>
+					The target's turn rate. Positive values indicate a clockwise turn. Signed decimal
+					value in °/s. Currently omitted. Field is empty if the privacy for the target is active.
+		<GroundSpeed>
+					The target's ground speed. Decimal value in m/s. The field is set to 0 to indicate
+					the aircraft is not moving, i.e. on ground. This field is empty if the privacy for the
+					target is active while the target is airborne.
+		<ClimbRate>
+					The target's climb rate. Positive values indicate a climbing aircraft. Signed decimal
+					value in m/s. This field is empty if the privacy for the target is active.
+		<Type>
+					Up to two hex characters showing the object type
+					0 = unknown
+					1 = glider
+					2 = tow plane
+					3 = helicopter
+					4 = parachute
+					5 = drop plane
+					6 = fixed hang-glider
+					7 = soft para-glider
+					8 = powered aircraft
+					9 = jet aircraft
+					A = UFO
+					B = balloon
+					C = blimp, zeppelin
+					D = UAV
+					F = static
+	 */
+	int cs;
+	int calc_cs=calcNMEACheckSum( pflaa );
+	cs = getNMEACheckSum( pflaa );
+	if( cs != calc_cs ){
+		ESP_LOGW(FNAME,"PFLAA CHECKSUM ERROR: %s; calculcated CS: %d != delivered CS %d", pflaa, calc_cs, cs );
+		return;
+	}
+	// PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<Type>
+
+	sscanf( pflaa, "$PFLAA,%d,%d,%d,%d,%d,%s,%d,%d,%float,%c,%d",
+															  &PFLAA.alarmLevel,
+															  &PFLAA.relNorth,
+															  &PFLAA.relEast,
+															  &PFLAA.relVertical,
+															  &PFLAA.idType,
+															  &PFLAA.ID[0],
+															  &PFLAA.track,
+															  &PFLAA.groundSpeed,
+															  &PFLAA.climbRate,
+															  &PFLAA.acftType[0],
+															  &PFLAA.noTrack
+															  );
+	_tick=0;
+	timeout = 10;
 }
 
 #define CENTERX 120
@@ -150,6 +226,31 @@ void Flarm::progress(){  // once per second
 	// ESP_LOGI(FNAME,"progress, timeout=%d", timeout );
 	flarmSim();
 }
+
+
+void Flarm::parseNMEA( const char *str, int len ){
+	ESP_LOGI(FNAME,"parseNMEA: %s, len: %d", str,  strlen(str) );
+
+	if( !strncmp( str+1, "PFLAE,", 5 )) {  // On Task declaration or re-connect
+		parsePFLAE( str );
+	}
+	else if( !strncmp( str+1, "PFLAU,", 5 )) {
+		parsePFLAU( str );
+	}
+	else if( !strncmp( str+1, "PFLAA,", 5 )) {
+			parsePFLAA( str );
+	}
+	else if( !strncmp( str+3, "RMC,", 3 ) ) {
+		parseGPRMC( str );
+	}
+	else if( !strncmp( str+3, "GGA,", 3 )) {
+		parseGPGGA( str );
+	}
+	else if( !strncmp( str+3, "RMZ,", 3 )) {
+		parsePGRMZ( str );
+	}
+}
+
 
 bool Flarm::connected(){
 	// ESP_LOGI(FNAME,"timeout=%d", timeout );
@@ -270,6 +371,32 @@ void Flarm::parsePFLAE( const char *pflae ) {
 }
 
 
+/* PFLAU,<RX>,<TX>,<GPS>,<Power>,<AlarmLevel>,<RelativeBearing>,<AlarmType>,<RelativeVertical>,<RelativeDistance>,<ID>
+		$PFLAU,3,1,2,1,2,-30,2,-32,755*FLARM is working properly and currently receives 3 other aircraft.
+		The most dangerous of these aircraft is at 11 o’clock, position 32m below and 755m away. It is a level 2 alarm
+
+
+
+<AcftType>
+
+0 = unknown
+1 = glider / motor glider
+2 = tow / tug plane
+3 = helicopter / rotorcraft
+4 = skydiver
+5 = drop plane for skydivers
+6 = hang glider (hard)
+7 = paraglider (soft)
+8 = aircraft with reciprocating engine(s)
+9 = aircraft with jet/turboprop engine(s)
+A = unknown
+B = balloon
+C = airship
+D = unmanned aerial vehicle (UAV)
+E = unknown
+F = static object
+*/
+
 void Flarm::parsePFLAU( const char *pflau, bool sim_data ) {
 	if( !sim_data && (sim_tick < NUM_SIM_DATASETS*2) ){
 		return;  // drop FLARM data during simulation
@@ -331,11 +458,7 @@ void Flarm::drawDownloadInfo() {
 	xSemaphoreGive(spiMutex);
 }
 
-void Flarm::tick(){
-	// ESP_LOGI(FNAME,"Flarm tick, bincom: %d", bincom );
-	if( ext_alt_timer )
-		ext_alt_timer--;
-};
+
 
 // $PGRMZ,880,F,2*3A  $PGRMZ,864,F,2*30
 void Flarm::parsePGRMZ( const char *pgrmz ) {
@@ -348,9 +471,6 @@ void Flarm::parsePGRMZ( const char *pgrmz ) {
 		return;
 	}
 	sscanf( pgrmz, "$PGRMZ,%d,F,2",&alt1013_ft );
-
-	alt_external = Units::feet2meters( (float)(alt1013_ft + 0.5) );
-	ESP_LOGI(FNAME,"parsePGRMZ() %s: ALT(1013):%5.0f m", pgrmz, alt_external );
 	timeout = 10;
 	ext_alt_timer = 10;  // Fall back to internal Barometer after 10 seconds
 }
@@ -416,11 +536,6 @@ void Flarm::drawAirplane( int x, int y, bool fromBehind, bool smallSize ){
 	}
 }
 
-void Flarm::processNMEA( char * buffer, int len ){
-
-}
-
-
 void Flarm::initFlarmWarning(){
 	ucg->setPrintPos(15, 25 );
 	ucg->setFontPosCenter();
@@ -448,8 +563,7 @@ void Flarm::drawFlarmWarning(){
 	if( _tick > 500 ) // age FLARM alarm in case there is no more input  50 per second = 10 sec
 		AlarmLevel = 0;
 	xSemaphoreTake(spiMutex,portMAX_DELAY );
-	int volume=0;
-	e_audio_alarm_type_t alarm = AUDIO_ALARM_FLARM_1;
+
 	if( AlarmLevel == 3 ) { // highest, impact 0-8 seconds
 		alarm = AUDIO_ALARM_FLARM_3;
 	}

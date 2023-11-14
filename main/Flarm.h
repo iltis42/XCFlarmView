@@ -6,12 +6,44 @@
 #include <AdaptUGC.h>
 #include "RingBufCPP.h"  // SString, tbd: extra header
 #include "Units.h"
+#include "freertos/FreeRTOS.h"
 
 typedef enum e_audio_alarm_type { AUDIO_ALARM_OFF, AUDIO_ALARM_NEAR, AUDIO_ALARM_FLARM_1, AUDIO_ALARM_FLARM_2, AUDIO_ALARM_FLARM_3  } e_audio_alarm_type_t;
+
+typedef struct {
+	int alarmLevel;
+	int relNorth;
+	int relEast;
+	int relVertical;
+	int idType;
+	char ID[6];
+	int track;
+	int groundSpeed;
+	float climbRate;
+	char acftType[1];
+	int noTrack;
+} nmea_pflaa_s;
+
+/* Value indexes */
+#define NMEA_PFLAA_ALARMLEVEL		 0
+#define NMEA_PFLAA_RELATIVE_NORTH	 1
+#define NMEA_PFLAA_RELATIVE_EAST	 2
+#define NMEA_PFLAA_RELATIVE_VERTICAL 3
+#define NMEA_PFLAA_IDTYPE			 4
+#define NMEA_PFLAA_ID				 5
+#define NMEA_PFLAA_TRACK			 6
+//#define NMEA_PFLAA_TURN_RATE		 7
+#define NMEA_PFLAA_GROUND_SPEED		 7
+#define NMEA_PFLAA_CLIMB_RATE		 8
+#define NMEA_PFLAA_ACFTTYPE		     9
+#define NMEA_PFLAA_NO_TRACK		    10
+
+
 
 class Flarm {
 public:
 	static void setDisplay( AdaptUGC *theUcg ) { ucg = theUcg; };
+	static void parseNMEA( const char *str, int len );
 	static void parsePFLAE( const char *pflae );
 	static void parsePFLAU( const char *pflau, bool sim=false );
 	static void parsePFLAA( const char *pflaa );
@@ -56,9 +88,8 @@ public:
 	else
 		return false;
 	}
-
-	static void processNMEA( char * buffer, int len );
-
+	static void begin();
+	static void taskFlarm(void *pvParameters);
 
 private:
 	static int calcNMEACheckSum(const char *nmea);
@@ -74,7 +105,7 @@ private:
 	static int RelativeBearing,RelativeVertical,RelativeDistance;
 	static float gndSpeedKnots;
 	static float gndCourse;
-	static bool   myGPS_OK;
+	static bool  myGPS_OK;
 	static int AlarmType;
 	static char ID[20];
 	static int oldDist;
@@ -86,7 +117,9 @@ private:
 	static int ext_alt_timer;
 	static int _numSat;
 	static int sim_tick;
-	static float alt_external;
+	static nmea_pflaa_s PFLAA;
+	static e_audio_alarm_type_t alarm;
+	static TaskHandle_t pid;
 };
 
 #endif

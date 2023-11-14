@@ -17,6 +17,7 @@
 #include <AdaptUGC.h>
 #include <cmath>
 #include <Serial.h>
+#include "Flarm.h"
 
 AdaptUGC *egl = 0;
 
@@ -56,7 +57,6 @@ void drawFlarmTarget( int x, int y, float bearing, int sideLength ){
 
 extern "C" void app_main(void)
 {
-    printf("Hello world!\n");
     initArduino();
     bool setupPresent;
     SetupCommon::initSetup( setupPresent );
@@ -88,10 +88,8 @@ extern "C" void app_main(void)
 
     // begin(unsigned long baud, uint32_t config=SERIAL_8N1, int8_t rxPin=-1, int8_t txPin=-1)
 
-
-
-
     delay(100);
+
     egl = new AdaptUGC();
     egl->begin();
     egl->clearScreen();
@@ -119,48 +117,52 @@ extern "C" void app_main(void)
     egl->setPrintPos( 200, 170 );
     egl->print("+1.1 m/s");
 
-    while( 1 ){
-    	egl->setColor( 0, 0, 0 );   // BLACK delete close
-        drawFlarmTarget( 110,60, 100, 40 );
-    	egl->setColor( 0, 255, 0 ); // green
-        egl->drawCircle( 160,86, 40 );  // circle repair
-    	egl->setColor( 0, 255, 0 );   // GREEN more away 1
-    	drawFlarmTarget( 60,50, 100, 25 );
-    	egl->setPrintPos( 200, 30 );
-    	egl->setColor( 255, 255, 255 );
-    	egl->print("1.85 km  ");
-    	egl->setPrintPos( 5, 170 );
-    	egl->print("-180 m  ");
-    	delay(1000);
-    	egl->setColor( 0, 0, 0 );   // del GREEN more away 1
-    	drawFlarmTarget( 60,50, 100, 25 );
-        egl->setColor( 0, 255, 0 );   // GREEN more away 2
-        drawFlarmTarget( 80,55, 100, 30 );
-        egl->setPrintPos( 200, 30 );
-        egl->setColor( 255, 255, 255 );
-        egl->print("0.80 km  ");
-        egl->setPrintPos( 5, 170 );
-        egl->print("-80 m  ");
-        delay(1000);
-        egl->setColor( 0, 0, 0 );   // BLACK delete more away 2
-        drawFlarmTarget( 80,55, 100, 30 );
-        egl->setPrintPos( 200, 30 );
-        egl->setColor( 255, 255, 255 );
-        egl->print("0.49 km  ");
-        egl->setPrintPos( 5, 170 );
-        egl->print("-25 m  ");
-        for( int i=0; i<10; i++ ){
-           egl->setColor( 255, 0, 0 );   // RED print close
-           drawFlarmTarget( 110,60, 100, 40 );
-           delay(100);
-           egl->setColor( 0, 0, 0 );   // RED del
-           drawFlarmTarget( 110,60, 100, 40 );
-           delay(100);
-        }
 
+    egl->setColor( 0, 0, 0 );   // BLACK delete close
+    drawFlarmTarget( 110,60, 100, 40 );
+    egl->setColor( 0, 255, 0 ); // green
+    egl->drawCircle( 160,86, 40 );  // circle repair
+    egl->setColor( 0, 255, 0 );   // GREEN more away 1
+    drawFlarmTarget( 60,50, 100, 25 );
+    egl->setPrintPos( 200, 30 );
+    egl->setColor( 255, 255, 255 );
+    egl->print("1.85 km  ");
+    egl->setPrintPos( 5, 170 );
+    egl->print("-180 m  ");
+    delay(200);
+    egl->setColor( 0, 0, 0 );   // del GREEN more away 1
+    drawFlarmTarget( 60,50, 100, 25 );
+    egl->setColor( 0, 255, 0 );   // GREEN more away 2
+    drawFlarmTarget( 80,55, 100, 30 );
+    egl->setPrintPos( 200, 30 );
+    egl->setColor( 255, 255, 255 );
+    egl->print("0.80 km  ");
+    egl->setPrintPos( 5, 170 );
+    egl->print("-80 m  ");
+    delay(200);
+    egl->setColor( 0, 0, 0 );   // BLACK delete more away 2
+    drawFlarmTarget( 80,55, 100, 30 );
+    egl->setPrintPos( 200, 30 );
+    egl->setColor( 255, 255, 255 );
+    egl->print("0.49 km  ");
+    egl->setPrintPos( 5, 170 );
+    egl->print("-25 m  ");
+    for( int i=0; i<10; i++ ){
+    	egl->setColor( 255, 0, 0 );   // RED print close
+    	drawFlarmTarget( 110,60, 100, 40 );
+    	delay(100);
+    	egl->setColor( 0, 0, 0 );   // RED del
+    	drawFlarmTarget( 110,60, 100, 40 );
+    	delay(10);
     }
 
-    // Serial::begin();
+    Flarm::begin();
+    Serial::begin();
+    if( Serial::selfTest() )
+    	printf("Self TEST OK");
+    else
+    	printf("Self TEST Failed");
+
     while( 1 ){
     	delay(10);
     }

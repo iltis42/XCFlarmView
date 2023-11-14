@@ -65,7 +65,7 @@ char Serial::framebuffer[128];
 int  Serial::pos = 0;
 int  Serial::len = 0;
 TaskHandle_t Serial::pid = 0;
-const uart_port_t uart_num = UART_NUM_0;
+const uart_port_t uart_num = UART_NUM_1;
 
 bool Serial::bincom_mode = false;  // we start with bincom timer inactive
 
@@ -128,7 +128,7 @@ void Serial::parse_NMEA( char c ){
 				pos++;
 				framebuffer[pos] = 0;  // framebuffer is zero terminated
 				// pos++;
-				Flarm::processNMEA( framebuffer, pos );
+				Flarm::parseNMEA( framebuffer, pos );
 				state = GET_NMEA_SYNC;
 				pos = 0;
 			}else{
@@ -147,7 +147,7 @@ void Serial::serialHandler(void *pvParameters)
 	char buf[512];  // 6 messages @ 80 byte
 	// Make a pause, that has avoided core dumps during enable the RX interrupt.
 	delay( 1000 );  // delay a bit serial task startup unit startup of system is through
-
+	ESP_LOGI(FNAME,"S1 serial handler startup");
 	while( true ) {
 		// Stack supervision
 		if( uxTaskGetStackHighWaterMark( pid ) < 256 )
@@ -169,6 +169,7 @@ void Serial::serialHandler(void *pvParameters)
 		// RX part
 		int length = 0;
 		uart_get_buffered_data_len(uart_num, (size_t*)&length);
+		// ESP_LOGI(FNAME,"S1 RX, len=%d", length );
 		if( length ){
 			uint16_t rxBytes = uart_read_bytes( uart_num, (uint8_t*)buf, length, 512);  // read out all characters from the RX queue
 			ESP_LOGI(FNAME,"S1: RX: read %d bytes, avail were: %d bytes", rxBytes, length );
@@ -176,6 +177,7 @@ void Serial::serialHandler(void *pvParameters)
 			buf[rxBytes] = 0;
 			process( buf, rxBytes );
 		}
+		delay( 100 );
 	} // end while( true )
 }
 
@@ -186,7 +188,8 @@ bool Serial::selfTest(){
 	_selfTest = true;
 	std::string test( PROGMEM "The quick brown fox jumps over the lazy dog" );
 	int tx = 0;
-	if( uart_wait_tx_done(uart_num, 100) ) {
+	uart_flush(uart_num);
+	if( uart_wait_tx_done(uart_num, 5000) == ESP_OK ) {
 		tx = uart_write_bytes(uart_num, (const char*)test.c_str(), test.length() );
 		ESP_LOGI(FNAME,"Serial TX written: %d", tx );
 	}
@@ -228,9 +231,9 @@ void Serial::begin(){
 	ESP_LOGI(FNAME,"Serial::begin()" );
 	// Initialize static configuration
 	qMutex = xSemaphoreCreateMutex();
-
+	int baudrate = baud[serial1_speed.get()];
 	uart_config_t uart_config = {
-	    .baud_rate = baud[serial1_speed.get()],
+	    .baud_rate = baudrate,
 	    .data_bits = UART_DATA_8_BITS,
 	    .parity = UART_PARITY_DISABLE,
 	    .stop_bits = UART_STOP_BITS_1,
@@ -239,52 +242,76 @@ void Serial::begin(){
 		.source_clk = UART_SCLK_REF_TICK
 	};
 
-	ESP_ERROR_CHECK( uart_config.baud_rate );
+	ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
+	ESP_LOGI(FNAME,"Serial param config, baudrate=%d", baudrate );
 
 	int umask = UART_SIGNAL_INV_DISABLE;
 	if( serial1_tx_inverted.get() )
 		umask |= UART_SIGNAL_TXD_INV;
 	if( serial1_rx_inverted.get() )
 		umask |= UART_SIGNAL_RXD_INV;
-	ESP_ERROR_CHECK( uart_set_line_inverse( uart_num, umask ) );
+	if( umask ){
+		ESP_ERROR_CHECK( uart_set_line_inverse( uart_num, umask ) );
+		ESP_LOGI(FNAME,"Serial param line inverse" );
+	}
 
-	ESP_ERROR_CHECK( uart_set_hw_flow_ctrl( uart_num,  uart_config.flow_ctrl, 0) );
-
-	ESP_ERROR_CHECK( uart_set_stop_bits( uart_num, uart_config.stop_bits ) );
-
-	if( serial1_speed.get() != 0  ){
-		int baudrate = baud[serial1_speed.get()];
-		if( baudrate != 0 ) {
-			gpio_pullup_en( GPIO_NUM_16 );
-			gpio_pullup_en( GPIO_NUM_17 );
-			// Pin 38 is standard IGC RX pin, Pin 37 TX pin
-			ESP_LOGI(FNAME,"Serial Interface ttyS1 enabled with serial speed: %d baud: %d tx_inv: %d rx_inv: %d",  serial1_speed.get(), baud[serial1_speed.get()], serial1_tx_inverted.get(), serial1_rx_inverted.get() );
-			if( serial1_pins_twisted.get() ){
-				if( serial1_tx_enable.get() ){
-					ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_38, GPIO_NUM_37, GPIO_NUM_33, GPIO_NUM_34));
-				}else{
-					ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_9, GPIO_NUM_37, GPIO_NUM_33, GPIO_NUM_34));
-					gpio_set_direction(GPIO_NUM_37, GPIO_MODE_INPUT);     // high impedance
-					gpio_pullup_dis( GPIO_NUM_37 );
-				}
+	if( baudrate != 0 ) {
+		gpio_pullup_en( GPIO_NUM_16 );
+		gpio_pullup_en( GPIO_NUM_17 );
+		// Pin 38 is standard IGC RX pin, Pin 37 TX pin
+		if( serial1_pins_twisted.get() ){
+			if( serial1_tx_enable.get() ){
+				ESP_LOGI(FNAME,"Serial pins twisted, TX enabled" );
+				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_38, GPIO_NUM_37, GPIO_NUM_33, GPIO_NUM_34));
+			}else{
+				ESP_LOGI(FNAME,"Serial pins twisted, TX disabled" );
+				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_9, GPIO_NUM_37, GPIO_NUM_33, GPIO_NUM_34));
+				gpio_set_direction(GPIO_NUM_37, GPIO_MODE_INPUT);     // high impedance
+				gpio_pullup_dis( GPIO_NUM_37 );
 			}
-			else{
-				if( serial1_tx_enable.get() ){
-					// Set UART pins(TX, RX, RTS, CTS ) RTS and CTS nor wired, dummy
-					ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_37, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));
-				}else{
-					ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_9, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));
-					gpio_set_direction(GPIO_NUM_38, GPIO_MODE_INPUT);     // high impedance
-					gpio_pullup_dis( GPIO_NUM_38 );
-				}
+		}
+		else{
+			if( serial1_tx_enable.get() ){
+				ESP_LOGI(FNAME,"Serial pins normal, TX enabled" );
+				// Set UART pins(TX, RX, RTS, CTS ) RTS and CTS nor wired, dummy
+				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_37, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));
+			}else{
+				ESP_LOGI(FNAME,"Serial pins normal, TX disable" );
+				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_9, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));
+				gpio_set_direction(GPIO_NUM_38, GPIO_MODE_INPUT);     // high impedance
+				gpio_pullup_dis( GPIO_NUM_38 );
 			}
 		}
 	}
+	ESP_LOGI(FNAME,"Serial Interface ttyS1 enabled with serial speed: %d baud: %d tx_inv: %d rx_inv: %d",  serial1_speed.get(), baud[serial1_speed.get()], serial1_tx_inverted.get(), serial1_rx_inverted.get() );
+
+
+	const int uart_buffer_size = 512;
+	QueueHandle_t uart_queue;
+	// Install UART driver using an event queue here
+	// esp_err_t uart_driver_install(uart_port_t uart_num, int rx_buffer_size, int tx_buffer_size, int queue_size, QueueHandle_t *uart_queue, int intr_alloc_flags)
+	ESP_ERROR_CHECK(uart_driver_install(uart_num, uart_buffer_size, uart_buffer_size, 10, &uart_queue, 0));
+    taskStart();
+    unsigned int _baudrate = serial1_speed.get();
+    while( !Flarm::connected() ){
+    	uart_set_baudrate(uart_num, baud[_baudrate]);
+    	ESP_LOGI(FNAME,"Serial Interface ttyS1 baudrate: %d", baud[_baudrate] );
+    	int n=0;
+     	while( !Flarm::connected() ){
+     		delay(100);
+     		n++;
+     		if( n>20 )  // An active Flarm sends every second at least
+     			break;
+     	}
+     	_baudrate++;
+     	if( _baudrate > 6 )
+     		_baudrate=2;  // 9600
+    }
+    ESP_LOGI(FNAME,"Serial baudrate auto detected: %d", _baudrate );
+    serial1_speed.set( _baudrate );
 }
 
 void Serial::taskStart(){
 	ESP_LOGI(FNAME,"Serial::taskStart()" );
-	if( serial1_speed.get() != 0 ){
-		xTaskCreatePinnedToCore(&serialHandler, "serialHandler1", 4096, NULL, 13, &pid, 0);
-	}
+	xTaskCreatePinnedToCore(&serialHandler, "serialHandler1", 4096, NULL, 13, &pid, 0);
 }
