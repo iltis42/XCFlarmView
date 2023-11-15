@@ -163,6 +163,7 @@ extern "C" void app_main(void)
     else
     	printf("Self TEST Failed");
 
+    Flarm::startSim();
     while( 1 ){
     	delay(10);
     }

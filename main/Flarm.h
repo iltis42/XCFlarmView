@@ -16,7 +16,7 @@ typedef struct {
 	int relEast;
 	int relVertical;
 	int idType;
-	char ID[6];
+	unsigned int ID;
 	int track;
 	int groundSpeed;
 	float climbRate;
@@ -90,6 +90,7 @@ public:
 	}
 	static void begin();
 	static void taskFlarm(void *pvParameters);
+	static void startSim() { flarm_sim = true; };
 
 private:
 	static int calcNMEACheckSum(const char *nmea);
@@ -117,9 +118,9 @@ private:
 	static int ext_alt_timer;
 	static int _numSat;
 	static int sim_tick;
-	static nmea_pflaa_s PFLAA;
 	static e_audio_alarm_type_t alarm;
 	static TaskHandle_t pid;
+	static bool flarm_sim;
 };
 
 #endif

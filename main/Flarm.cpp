@@ -2,6 +2,8 @@
 #include "logdef.h"
 #include "Colors.h"
 #include "math.h"
+#include "pflaa2.h"
+#include "TargetManager.h"
 
 int Flarm::RX = 0;
 int Flarm::TX = 0;
@@ -18,11 +20,7 @@ bool Flarm::myGPS_OK = false;
 char Flarm::ID[20] = "";
 int Flarm::bincom = 0;
 TaskHandle_t Flarm::pid = 0;
-
-nmea_pflaa_s Flarm::PFLAA;
-
 AdaptUGC* Flarm::ucg;
-
 e_audio_alarm_type_t Flarm::alarm = AUDIO_ALARM_OFF;
 
 extern xSemaphoreHandle spiMutex;
@@ -130,6 +128,7 @@ void Flarm::parsePFLAA( const char *pflaa ){
 					F = static
 	 */
 	int cs;
+	nmea_pflaa_s PFLAA;
 	int calc_cs=calcNMEACheckSum( pflaa );
 	cs = getNMEACheckSum( pflaa );
 	if( cs != calc_cs ){
@@ -138,13 +137,13 @@ void Flarm::parsePFLAA( const char *pflaa ){
 	}
 	// PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<Type>
 
-	sscanf( pflaa, "$PFLAA,%d,%d,%d,%d,%d,%s,%d,%d,%float,%c,%d",
+	sscanf( pflaa, "$PFLAA,%d,%d,%d,%d,%d,%06X,%d,%d,%float,%c,%d",
 															  &PFLAA.alarmLevel,
 															  &PFLAA.relNorth,
 															  &PFLAA.relEast,
 															  &PFLAA.relVertical,
 															  &PFLAA.idType,
-															  &PFLAA.ID[0],
+															  &PFLAA.ID,
 															  &PFLAA.track,
 															  &PFLAA.groundSpeed,
 															  &PFLAA.climbRate,
@@ -153,6 +152,7 @@ void Flarm::parsePFLAA( const char *pflaa ){
 															  );
 	_tick=0;
 	timeout = 10;
+	TargetManager::receiveTarget( PFLAA );
 }
 
 #define CENTERX 120
@@ -171,7 +171,7 @@ int Flarm::ext_alt_timer=0;
 int Flarm::_numSat=0;
 int Flarm::bincom_port=0;
 
-bool flarm_sim = false;
+bool Flarm::flarm_sim = false;
 
 
 // Calculate the checksum and output it as an int
@@ -201,17 +201,15 @@ int Flarm::getNMEACheckSum(const char *nmea) {
 void Flarm::flarmSim(){
 	// ESP_LOGI(FNAME,"flarmSim sim-tick: %d", sim_tick);
 	if( flarm_sim ){
-		sim_tick=-3;
+		sim_tick=0;
 		flarm_sim=false;
 	}
-	if( sim_tick < NUM_SIM_DATASETS*2 ){
+	if( sim_tick < NUM_PFLAA2_SIM  ){
 		if( sim_tick >= 0 ){
-			int cs = calcNMEACheckSum( (char *)flarm[sim_tick/2] );
+			int cs = calcNMEACheckSum( (char *)pflaa2[sim_tick] );
 			char str[80];
-			sprintf( str, "%s%02X\r\n", flarm[sim_tick/2], cs );
-			// SString sf( str );
-			// Router::forwardMsg( sf, s1_rx_q );
-			parsePFLAU( str, true );
+			sprintf( str, "%s%02X\r\n", pflaa2[sim_tick], cs );
+			parsePFLAA( str );
 			ESP_LOGI(FNAME,"Serial FLARM SIM: %s",  str );
 		}
 		sim_tick++;
