@@ -50,6 +50,7 @@ void Flarm::taskFlarm(void *pvParameters)
 {
 	while(1){
 		progress();
+		TargetManager::tick();
 		delay(1000);
 		_tick++;
 	}
@@ -137,7 +138,7 @@ void Flarm::parsePFLAA( const char *pflaa ){
 	}
 	// PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<Type>
 
-	sscanf( pflaa, "$PFLAA,%d,%d,%d,%d,%d,%06X,%d,%d,%float,%c,%d",
+	sscanf( pflaa, "$PFLAA,%d,%d,%d,%d,%d,%06X,%d,%d,%f,%c,%d",
 															  &PFLAA.alarmLevel,
 															  &PFLAA.relNorth,
 															  &PFLAA.relEast,

@@ -6,6 +6,8 @@
  */
 
 #include "Flarm.h"
+#include <map>
+#include "Target.h"
 
 #ifndef MAIN_TARGETMANAGER_H_
 #define MAIN_TARGETMANAGER_H_
@@ -15,6 +17,10 @@ public:
 	TargetManager();
 	virtual ~TargetManager();
 	static void receiveTarget( nmea_pflaa_s &target );
+	static void tick();
+private:
+	static std::map< unsigned int, Target *> targets;
+
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */
