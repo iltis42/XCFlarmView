@@ -18,6 +18,8 @@
 #include <cmath>
 #include <Serial.h>
 #include "Flarm.h"
+#include "driver/ledc.h"
+#include "Buzzer.h"
 
 AdaptUGC *egl = 0;
 
@@ -95,75 +97,43 @@ extern "C" void app_main(void)
     egl->clearScreen();
     egl->setRedBlueTwist( true );
 
-    egl->setColor( 255, 0, 0 );   // RED
-    drawFlarmTarget( 110,60, 100, 30 );
-
-    egl->setColor( 0, 255, 0 );   // GREEN
-    drawFlarmTarget( 250,120, -45, 20 );
-
-
     egl->setColor( 0, 255, 0 ); // green
     egl->drawCircle( 160,86, 40 );
     drawAirplane( 160,86 );
 
-    egl->setFont( ucg_font_fub20_hf );
-    egl->setColor( 255, 255, 255 );
-    egl->setPrintPos( 10, 30 );
-    egl->print("778C78");
-    egl->setPrintPos( 200, 30 );
-    egl->print("1.85 km");
-    egl->setPrintPos( 5, 170 );
-    egl->print("-180 m");
-    egl->setPrintPos( 200, 170 );
-    egl->print("+1.1 m/s");
-
-
-    egl->setColor( 0, 0, 0 );   // BLACK delete close
-    drawFlarmTarget( 110,60, 100, 40 );
-    egl->setColor( 0, 255, 0 ); // green
-    egl->drawCircle( 160,86, 40 );  // circle repair
-    egl->setColor( 0, 255, 0 );   // GREEN more away 1
-    drawFlarmTarget( 60,50, 100, 25 );
-    egl->setPrintPos( 200, 30 );
-    egl->setColor( 255, 255, 255 );
-    egl->print("1.85 km  ");
-    egl->setPrintPos( 5, 170 );
-    egl->print("-180 m  ");
-    delay(200);
-    egl->setColor( 0, 0, 0 );   // del GREEN more away 1
-    drawFlarmTarget( 60,50, 100, 25 );
-    egl->setColor( 0, 255, 0 );   // GREEN more away 2
-    drawFlarmTarget( 80,55, 100, 30 );
-    egl->setPrintPos( 200, 30 );
-    egl->setColor( 255, 255, 255 );
-    egl->print("0.80 km  ");
-    egl->setPrintPos( 5, 170 );
-    egl->print("-80 m  ");
-    delay(200);
-    egl->setColor( 0, 0, 0 );   // BLACK delete more away 2
-    drawFlarmTarget( 80,55, 100, 30 );
-    egl->setPrintPos( 200, 30 );
-    egl->setColor( 255, 255, 255 );
-    egl->print("0.49 km  ");
-    egl->setPrintPos( 5, 170 );
-    egl->print("-25 m  ");
-    for( int i=0; i<10; i++ ){
-    	egl->setColor( 255, 0, 0 );   // RED print close
-    	drawFlarmTarget( 110,60, 100, 40 );
-    	delay(100);
-    	egl->setColor( 0, 0, 0 );   // RED del
-    	drawFlarmTarget( 110,60, 100, 40 );
-    	delay(10);
-    }
-
-    Flarm::begin();
-    Serial::begin();
+    // Flarm::begin();
+    // Serial::begin();
     if( Serial::selfTest() )
     	printf("Self TEST OK");
     else
     	printf("Self TEST Failed");
 
-    Flarm::startSim();
+    Buzzer::init(2700);
+
+    for(int i=0; i<6; i++){
+    	Buzzer::play2( BUZZ_DH, 200,25, BUZZ_E, 200, 25 );
+    	delay(1000);
+    	Buzzer::play2( BUZZ_DH, 200,100, BUZZ_E, 200, 100 );
+    	delay(1000);
+    }
+
+    for(int i=0; i<4; i++){
+    	Buzzer::play( BUZZ_C );
+     	Buzzer::play( BUZZ_CH );
+    	Buzzer::play( BUZZ_D );
+    	Buzzer::play( BUZZ_DH );
+    	Buzzer::play( BUZZ_E );
+    	Buzzer::play( BUZZ_F );
+    	Buzzer::play( BUZZ_FH );
+    	Buzzer::play( BUZZ_G );
+    	Buzzer::play( BUZZ_GH );
+    	Buzzer::play( BUZZ_A );
+    	Buzzer::play( BUZZ_AH );
+    	Buzzer::play( BUZZ_H );
+    }
+
+
+    // Flarm::startSim();
     while( 1 ){
     	delay(10);
     }

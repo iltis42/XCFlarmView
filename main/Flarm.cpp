@@ -51,7 +51,7 @@ void Flarm::taskFlarm(void *pvParameters)
 	while(1){
 		progress();
 		TargetManager::tick();
-		delay(1000);
+		delay(100);
 		_tick++;
 	}
 }

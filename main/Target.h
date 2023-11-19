@@ -19,11 +19,20 @@ public:
 	void update( nmea_pflaa_s a_pflaa );
 	inline int getAge() { return age; };
 	inline int getID() { return pflaa.ID; };
+	inline int getDist() { return dist; };
 	void dumpInfo();
+	void drawInfo(bool erase=false);
+	void draw( bool closest=false );
+	void drawFlarmTarget( int x, int y, float bearing, int sideLength, bool erase=false, bool closest=false );
+
 
 private:
+
 	nmea_pflaa_s pflaa;
 	int age;
+	float dist;
+	int x,y,old_x, old_y, old_size, old_track;
+	void recalc();
 };
 
 #endif /* MAIN_TARGET_H_ */
