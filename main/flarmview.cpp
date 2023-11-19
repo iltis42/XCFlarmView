@@ -101,8 +101,8 @@ extern "C" void app_main(void)
     egl->drawCircle( 160,86, 40 );
     drawAirplane( 160,86 );
 
-    // Flarm::begin();
-    // Serial::begin();
+    Flarm::begin();
+    Serial::begin();
     if( Serial::selfTest() )
     	printf("Self TEST OK");
     else
@@ -116,7 +116,7 @@ extern "C" void app_main(void)
     	Buzzer::play2( BUZZ_DH, 200,100, BUZZ_E, 200, 100 );
     	delay(1000);
     }
-
+/*
     for(int i=0; i<4; i++){
     	Buzzer::play( BUZZ_C );
      	Buzzer::play( BUZZ_CH );
@@ -131,7 +131,7 @@ extern "C" void app_main(void)
     	Buzzer::play( BUZZ_AH );
     	Buzzer::play( BUZZ_H );
     }
-
+*/
 
     // Flarm::startSim();
     while( 1 ){

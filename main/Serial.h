@@ -50,10 +50,10 @@ public:
 	static void taskStart();
 	static void serialHandler(void *pvParameters);
 	static bool selfTest();
-	static int pullBlock( RingBufCPP<SString, QUEUE_SIZE>& q, char *block, int size );
+	static int  pullBlock( RingBufCPP<SString, QUEUE_SIZE>& q, char *block, int size );
 	static void process( const char *packet, int len );
 	static void parse_NMEA( char c );
-
+	static void huntBaudrate();
 
 private:
 	static enum state_t state;
@@ -65,6 +65,8 @@ private:
 	static int  pos;
 	static int  len;
 	static TaskHandle_t pid;
+	static int trials;
+	static int baudrate;
 };
 
 #endif

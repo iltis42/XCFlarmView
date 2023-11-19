@@ -68,6 +68,8 @@ TaskHandle_t Serial::pid = 0;
 const uart_port_t uart_num = UART_NUM_1;
 
 bool Serial::bincom_mode = false;  // we start with bincom timer inactive
+int Serial::trials=0;
+int Serial::baudrate = 0;
 
 int Serial::pullBlock( RingBufCPP<SString, QUEUE_SIZE>& q, char *block, int size ){
         xSemaphoreTake(qMutex,portMAX_DELAY );
@@ -148,6 +150,7 @@ void Serial::serialHandler(void *pvParameters)
 	// Make a pause, that has avoided core dumps during enable the RX interrupt.
 	delay( 1000 );  // delay a bit serial task startup unit startup of system is through
 	ESP_LOGI(FNAME,"S1 serial handler startup");
+
 	while( true ) {
 		// Stack supervision
 		if( uxTaskGetStackHighWaterMark( pid ) < 256 )
@@ -176,6 +179,9 @@ void Serial::serialHandler(void *pvParameters)
 			ESP_LOG_BUFFER_HEXDUMP(FNAME,buf, rxBytes, ESP_LOG_INFO);
 			buf[rxBytes] = 0;
 			process( buf, rxBytes );
+		}
+		if( !Flarm::connected() ){
+			huntBaudrate();
 		}
 		delay( 100 );
 	} // end while( true )
@@ -227,11 +233,34 @@ bool Serial::selfTest(){
 	return false;
 }
 
+void Serial::huntBaudrate(){
+	if( !Flarm::connected() ){
+		ESP_LOGI(FNAME,"Serial Interface ttyS1 baudrate: %d", baud[baudrate] );
+		if( !Flarm::connected() ){
+			trials++;
+			if( trials>20 ) { // An active Flarm sends every second at least
+				trials = 0;
+				baudrate++;
+				if( baudrate > 6 ){
+					baudrate=2;  // 9600
+				}
+				uart_set_baudrate(uart_num, baud[baudrate]);
+			}
+		}
+	}
+	else{
+		if( serial1_speed.get() != baudrate ){
+			ESP_LOGI(FNAME,"Serial baudrate auto detected: %d", baudrate );
+			serial1_speed.set( baudrate );
+		}
+	}
+}
+
 void Serial::begin(){
 	ESP_LOGI(FNAME,"Serial::begin()" );
 	// Initialize static configuration
 	qMutex = xSemaphoreCreateMutex();
-	int baudrate = baud[serial1_speed.get()];
+	baudrate = baud[serial1_speed.get()];
 	uart_config_t uart_config = {
 	    .baud_rate = baudrate,
 	    .data_bits = UART_DATA_8_BITS,
@@ -254,7 +283,6 @@ void Serial::begin(){
 		ESP_ERROR_CHECK( uart_set_line_inverse( uart_num, umask ) );
 		ESP_LOGI(FNAME,"Serial param line inverse" );
 	}
-
 	if( baudrate != 0 ) {
 		gpio_pullup_en( GPIO_NUM_16 );
 		gpio_pullup_en( GPIO_NUM_17 );
@@ -292,23 +320,7 @@ void Serial::begin(){
 	// esp_err_t uart_driver_install(uart_port_t uart_num, int rx_buffer_size, int tx_buffer_size, int queue_size, QueueHandle_t *uart_queue, int intr_alloc_flags)
 	ESP_ERROR_CHECK(uart_driver_install(uart_num, uart_buffer_size, uart_buffer_size, 10, &uart_queue, 0));
     taskStart();
-    unsigned int _baudrate = serial1_speed.get();
-    while( !Flarm::connected() ){
-    	uart_set_baudrate(uart_num, baud[_baudrate]);
-    	ESP_LOGI(FNAME,"Serial Interface ttyS1 baudrate: %d", baud[_baudrate] );
-    	int n=0;
-     	while( !Flarm::connected() ){
-     		delay(100);
-     		n++;
-     		if( n>20 )  // An active Flarm sends every second at least
-     			break;
-     	}
-     	_baudrate++;
-     	if( _baudrate > 6 )
-     		_baudrate=2;  // 9600
-    }
-    ESP_LOGI(FNAME,"Serial baudrate auto detected: %d", _baudrate );
-    serial1_speed.set( _baudrate );
+
 }
 
 void Serial::taskStart(){

@@ -20,8 +20,9 @@ TargetManager::TargetManager() {
 void TargetManager::receiveTarget( nmea_pflaa_s &pflaa ){
 
     // ESP_LOGI(FNAME,"ID %06X (dec) %d ", pflaa.ID, pflaa.ID );
-    if( targets.find(pflaa.ID) == targets.end() )
+    if( targets.find(pflaa.ID) == targets.end() ){
     	targets[ pflaa.ID ] = new Target ( pflaa );
+    }
     else
     	targets[ pflaa.ID ]->update( pflaa );
     targets[ pflaa.ID ]->dumpInfo();
