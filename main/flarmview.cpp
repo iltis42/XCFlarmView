@@ -91,6 +91,7 @@ extern "C" void app_main(void)
     // begin(unsigned long baud, uint32_t config=SERIAL_8N1, int8_t rxPin=-1, int8_t txPin=-1)
 
     delay(100);
+    //  serial1_speed.set( 1 );  // test for autoBaud
 
     egl = new AdaptUGC();
     egl->begin();
@@ -110,13 +111,14 @@ extern "C" void app_main(void)
 
     Buzzer::init(2700);
 
+/*
     for(int i=0; i<6; i++){
     	Buzzer::play2( BUZZ_DH, 200,25, BUZZ_E, 200, 25 );
     	delay(1000);
     	Buzzer::play2( BUZZ_DH, 200,100, BUZZ_E, 200, 100 );
     	delay(1000);
     }
-/*
+
     for(int i=0; i<4; i++){
     	Buzzer::play( BUZZ_C );
      	Buzzer::play( BUZZ_CH );

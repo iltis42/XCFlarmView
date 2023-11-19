@@ -235,17 +235,15 @@ bool Serial::selfTest(){
 
 void Serial::huntBaudrate(){
 	if( !Flarm::connected() ){
-		ESP_LOGI(FNAME,"Serial Interface ttyS1 baudrate: %d", baud[baudrate] );
-		if( !Flarm::connected() ){
-			trials++;
-			if( trials>20 ) { // An active Flarm sends every second at least
-				trials = 0;
-				baudrate++;
-				if( baudrate > 6 ){
-					baudrate=2;  // 9600
-				}
-				uart_set_baudrate(uart_num, baud[baudrate]);
+		trials++;
+		if( trials>20 ) { // An active Flarm sends every second at least
+			trials = 0;
+			baudrate++;
+			if( baudrate > 6 ){
+				baudrate=2;  // 9600
 			}
+			uart_set_baudrate(uart_num, baud[baudrate]);
+			ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
 		}
 	}
 	else{

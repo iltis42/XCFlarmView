@@ -14,12 +14,6 @@ extern AdaptUGC *egl;
 
 Target::Target() {
 	ESP_LOGI(FNAME,"Target DAFAULT constructor");
-	x=-1;
-	y=-1;
-	old_x=-1000;
-	old_y=-1000;
-	dist = 100.0;
-	memset( &pflaa, 0, sizeof( pflaa ) );
 }
 
 void Target::drawInfo(bool erase){
@@ -41,6 +35,14 @@ void Target::drawInfo(bool erase){
 	egl->printf("%.1f m/s  ", pflaa.climbRate);
 }
 
+void Target::checkClose(){
+	// ESP_LOGI(FNAME,"ID %06X, close Target Buzzer dist=%.2f Holddown= %d", pflaa.ID, dist, _buzzedHoldDown );
+	if( dist < 2.0 && (_buzzedHoldDown == 0) ){
+		ESP_LOGI(FNAME,"BUZZ dist=%.2f", dist );
+		Buzzer::play2( BUZZ_DH, 200,100, BUZZ_E, 200, 100 );
+		_buzzedHoldDown = 300;
+	}
+}
 
 void Target::recalc(){
 	age = 0;
@@ -101,6 +103,7 @@ Target::Target( nmea_pflaa_s a_pflaa ) {
 	pflaa = a_pflaa;
 	old_x=-1000;
 	old_y=-1000;
+	_buzzedHoldDown = 0;
 	// ESP_LOGI(FNAME,"Target (ID %06X) Creation()", pflaa.ID );
 	recalc();
 }
@@ -114,6 +117,8 @@ void Target::update( nmea_pflaa_s a_pflaa ){
 void Target::ageTarget(){
 	if( age < 1000 )
 		age++;
+	if( _buzzedHoldDown )
+		_buzzedHoldDown--;
 }
 
 void Target::dumpInfo(){

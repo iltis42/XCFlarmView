@@ -136,14 +136,16 @@ void AdaptUGC::setFont(uint8_t *f, bool filled ){    // adapter
 	}
 };
 
+#define EGL_DISPLAY_TOPDOWN 1
+
 void  AdaptUGC::begin() {
 	eglib = &myeglib;
-	/*
-	if( display_orientation.get() == DISPLAY_TOPDOWN ){  // default is DISPLAY_NORMAL
-		ili9341_config.page_address =  ILI9341_PAGE_ADDRESS_BOTTOM_TO_TOP;
+
+	if( EGL_DISPLAY_TOPDOWN ){  // default is DISPLAY_NORMAL
+		ili9341_config.page_address =  ILI9341_PAGE_ADDRESS_TOP_TO_BOTTOM;
 		ili9341_config.colum_address = ILI9341_COLUMN_ADDRESS_RIGHT_TO_LEFT;
 	}
-	*/
+
 	ESP_LOGI(FNAME, "eglib_Send() &eglib:%x  hal-driv:%x config:%x\n", (unsigned int)eglib, (unsigned int)&esp32_ili9341, (unsigned int)&esp32_ili9341_config );
 	eglib_Init( &myeglib, &esp32_ili9341, &esp32_ili9341_config, &ili9341, &ili9341_config );
 	setClipRange( 0,0, 320, 320 );

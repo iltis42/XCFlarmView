@@ -25,6 +25,9 @@ e_audio_alarm_type_t Flarm::alarm = AUDIO_ALARM_OFF;
 
 extern xSemaphoreHandle spiMutex;
 
+#define TASK_PERIOD 100  // ms
+#define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
+
 // Option to simulate FLARM sentences
 const char *flarm[] = {
 		"$PFLAU,3,1,2,1,1,-60,2,-100,355,1234*\n",
@@ -51,7 +54,7 @@ void Flarm::taskFlarm(void *pvParameters)
 	while(1){
 		progress();
 		TargetManager::tick();
-		delay(100);
+		delay(TASK_PERIOD);
 		_tick++;
 	}
 }
@@ -130,6 +133,7 @@ void Flarm::parsePFLAA( const char *pflaa ){
 	 */
 	int cs;
 	nmea_pflaa_s PFLAA;
+	memset( &PFLAA, 0, sizeof(PFLAA) );
 	int calc_cs=calcNMEACheckSum( pflaa );
 	cs = getNMEACheckSum( pflaa );
 	if( cs != calc_cs ){
@@ -139,20 +143,20 @@ void Flarm::parsePFLAA( const char *pflaa ){
 	// PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<Type>
 
 	sscanf( pflaa, "$PFLAA,%d,%d,%d,%d,%d,%06X,%d,%d,%f,%c,%d",
-															  &PFLAA.alarmLevel,
-															  &PFLAA.relNorth,
-															  &PFLAA.relEast,
-															  &PFLAA.relVertical,
-															  &PFLAA.idType,
-															  &PFLAA.ID,
-															  &PFLAA.track,
-															  &PFLAA.groundSpeed,
-															  &PFLAA.climbRate,
-															  &PFLAA.acftType[0],
-															  &PFLAA.noTrack
-															  );
+			&PFLAA.alarmLevel,
+			&PFLAA.relNorth,
+			&PFLAA.relEast,
+			&PFLAA.relVertical,
+			&PFLAA.idType,
+			&PFLAA.ID,
+			&PFLAA.track,
+			&PFLAA.groundSpeed,
+			&PFLAA.climbRate,
+			&PFLAA.acftType[0],
+			&PFLAA.noTrack
+	);
 	_tick=0;
-	timeout = 10;
+	timeout = FLARM_TIMEOUT;
 	TargetManager::receiveTarget( PFLAA );
 }
 
@@ -179,23 +183,23 @@ bool Flarm::flarm_sim = false;
 // is required as HEX in the NMEA data set
 // between $ or! and * character
 int Flarm::calcNMEACheckSum(const char *nmea) {
-        int i, XOR, c;
-        for (XOR = 0, i = 0; i < strlen(nmea); i++) {
-                c = (unsigned char)nmea[i];
-                if (c == '*') break;
-                if ((c != '$') && (c != '!')) XOR ^= c;
-        }
-        return XOR;
+	int i, XOR, c;
+	for (XOR = 0, i = 0; i < strlen(nmea); i++) {
+		c = (unsigned char)nmea[i];
+		if (c == '*') break;
+		if ((c != '$') && (c != '!')) XOR ^= c;
+	}
+	return XOR;
 }
 
 int Flarm::getNMEACheckSum(const char *nmea) {
-        int i, cs, c;
-        for (i = 0; i < strlen(nmea); i++) {
-                c = (unsigned char)nmea[i];
-                if (c == '*') break;
-        }
-        sscanf( &nmea[i],"*%02x", &cs );
-        return cs;
+	int i, cs, c;
+	for (i = 0; i < strlen(nmea); i++) {
+		c = (unsigned char)nmea[i];
+		if (c == '*') break;
+	}
+	sscanf( &nmea[i],"*%02x", &cs );
+	return cs;
 }
 
 
@@ -237,7 +241,7 @@ void Flarm::parseNMEA( const char *str, int len ){
 		parsePFLAU( str );
 	}
 	else if( !strncmp( str+1, "PFLAA,", 5 )) {
-			parsePFLAA( str );
+		parsePFLAA( str );
 	}
 	else if( !strncmp( str+3, "RMC,", 3 ) ) {
 		parseGPRMC( str );
@@ -301,7 +305,7 @@ void Flarm::parseGPRMC( const char *gprmc ) {
 			ESP_LOGI(FNAME,"GPRMC, GPS status changed to bad, rmc:%s gps:%d", gprmc, myGPS_OK );
 		}
 	}
-	timeout = 10;
+	timeout = FLARM_TIMEOUT;
 	// ESP_LOGI(FNAME,"parseGPRMC() GPS: %d, Speed: %3.1f knots, Track: %3.1f° ", myGPS_OK, gndSpeedKnots, gndCourse );
 }
 
@@ -345,7 +349,7 @@ void Flarm::parseGPGGA( const char *gpgga ) {
 		if( numSat != _numSat ){
 			_numSat = numSat;
 		}
-		timeout = 10;
+		timeout = FLARM_TIMEOUT;
 	}
 }
 
@@ -361,7 +365,7 @@ void Flarm::parsePFLAE( const char *pflae ) {
 		ESP_LOGW(FNAME,"CHECKSUM ERROR: %s; calculcated CS: %d != delivered CS %d", pflae, calc_cs, cs );
 		return;
 	}
-	timeout = 10;
+	timeout = FLARM_TIMEOUT;
 	const char* pf = "$PFLAE,A,0,0";
 	const unsigned short len = strlen(pf);
 	if( !strncmp( pflae, pf, len )  ){
@@ -394,7 +398,7 @@ C = airship
 D = unmanned aerial vehicle (UAV)
 E = unknown
 F = static object
-*/
+ */
 
 void Flarm::parsePFLAU( const char *pflau, bool sim_data ) {
 	if( !sim_data && (sim_tick < NUM_SIM_DATASETS*2) ){
@@ -413,7 +417,7 @@ void Flarm::parsePFLAU( const char *pflau, bool sim_data ) {
 	// ESP_LOGI(FNAME,"parsePFLAU() RB: %d ALT:%d  DIST %d",RelativeBearing,RelativeVertical, RelativeDistance );
 	sprintf( ID,"%06x", id );
 	_tick=0;
-	timeout = 10;
+	timeout = FLARM_TIMEOUT;
 }
 
 void Flarm::parsePFLAX( const char *msg, int port ) {
@@ -424,7 +428,7 @@ void Flarm::parsePFLAX( const char *msg, int port ) {
 	if( !strncmp( msg, "\n", 1 )  ){  // catch case when serial.cpp does not correctly dissect at '\n', needs further evaluation, maybe multiple '\n' sent ?
 		start=1;
 	}
-	*/
+	 */
 	// Note, if the Flarm switch to binary mode was accepted, Flarm will answer
 	// with $PFLAX,A*2E. In error case you will get as answer $PFLAX,A,<error>*
 	// and the Flarm stays in text mode.
@@ -436,7 +440,7 @@ void Flarm::parsePFLAX( const char *msg, int port ) {
 		int old = bincom;
 		bincom = 5;
 		ESP_LOGI(FNAME,"bincom: %d --> %d", old, bincom  );
-		timeout = 10;
+		timeout = FLARM_TIMEOUT;
 	}
 }
 
@@ -470,7 +474,7 @@ void Flarm::parsePGRMZ( const char *pgrmz ) {
 		return;
 	}
 	sscanf( pgrmz, "$PGRMZ,%d,F,2",&alt1013_ft );
-	timeout = 10;
+	timeout = FLARM_TIMEOUT;
 	ext_alt_timer = 10;  // Fall back to internal Barometer after 10 seconds
 }
 

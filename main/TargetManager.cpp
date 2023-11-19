@@ -8,6 +8,7 @@
 #include "TargetManager.h"
 #include "inttypes.h"
 #include "Flarm.h"
+#include "Buzzer.h"
 
 std::map< unsigned int, Target*> TargetManager::targets;
 extern AdaptUGC *egl;
@@ -87,6 +88,7 @@ void TargetManager::tick(){
 				it->second->dumpInfo();
 				it->second->draw();
 			}
+			it->second->checkClose();
 		}else{
 			if( it->first == min_id ){
 				// it->second->drawInfo(true);
