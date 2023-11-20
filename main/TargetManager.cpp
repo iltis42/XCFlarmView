@@ -91,7 +91,8 @@ void TargetManager::tick(){
 			it->second->checkClose();
 		}else{
 			if( it->first == min_id ){
-				// it->second->drawInfo(true);
+				it->second->drawInfo(true);
+				it->second->draw(true);
 			}
 		}
 	}

@@ -17,6 +17,7 @@ Target::Target() {
 }
 
 void Target::drawInfo(bool erase){
+	// ESP_LOGI(FNAME,"ID %06X, drawInfo, erase=%d", pflaa.ID, erase );
 	if( pflaa.ID == 0 )
 		return;
 	egl->setFont( ucg_font_fub20_hf );
@@ -24,7 +25,6 @@ void Target::drawInfo(bool erase){
 		egl->setColor(0, 0, 0 );
 	else
 		egl->setColor( 255, 255, 255 );
-	egl->setColor( 255, 255, 255 );
 	egl->setPrintPos( 200, 170 );
 	egl->printf("%06X ", pflaa.ID );
 	egl->setPrintPos( 200, 30 );
