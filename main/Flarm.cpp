@@ -214,7 +214,7 @@ void Flarm::flarmSim(){
 			int cs = calcNMEACheckSum( (char *)pflaa2[sim_tick] );
 			char str[80];
 			sprintf( str, "%s%02X\r\n", pflaa2[sim_tick], cs );
-			parsePFLAA( str );
+			parseNMEA( str, strlen(str) );
 			ESP_LOGI(FNAME,"Serial FLARM SIM: %s",  str );
 		}
 		sim_tick++;

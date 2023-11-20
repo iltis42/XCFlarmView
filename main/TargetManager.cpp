@@ -81,11 +81,11 @@ void TargetManager::tick(){
 		if( it->second->getAge() < 30 ){
 			if( it->first == min_id ){
 				it->second->draw(true);
-				it->second->dumpInfo();
+				// it->second->dumpInfo();
 				it->second->drawInfo();
 			}
 			else{
-				it->second->dumpInfo();
+				// it->second->dumpInfo();
 				it->second->draw();
 			}
 			it->second->checkClose();

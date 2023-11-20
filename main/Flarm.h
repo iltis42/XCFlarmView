@@ -79,7 +79,7 @@ public:
 	}
 	static inline bool gpsStatus() { return myGPS_OK; }
 	static float getGndSpeedKnots() { return gndSpeedKnots; }
-	static float getGndCourse() { return gndCourse; }
+	static inline float getGndCourse() { return gndCourse; }
 	static int bincom;
 	static int bincom_port;
 	static void tick();

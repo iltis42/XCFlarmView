@@ -8,6 +8,7 @@
 #include "Target.h"
 #include <algorithm>
 #include <AdaptUGC.h>
+#include "vector.h"
 
 extern AdaptUGC *egl;
 
@@ -30,7 +31,10 @@ void Target::drawInfo(bool erase){
 	egl->setPrintPos( 200, 30 );
 	egl->printf("%.2f km  ", dist );
 	egl->setPrintPos( 5, 170 );
-	egl->printf("%d m  ", pflaa.relVertical );
+	if( pflaa.relVertical > 0 )
+		egl->printf("+%d m  ", pflaa.relVertical );
+	else
+		egl->printf("%d m  ", pflaa.relVertical );
 	egl->setPrintPos( 10, 30 );
 	egl->printf("%.1f m/s  ", pflaa.climbRate);
 }
@@ -44,12 +48,24 @@ void Target::checkClose(){
 	}
 }
 
+#define SCALE 40
+// Transform to heading from ground track
 void Target::recalc(){
 	age = 0;
-	dist = sqrt( pflaa.relNorth*pflaa.relNorth + pflaa.relEast*pflaa.relEast )/1000.0; // distance in km float
-	x=160+(pflaa.relEast/20);
-	y=86-(pflaa.relNorth/20);
-	// ESP_LOGI(FNAME,"recalc x=%d, y=%d, N:%d, E:%d", x, y, pflaa.relNorth, pflaa.relEast );
+	float a=Vector::normalizeDeg180(Flarm::getGndCourse());
+	float relE=float(pflaa.relEast)/1000.0;   // comes in meters
+	float relN=float(pflaa.relNorth)/1000.0;
+	float relES = relE * cos(D2R(a)) - relN*sin(D2R(a));  // x' = x·cos(α) - y·sin(α)
+	float relNS = relE * sin(D2R(a)) + relN*cos(D2R(a));  // y' = x·sin(α) + y·cos(α)
+	dist = sqrt( relNS*relNS + relES*relES ); // distance in km float
+	float f=1.0;
+	if( dist*SCALE < 40 ){
+		dist = dist*SCALE < 1.0 ? 1.0 : dist;
+		f=40/(dist*SCALE);
+	}
+	x=160+(relES*f*SCALE);
+	y=86-(relNS*f*SCALE);
+	ESP_LOGI(FNAME,"recalc x=%d, y=%d, N:%.2f E:%.2f NS:%.2f, ES:%.2f a:%d", x, y, relN, relE, relNS, relES, int(a) );
 }
 
 void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, bool erase, bool closest ){
@@ -66,7 +82,7 @@ void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, boo
 	if( closest )
 		egl->drawCircle( ax,ay, sideLength );
 	if( !erase ){
-		ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%.1f, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
+		// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%.1f, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
 		old_x = ax;
 		old_y = ay;
 		old_size = sideLength;
@@ -76,7 +92,7 @@ void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, boo
 
 
 void Target::draw( bool closest ){
-	int size = int( std::min( 50.0, 10.0+10.0/dist  ) );
+	int size = std::min( 30.0, std::min( 80.0, 10.0+10.0/dist )  );
 	if( old_x != -1000 && x != -1000 ){
 		// ESP_LOGI(FNAME,"drawFlarmTarget() erase old x:%d old_x:%d", x, old_x );
 		egl->setColor( 0, 0, 0 );   // BLACK
