@@ -102,46 +102,23 @@ extern "C" void app_main(void)
     egl->drawCircle( 160,86, 40 );
     drawAirplane( 160,86 );
 
+    Buzzer::init(2700);
     Flarm::begin();
     Serial::begin();
+
+    Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 1000, 0, 1 );
+
     if( Serial::selfTest() )
     	printf("Self TEST OK");
     else
     	printf("Self TEST Failed");
-
-    Buzzer::init(2700);
-
 /*
-    for(int i=0; i<6; i++){
-    	Buzzer::play2( BUZZ_DH, 200,25, BUZZ_E, 200, 25 );
-    	delay(1000);
-    	Buzzer::play2( BUZZ_DH, 200,100, BUZZ_E, 200, 100 );
-    	delay(1000);
-    }
-
-    for(int i=0; i<4; i++){
-    	Buzzer::play( BUZZ_C );
-     	Buzzer::play( BUZZ_CH );
-    	Buzzer::play( BUZZ_D );
-    	Buzzer::play( BUZZ_DH );
-    	Buzzer::play( BUZZ_E );
-    	Buzzer::play( BUZZ_F );
-    	Buzzer::play( BUZZ_FH );
-    	Buzzer::play( BUZZ_G );
-    	Buzzer::play( BUZZ_GH );
-    	Buzzer::play( BUZZ_A );
-    	Buzzer::play( BUZZ_AH );
-    	Buzzer::play( BUZZ_H );
-    }
-*/
-
-    // Flarm::startSim();
     while( 1 ){
-    	delay(10);
+    	delay(100);
     }
 
-    vTaskDelay(1000000 / portTICK_PERIOD_MS);
     printf("Restarting now.\n");
     fflush(stdout);
     esp_restart();
+    */
 }

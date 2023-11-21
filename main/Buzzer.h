@@ -33,7 +33,7 @@ public:
 	static void init( uint frequency);
 	static void volume( uint vol=0 );
 	static void frequency( uint f);
-	static inline void play2( uint f1=BUZZ_DH, uint d1=200, uint v1=100, uint f2=BUZZ_E, uint d2=200, uint v2=0 ) { play(f1,d1,v1);  play(f2,d2,v2);  };
+	static void play2( uint f1=BUZZ_DH, uint d1=200, uint v1=100, uint f2=BUZZ_E, uint d2=200, uint v2=0, uint repetition=1 );
 	static void play( uint f=BUZZ_DH, uint d=200, uint v=100 );
 private:
 	static TaskHandle_t pid;

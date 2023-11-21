@@ -80,7 +80,7 @@ bool eglib_inClipArea(eglib_t * eglib, coordinate_t x, coordinate_t y ){
 		return true;
 	}
 	else{
-		ESP_LOGI("ili", "outside clip %d %d", x,y );
+		// ESP_LOGI("ili", "outside clip %d %d", x,y );
 		return false;
 	}
 }

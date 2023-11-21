@@ -24,16 +24,16 @@ public:
 	void dumpInfo();
 	void drawInfo(bool erase=false);
 	void draw( bool closest=false );
-	void drawFlarmTarget( int x, int y, float bearing, int sideLength, bool erase=false, bool closest=false );
 	void checkClose();
 
 private:
-
+	void checkAlarm();
+	void drawFlarmTarget( int x, int y, float bearing, int sideLength, bool erase=false, bool closest=false );
 	nmea_pflaa_s pflaa;
 	int age;
 	int _buzzedHoldDown;
 	float dist;
-	int x,y,old_x, old_y, old_size, old_track;
+	int x,y,old_x, old_y, old_size, old_track, old_closest;
 	void recalc();
 };
 

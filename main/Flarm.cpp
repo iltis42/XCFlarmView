@@ -25,7 +25,7 @@ e_audio_alarm_type_t Flarm::alarm = AUDIO_ALARM_OFF;
 
 extern xSemaphoreHandle spiMutex;
 
-#define TASK_PERIOD 100  // ms
+#define TASK_PERIOD 500  // ms
 #define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
 
 // Option to simulate FLARM sentences
@@ -211,9 +211,9 @@ void Flarm::flarmSim(){
 	}
 	if( sim_tick < NUM_PFLAA2_SIM  ){
 		if( sim_tick >= 0 ){
-			int cs = calcNMEACheckSum( (char *)pflaa2[sim_tick] );
+			// int cs = calcNMEACheckSum( (char *)pflaa2[sim_tick] );
 			char str[80];
-			sprintf( str, "%s%02X\r\n", pflaa2[sim_tick], cs );
+			sprintf( str, "%s", pflaa2[sim_tick] );
 			parseNMEA( str, strlen(str) );
 			ESP_LOGI(FNAME,"Serial FLARM SIM: %s",  str );
 		}
@@ -227,6 +227,7 @@ void Flarm::progress(){  // once per second
 		timeout--;
 	}
 	// ESP_LOGI(FNAME,"progress, timeout=%d", timeout );
+	flarmSim();
 	flarmSim();
 }
 

@@ -65,7 +65,7 @@ void Target::recalc(){
 	}
 	x=160+(relES*f*SCALE);
 	y=86-(relNS*f*SCALE);
-	ESP_LOGI(FNAME,"recalc x=%d, y=%d, N:%.2f E:%.2f NS:%.2f, ES:%.2f a:%d", x, y, relN, relE, relNS, relES, int(a) );
+	// ESP_LOGI(FNAME,"recalc x=%d, y=%d, N:%.2f E:%.2f NS:%.2f, ES:%.2f a:%d", x, y, relN, relE, relNS, relES, int(a) );
 }
 
 void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, bool erase, bool closest ){
@@ -87,16 +87,28 @@ void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, boo
 		old_y = ay;
 		old_size = sideLength;
 		old_track = bearing;
+		old_closest = closest;
+	}
+}
+
+void Target::checkAlarm(){
+	if( pflaa.alarmLevel == 1 ){
+		Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 150, 0, 3 );
+	}else if( pflaa.alarmLevel == 2 ){
+		Buzzer::play2( BUZZ_E, 100,100, BUZZ_E, 100, 0, 5 );
+	}else if( pflaa.alarmLevel == 3 ){
+		Buzzer::play2( BUZZ_F, 70,100, BUZZ_F, 70, 0, 7 );
 	}
 }
 
 
 void Target::draw( bool closest ){
+	checkAlarm();
 	int size = std::min( 30.0, std::min( 80.0, 10.0+10.0/dist )  );
 	if( old_x != -1000 && x != -1000 ){
 		// ESP_LOGI(FNAME,"drawFlarmTarget() erase old x:%d old_x:%d", x, old_x );
 		egl->setColor( 0, 0, 0 );   // BLACK
-		drawFlarmTarget( old_x, old_y, old_track, old_size, true, closest );
+		drawFlarmTarget( old_x, old_y, old_track, old_size, true, old_closest );
 	}
 	if( age < 30 ){
 		int highlight = 0;
@@ -119,6 +131,7 @@ Target::Target( nmea_pflaa_s a_pflaa ) {
 	pflaa = a_pflaa;
 	old_x=-1000;
 	old_y=-1000;
+	old_closest=false;
 	_buzzedHoldDown = 0;
 	// ESP_LOGI(FNAME,"Target (ID %06X) Creation()", pflaa.ID );
 	recalc();

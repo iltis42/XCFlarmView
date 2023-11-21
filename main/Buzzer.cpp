@@ -96,12 +96,19 @@ void Buzzer::init(uint freq)
     };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
     volume(0);
-    queue = xQueueCreate(32, sizeof(tone_t));
+    queue = xQueueCreate(200, sizeof(tone_t));
     taskStart();
 }
 
 void Buzzer::frequency( uint f ){
 	ESP_ERROR_CHECK(ledc_set_freq( LEDC_MODE, LEDC_TIMER, f));
+}
+
+void Buzzer::play2( uint f1, uint d1, uint v1, uint f2, uint d2, uint v2, uint repetition )
+{ 	for(int i=0; i<repetition; i++ ){
+		play(f1,d1,v1);
+		play(f2,d2,v2);
+	}
 }
 
 void Buzzer::buzz_task(void *pvParameters)
@@ -115,13 +122,13 @@ void Buzzer::buzz_task(void *pvParameters)
     		delay(t.duration);
     		volume(0);
 		}
-		delay(5);
+		// delay(20);
 	}
 }
 
 void Buzzer::play( uint f, uint d, uint v ) {
 	tone_t t = { f, d, v };
-	xQueueSend(queue, &t, portMAX_DELAY);
+	xQueueSend(queue, &t, 0);
 };
 
 void Buzzer::volume( uint vol ){
@@ -133,6 +140,6 @@ void Buzzer::volume( uint vol ){
 
 void Buzzer::taskStart(){
 	ESP_LOGI(FNAME,"Buzzer::taskStart()" );
-	xTaskCreatePinnedToCore(&buzz_task, "Buzzer", 4096, NULL, 10, &pid, 0);
+	xTaskCreatePinnedToCore(&buzz_task, "Buzzer", 4096, NULL, 20, &pid, 0);
 }
 
