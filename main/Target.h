@@ -21,10 +21,13 @@ public:
 	inline int getAge() { return age; };
 	inline int getID() { return pflaa.ID; };
 	inline float getDist() { return dist; };
+	inline float getProximity() { return prox; };
 	void dumpInfo();
 	void drawInfo(bool erase=false);
 	void draw( bool closest=false );
 	void checkClose();
+	inline bool haveAlarm(){ return pflaa.alarmLevel != 0; };
+	inline bool sameAlt( uint tolerance=150 ) { return( abs( pflaa.relVertical )< tolerance ); };
 
 private:
 	void checkAlarm();
@@ -32,8 +35,8 @@ private:
 	nmea_pflaa_s pflaa;
 	int age;
 	int _buzzedHoldDown;
-	float dist;
-	int x,y,old_x, old_y, old_size, old_track, old_closest;
+	float dist, prox, old_track;
+	int x,y,old_x, old_y, old_size, old_closest;
 	void recalc();
 };
 

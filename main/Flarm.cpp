@@ -4,6 +4,8 @@
 #include "math.h"
 #include "pflaa2.h"
 #include "TargetManager.h"
+#include <iostream>
+#include <sstream>
 
 int Flarm::RX = 0;
 int Flarm::TX = 0;
@@ -142,19 +144,43 @@ void Flarm::parsePFLAA( const char *pflaa ){
 	}
 	// PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<Type>
 
-	sscanf( pflaa, "$PFLAA,%d,%d,%d,%d,%d,%06X,%d,%d,%f,%c,%d",
-			&PFLAA.alarmLevel,
-			&PFLAA.relNorth,
-			&PFLAA.relEast,
-			&PFLAA.relVertical,
-			&PFLAA.idType,
-			&PFLAA.ID,
-			&PFLAA.track,
-			&PFLAA.groundSpeed,
-			&PFLAA.climbRate,
-			&PFLAA.acftType[0],
-			&PFLAA.noTrack
-	);
+	std::istringstream ss(pflaa);
+	std::string token;
+	std::getline(ss, token, ',');
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		PFLAA.alarmLevel = std::stoi(token);
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		PFLAA.relNorth = std::stoi(token);
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		PFLAA.relEast = std::stoi(token);
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		PFLAA.relVertical = std::stoi(token);
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		PFLAA.idType = std::stoi(token);
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		sscanf(token.c_str(),"%06X", &PFLAA.ID );
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		PFLAA.track = std::stoi(token);
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		PFLAA.turnRate = std::stoi(token);
+	std::getline(ss, token, ',');
+		if( !token.empty() )
+	PFLAA.groundSpeed = std::stoi(token);
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		PFLAA.climbRate = std::stof(token);
+	std::getline(ss, token, ',');
+	if( !token.empty() )
+		sscanf(token.c_str(), "%s", PFLAA.acftType);
+
 	_tick=0;
 	timeout = FLARM_TIMEOUT;
 	TargetManager::receiveTarget( PFLAA );

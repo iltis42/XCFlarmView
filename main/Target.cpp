@@ -36,7 +36,10 @@ void Target::drawInfo(bool erase){
 	else
 		egl->printf("%d m  ", pflaa.relVertical );
 	egl->setPrintPos( 10, 30 );
-	egl->printf("%.1f m/s  ", pflaa.climbRate);
+	if( pflaa.climbRate > 0 )
+		egl->printf("+%.1f m/s  ", pflaa.climbRate);
+	else
+		egl->printf("%.1f m/s  ", pflaa.climbRate);
 }
 
 void Target::checkClose(){
@@ -55,16 +58,19 @@ void Target::recalc(){
 	float a=Vector::normalizeDeg180(Flarm::getGndCourse());
 	float relE=float(pflaa.relEast)/1000.0;   // comes in meters
 	float relN=float(pflaa.relNorth)/1000.0;
-	float relES = relE * cos(D2R(a)) - relN*sin(D2R(a));  // x' = x·cos(α) - y·sin(α)
-	float relNS = relE * sin(D2R(a)) + relN*cos(D2R(a));  // y' = x·sin(α) + y·cos(α)
+	float relES = -(relE * cos(D2R(a)) - relN*sin(D2R(a)));  // x' = x·cos(α) - y·sin(α)
+	float relNS = -(relE * sin(D2R(a)) + relN*cos(D2R(a)));  // y' = x·sin(α) + y·cos(α)
 	dist = sqrt( relNS*relNS + relES*relES ); // distance in km float
+	float relV=float(pflaa.relVertical/1000.0);
+	prox=sqrt( relV*relV + dist*dist );
 	float f=1.0;
 	if( dist*SCALE < 40 ){
-		dist = dist*SCALE < 1.0 ? 1.0 : dist;
-		f=40/(dist*SCALE);
+		float d = dist*SCALE < 1.0 ? 1.0 : dist;
+		f=40/(d*SCALE);
 	}
 	x=160+(relES*f*SCALE);
 	y=86-(relNS*f*SCALE);
+
 	// ESP_LOGI(FNAME,"recalc x=%d, y=%d, N:%.2f E:%.2f NS:%.2f, ES:%.2f a:%d", x, y, relN, relE, relNS, relES, int(a) );
 }
 
@@ -114,15 +120,17 @@ void Target::draw( bool closest ){
 		int highlight = 0;
 		if( closest )
 			highlight = 0;
-		if( dist < 1.0 ){
+		if( (dist < 1.0) && sameAlt() ){
 			egl->setColor( 255, highlight, highlight );
 		}
 		else{
 			egl->setColor( highlight, 255, highlight );
 		}
 		if( x > 0 && x < 320 && y > 0 && y < 172 ){
-			// ESP_LOGI(FNAME,"drawFlarmTarget() draw %06X: x:%d y:%d", x,y , pflaa.ID );
-			drawFlarmTarget( x, y, (float)pflaa.track, size, false, closest );
+			// ESP_LOGI(FNAME,"drawFlarmTarget() draw %06X: N/y:%d E/x:%d", pflaa.ID, x,y );
+			float heading=Vector::normalizeDeg(  (float)pflaa.track + Vector::normalizeDeg180(Flarm::getGndCourse()) );
+
+			drawFlarmTarget( x, y, heading, size, false, closest );
 		}
 	}
 }
@@ -132,7 +140,10 @@ Target::Target( nmea_pflaa_s a_pflaa ) {
 	old_x=-1000;
 	old_y=-1000;
 	old_closest=false;
+	old_track = 0;
 	_buzzedHoldDown = 0;
+	dist=10000.0;
+	prox=10000.0;
 	// ESP_LOGI(FNAME,"Target (ID %06X) Creation()", pflaa.ID );
 	recalc();
 }

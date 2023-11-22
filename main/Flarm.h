@@ -18,10 +18,10 @@ typedef struct {
 	int idType;
 	unsigned int ID;
 	int track;
+	float turnRate;
 	int groundSpeed;
 	float climbRate;
-	char acftType[1];
-	int noTrack;
+	char acftType[3];
 } nmea_pflaa_s;
 
 /* Value indexes */

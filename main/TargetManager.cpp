@@ -69,7 +69,7 @@ void TargetManager::tick(){
 			delete it->second;
 			targets.erase( it++ );
 		}else{
-			if( it->second->getDist() < min_dist ){
+			if( (it->second->getProximity() < min_dist)  ){
 				min_dist = it->second->getDist();
 				min_id = it->first;
 			}
@@ -79,7 +79,7 @@ void TargetManager::tick(){
 	}
 	for (auto it=targets.begin(); it!=targets.end(); it++ ){
 		if( it->second->getAge() < 30 ){
-			if( it->first == min_id ){
+			if( it->first == min_id || it->second->haveAlarm() ){
 				it->second->draw(true);
 				// it->second->dumpInfo();
 				it->second->drawInfo();
