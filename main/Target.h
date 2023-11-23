@@ -35,6 +35,8 @@ private:
 	nmea_pflaa_s pflaa;
 	int age;
 	int _buzzedHoldDown;
+	float rel_target_heading;
+	float rel_target_dir;
 	float dist, prox, old_track;
 	int x,y,old_x, old_y, old_size, old_closest;
 	void recalc();

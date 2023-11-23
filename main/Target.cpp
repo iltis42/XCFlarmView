@@ -55,12 +55,13 @@ void Target::checkClose(){
 // Transform to heading from ground track
 void Target::recalc(){
 	age = 0;
-	float a=Vector::normalizeDeg180(Flarm::getGndCourse());
+	// float a=Vector::normalizeDeg180(Flarm::getGndCourse());
+	rel_target_heading = Vector::angleDiffDeg( (float)pflaa.track, Flarm::getGndCourse() );
 	float relE=float(pflaa.relEast)/1000.0;   // comes in meters
 	float relN=float(pflaa.relNorth)/1000.0;
-	float relES = -(relE * cos(D2R(a)) - relN*sin(D2R(a)));  // x' = x·cos(α) - y·sin(α)
-	float relNS = -(relE * sin(D2R(a)) + relN*cos(D2R(a)));  // y' = x·sin(α) + y·cos(α)
-	dist = sqrt( relNS*relNS + relES*relES ); // distance in km float
+	float target_dir = Vector::normalizeDeg180( R2D(atan2( relE, relN )) );
+	rel_target_dir = Vector::angleDiffDeg( target_dir, Flarm::getGndCourse() );
+	dist = sqrt( relN*relN + relE*relE ); // distance in km float
 	float relV=float(pflaa.relVertical/1000.0);
 	prox=sqrt( relV*relV + dist*dist );
 	float f=1.0;
@@ -68,10 +69,9 @@ void Target::recalc(){
 		float d = dist*SCALE < 1.0 ? 1.0 : dist;
 		f=40/(d*SCALE);
 	}
-	x=160+(relES*f*SCALE);
-	y=86-(relNS*f*SCALE);
-
-	// ESP_LOGI(FNAME,"recalc x=%d, y=%d, N:%.2f E:%.2f NS:%.2f, ES:%.2f a:%d", x, y, relN, relE, relNS, relES, int(a) );
+	x=160+(dist*f*SCALE)*sin(D2R(rel_target_dir));
+	y=86-(dist*f*SCALE)*cos(D2R(rel_target_dir));
+	// ESP_LOGI(FNAME,"recalc ID: %06X, own heading:%d targ-head:%d rel-target-head:%d (N:%.2f, E:%.2f) x:%d y:%d", pflaa.ID, int(Flarm::getGndCourse()), int(rel_target_heading), int(rel_target_dir) , relN, relE, x, y ) ;
 }
 
 void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, bool erase, bool closest ){
@@ -128,9 +128,8 @@ void Target::draw( bool closest ){
 		}
 		if( x > 0 && x < 320 && y > 0 && y < 172 ){
 			// ESP_LOGI(FNAME,"drawFlarmTarget() draw %06X: N/y:%d E/x:%d", pflaa.ID, x,y );
-			float heading=Vector::normalizeDeg(  (float)pflaa.track + Vector::normalizeDeg180(Flarm::getGndCourse()) );
-
-			drawFlarmTarget( x, y, heading, size, false, closest );
+			ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );
+			drawFlarmTarget( x, y, rel_target_heading, size, false, closest );
 		}
 	}
 }
