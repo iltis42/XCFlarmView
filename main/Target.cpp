@@ -18,28 +18,56 @@ Target::Target() {
 }
 
 void Target::drawInfo(bool erase){
+	char s[32];
+	int w=0;
 	// ESP_LOGI(FNAME,"ID %06X, drawInfo, erase=%d", pflaa.ID, erase );
 	if( pflaa.ID == 0 )
 		return;
-	egl->setFont( ucg_font_fub20_hf );
+
 	if( erase )
 		egl->setColor(0, 0, 0 );
 	else
 		egl->setColor( 255, 255, 255 );
-	egl->setPrintPos( 200, 170 );
-	egl->printf("%06X ", pflaa.ID );
-	egl->setPrintPos( 200, 30 );
-	egl->printf("%.2f km  ", dist );
+
+	egl->setFont( ucg_font_fub20_hf ); // big letters are a bit spacey
+	// Flarm ID right down
+	sprintf(s,"%06X ", pflaa.ID );
+	w=egl->getStrWidth(s);
+	egl->setPrintPos( 310-w, 170 );
+	egl->printf("%s",s);
+
+	egl->setFont( ucg_font_fub25_hf );
+	// Distance left up
+	sprintf(s,"%.2f ", dist );
+	w=egl->getStrWidth(s);
+	egl->setPrintPos( 310-w, 35 );
+	egl->printf(s,"%.2f  ", dist );
+
+	// relative vertical
 	egl->setPrintPos( 5, 170 );
 	if( pflaa.relVertical > 0 )
-		egl->printf("+%d m  ", pflaa.relVertical );
+		egl->printf("+%d   ", pflaa.relVertical );
 	else
-		egl->printf("%d m  ", pflaa.relVertical );
-	egl->setPrintPos( 10, 30 );
+		egl->printf("%d   ", pflaa.relVertical );
+	egl->setPrintPos( 5, 35 );
+
+	// climb rate
 	if( pflaa.climbRate > 0 )
-		egl->printf("+%.1f m/s  ", pflaa.climbRate);
+		sprintf(s,"+%.1f ", pflaa.climbRate);
 	else
-		egl->printf("%.1f m/s  ", pflaa.climbRate);
+		sprintf(s," %.1f ", pflaa.climbRate);
+	egl->printf("%s", s);
+
+	// Units
+	if( !erase )
+		egl->setColor( 0, 0, 255 );
+	egl->setFont( ucg_font_fub14_hf );
+	egl->setPrintPos( 255, 55 );
+	egl->print(" km");
+	egl->setPrintPos( 5, 55 );
+	egl->print("  m/s");
+	egl->setPrintPos( 25, 135 );
+	egl->print("m ");
 }
 
 void Target::checkClose(){
@@ -51,42 +79,41 @@ void Target::checkClose(){
 	}
 }
 
-#define SCALE 40
+#define SCALE 30
 // Transform to heading from ground track
 void Target::recalc(){
-	age = 0;
-	// float a=Vector::normalizeDeg180(Flarm::getGndCourse());
+	age = 0;  // reset age
 	rel_target_heading = Vector::angleDiffDeg( (float)pflaa.track, Flarm::getGndCourse() );
-	float relE=float(pflaa.relEast)/1000.0;   // comes in meters
-	float relN=float(pflaa.relNorth)/1000.0;
-	float target_dir = Vector::normalizeDeg180( R2D(atan2( relE, relN )) );
-	rel_target_dir = Vector::angleDiffDeg( target_dir, Flarm::getGndCourse() );
-	dist = sqrt( relN*relN + relE*relE ); // distance in km float
+	rel_target_dir = Vector::angleDiffDeg( R2D(atan2( pflaa.relEast, pflaa.relNorth )), Flarm::getGndCourse() );
+	dist = sqrt( pflaa.relNorth*pflaa.relNorth + pflaa.relEast*pflaa.relEast )/1000.0; // distance in km float
 	float relV=float(pflaa.relVertical/1000.0);
 	prox=sqrt( relV*relV + dist*dist );
 	float f=1.0;
-	if( dist*SCALE < 40 ){
+	if( dist*SCALE < 30 ){
 		float d = dist*SCALE < 1.0 ? 1.0 : dist;
 		f=40/(d*SCALE);
 	}
 	x=160+(dist*f*SCALE)*sin(D2R(rel_target_dir));
 	y=86-(dist*f*SCALE)*cos(D2R(rel_target_dir));
-	// ESP_LOGI(FNAME,"recalc ID: %06X, own heading:%d targ-head:%d rel-target-head:%d (N:%.2f, E:%.2f) x:%d y:%d", pflaa.ID, int(Flarm::getGndCourse()), int(rel_target_heading), int(rel_target_dir) , relN, relE, x, y ) ;
+	// ESP_LOGI(FNAME,"recalc ID: %06X, own heading:%d targ-head:%d rel-target-head:%d (N:%.2f, E:%.2f) x:%d y:%d", pflaa.ID, int(Flarm::getGndCourse()), int(rel_target_heading), int(rel_target_dir) , pflaa.relNorth, pflaa.relEast, x, y ) ;
 }
 
 void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, bool erase, bool closest ){
 	// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%.1f, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
-	float radians = (bearing-90.0) * M_PI / 180;
+	float radians = D2R(bearing-90.0);
+	float axt=ax-sideLength/4*sin(D2R(bearing));  // offset the Triangle to center of gravity (and circle)
+	float ayt=ay+sideLength/4*cos(D2R(bearing));
 	// Calculate the triangle's vertices
-	int x0 = ax + sideLength * cos(radians);
-	int y0 = ay + sideLength * sin(radians);
-	int x1 = ax + sideLength/2 * cos(radians + 2 * M_PI / 3);
-	int y1 = ay + sideLength/2 * sin(radians + 2 * M_PI / 3);
-	int x2 = ax + sideLength/2 * cos(radians - 2 * M_PI / 3);
-	int y2 = ay + sideLength/2 * sin(radians - 2 * M_PI / 3);
+	int x0 = axt + sideLength * cos(radians);   // arrow head
+	int y0 = ayt + sideLength * sin(radians);
+	int x1 = axt + sideLength/2 * cos(radians + 2 * M_PI / 3);  // base left
+	int y1 = ayt + sideLength/2 * sin(radians + 2 * M_PI / 3);
+	int x2 = axt + sideLength/2 * cos(radians - 2 * M_PI / 3);  // base right
+	int y2 = ayt + sideLength/2 * sin(radians - 2 * M_PI / 3);
 	egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
-	if( closest )
-		egl->drawCircle( ax,ay, sideLength );
+	if( closest ){
+		egl->drawCircle( ax,ay, int( sideLength*0.75 ) );
+	}
 	if( !erase ){
 		// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%.1f, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
 		old_x = ax;
@@ -117,18 +144,15 @@ void Target::draw( bool closest ){
 		drawFlarmTarget( old_x, old_y, old_track, old_size, true, old_closest );
 	}
 	if( age < 30 ){
-		int highlight = 0;
-		if( closest )
-			highlight = 0;
+		int brightness=int(255.0 - 255.0 * std::min(1.0, (age/30.0)) ); // fade out with growing age
 		if( (dist < 1.0) && sameAlt() ){
-			egl->setColor( 255, highlight, highlight );
+			egl->setColor( brightness, 0, 0 );
 		}
 		else{
-			egl->setColor( highlight, 255, highlight );
+			egl->setColor( 0, brightness, 0 );
 		}
 		if( x > 0 && x < 320 && y > 0 && y < 172 ){
-			// ESP_LOGI(FNAME,"drawFlarmTarget() draw %06X: N/y:%d E/x:%d", pflaa.ID, x,y );
-			ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );
+			// ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );
 			drawFlarmTarget( x, y, rel_target_heading, size, false, closest );
 		}
 	}

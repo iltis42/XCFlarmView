@@ -34,28 +34,14 @@ TargetManager::~TargetManager() {
 	// TODO Auto-generated destructor stub
 }
 
-void TargetManager::drawAirplane( int x, int y, bool fromBehind, bool smallSize ){
+void TargetManager::drawAirplane( int x, int y ){
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setColor( 255, 255, 255 );
-	if( fromBehind ){
-		egl->drawTetragon( x-30,y-2, x-30,y+2, x+30,y+2, x+30,y-2 );
-		egl->drawTetragon( x-2,y-2, x-2,y-10, x+2,y-10, x+2,y-2 );
-		egl->drawTetragon( x-8,y-12, x-8,y-16, x+8,y-16, x+8,y-12 );
-		egl->drawDisc( x,y, 4, UCG_DRAW_ALL );
-	}else{
-		if( smallSize ){
-			egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
-			egl->drawTetragon( x-1,y+10, x-1,y-3, x+1,y-3, x+1,y+10 ); // fuselage
-			egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
-
-		}else{
-			egl->drawTetragon( x-30,y-2, x-30,y+2, x+30,y+2, x+30,y-2 );  // wings
-			egl->drawTetragon( x-2,y+25, x-2,y-10, x+2,y-10, x+2,y+25 ); // fuselage
-			egl->drawTetragon( x-8,y+25, x-8,y+21, x+8,y+21, x+8,y+25 ); // elevator
-		}
-	}
+	egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
+	egl->drawTetragon( x-1,y+10, x-1,y-6, x+1,y-6, x+1,y+10 ); // fuselage
+	egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
 	egl->setColor( 0, 255, 0 ); // green
-	egl->drawCircle( x,y, 40 );
+	egl->drawCircle( x,y, 25 );
 }
 
 void TargetManager::tick(){
@@ -66,6 +52,7 @@ void TargetManager::tick(){
 		it->second->ageTarget();
 		if( it->second->getAge() > 35 ){
 			ESP_LOGI(FNAME,"ID %06X, ERASE from ageout", it->second->getID() );
+			it->second->draw(true);
 			delete it->second;
 			targets.erase( it++ );
 		}else{

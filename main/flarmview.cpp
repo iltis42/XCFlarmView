@@ -98,10 +98,6 @@ extern "C" void app_main(void)
     egl->clearScreen();
     egl->setRedBlueTwist( true );
 
-    egl->setColor( 0, 255, 0 ); // green
-    egl->drawCircle( 160,86, 40 );
-    drawAirplane( 160,86 );
-
     Buzzer::init(2700);
     Flarm::begin();
     Serial::begin();

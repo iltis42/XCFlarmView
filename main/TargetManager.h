@@ -18,7 +18,7 @@ public:
 	virtual ~TargetManager();
 	static void receiveTarget( nmea_pflaa_s &target );
 	static void tick();
-	static void drawAirplane( int x, int y, bool fromBehind=false, bool smallSize=false );
+	static void drawAirplane( int x, int y );
 private:
 	static std::map< unsigned int, Target *> targets;
 
