@@ -31,6 +31,7 @@ typedef struct _ucg_color_t
 
 typedef enum _e_font_mode { UCG_FONT_MODE_TRANSPARENT, UCG_FONT_MODE_SOLID } e_font_mode;
 
+#define COLOR_WHITE 255,255,255
 
 typedef enum _fonts_enum {
 	UCG_FONT_9x15B_MF,

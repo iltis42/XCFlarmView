@@ -5,6 +5,8 @@
  *      Author: iltis
  */
 
+#include <driver/gpio.h>
+
 #ifndef MAIN_SWITCH_H_
 #define MAIN_SWITCH_H_
 

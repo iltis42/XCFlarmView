@@ -20,8 +20,12 @@
 #include "Flarm.h"
 #include "driver/ledc.h"
 #include "Buzzer.h"
+#include "OTA.h"
+#include "Version.h"
+
 
 AdaptUGC *egl = 0;
+OTA *ota = 0;
 
 void drawAirplane( int x, int y, bool fromBehind=false, bool smallSize=false ){
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
@@ -97,8 +101,21 @@ extern "C" void app_main(void)
     egl->begin();
     egl->clearScreen();
     egl->setRedBlueTwist( true );
-
     Buzzer::init(2700);
+    Buzzer::play2( BUZZ_C, 500,70, BUZZ_C, 1000, 0, 1 );
+
+    Version V;
+    for(int i=0; i<30; i++){
+    	if( Switch::isClosed() ){
+    		ota = new OTA();
+    		ota->doSoftwareUpdate();
+    		while(1){
+    			delay(100);
+    		}
+    	}
+    	delay( 100 );
+    }
+
     Flarm::begin();
     Serial::begin();
 
