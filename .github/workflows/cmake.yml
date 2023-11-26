@@ -31,7 +31,7 @@ jobs:
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
 
       run:  touch $PWD/main/Version.h;
-            docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.4.5 idf.py build;
+            docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.4 idf.py build;
             mkdir -p artifacts;
             cp $PWD/build/sensor.bin $PWD/artifacts/sensor-${{ env.FILE_VERSION }}.bin;
             cp $PWD/build/sensor.elf $PWD/artifacts/sensor-${{ env.FILE_VERSION }}.elf;
