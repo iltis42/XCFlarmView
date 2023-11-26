@@ -10,7 +10,7 @@
 #include "esp_netif_types.h"
 
 
-
+extern char* wifi_password;
 
 /* FreeRTOS event group to signal when we are connected*/
 EventGroupHandle_t wifi_event_group;
@@ -186,7 +186,7 @@ void init_wifi_softap(void *arg)
 	// configure the wifi connection and start the interface
 	wifi_config_t ap_config;
 	strcpy( (char *)(ap_config.ap.ssid), "ESP32 OTA" );
-	strcpy( (char*)ap_config.ap.password, "xcvario-21" );
+	strcpy( (char*)ap_config.ap.password, wifi_password );
 	ap_config.ap.ssid_len = 0;
 	uint32_t channel = esp_random()%11;
 	ap_config.ap.channel = channel;

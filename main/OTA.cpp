@@ -29,8 +29,8 @@ OTA::OTA(){
 	tick = 0;
 }
 
-const char* ssid = "ESP32 OTA";
-const char* pwd = "xcvario-21";
+const char* ssid = "ESP32-OTA";
+const char* wifi_password = "esp32-ota";
 
 void OTA::writeText( int line, const char *text ){
 	egl->setFont(ucg_font_ncenR14_hr);
@@ -47,7 +47,10 @@ void OTA::doSoftwareUpdate( ){
 	delay(100);
 	// egl->clearScreen();
 	int line=1;
+	char text[80];
 	writeText(line++,"ESP32 OTA: http://192.168.4.1");
+	// sprintf(text, "                  PW: %s", wifi_password );
+	// writeText(line++,text );
 
 	enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW; // Error correction level
 	// ESP_LOGI(FNAME, "Generate QRCODE");
@@ -58,16 +61,16 @@ void OTA::doSoftwareUpdate( ){
 	uint8_t *tempBuffer = (uint8_t *)malloc(qrcodegen_BUFFER_LEN_FOR_VERSION(4));
 	uint8_t *qrcodeBuffer = (uint8_t *)malloc(qrcodegen_BUFFER_LEN_FOR_VERSION(4));
 
-	snprintf(textBuffer, textBufferSize, "WIFI:S:%s;T:WPA;P:%s;;", ssid, pwd);
+	snprintf(textBuffer, textBufferSize, "WIFI:S:%s;T:WPA;P:%s;;", ssid, wifi_password);
 	bool qrSuccess = qrcodegen_encodeText(textBuffer, tempBuffer, qrcodeBuffer, errCorLvl, 4, 4, qrcodegen_Mask_AUTO, true);
 
 	size_t qrCodeMaxWidth = 114;
 	size_t yOffset = 70;
 	size_t xOffset = 0;
 
-	const char *wifiText = "WIFI:";
-	size_t strWidth = egl->getStrWidth(wifiText);
-	egl->setPrintPos((120 - strWidth) / 2, 68);
+	const char *wifiText = "WIFI: esp32-ota";
+	size_t strWidth = egl->getStrWidth(text);
+	egl->setPrintPos(10, 68);
     egl->print(wifiText);
 
 	if( qrSuccess ) {

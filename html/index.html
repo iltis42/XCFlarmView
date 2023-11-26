@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>XCVario</title>
+    <title>XCFlarmDisplay</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link rel="stylesheet" href="milligram.min.css" />
 
@@ -273,7 +273,7 @@
     <main class="wrapper">
         <nav class="navigation">
             <section class="container">
-                <h1 class="title">XCVario Management</h1>
+                <h1 class="title">XCFlarmDisplay Management</h1>
             </section>
         </nav>
         <section class="spacer" style="padding-bottom: 5.2rem;"></section>
@@ -425,8 +425,8 @@
                     else{
                         var blob = new Blob( [xhr.response], {type:"octet-stream"} );
                         const href = URL.createObjectURL(blob);
-                        var filename="xcvario-config-" + new Date().toJSON().slice(0,10) + ".csv";
-                        window.alert("Download XCVario Configuration, filename: " + filename ); 
+                        var filename="XCFlarmDisplay-config-" + new Date().toJSON().slice(0,10) + ".csv";
+                        window.alert("Download XCFlarmDisplay Configuration, filename: " + filename ); 
                         const a = Object.assign( document.createElement('a'),{href, style:"display:none", download:filename });
                         document.body.appendChild(a);
                         a.click();
@@ -505,8 +505,8 @@
                         // document.write( xhr.response );
                         var blob = new Blob( [xhr.response], {type:"octet-stream"} );
                         const href = URL.createObjectURL(blob);
-                        var filename="xcvario-core-" + new Date().toJSON().slice(0,10) + ".txt";
-                        window.alert("Download XCVario Core File, filename: " + filename ); 
+                        var filename="XCFlarmDisplay-core-" + new Date().toJSON().slice(0,10) + ".txt";
+                        window.alert("Download XCFlarmDisplay Core File, filename: " + filename ); 
                         const a = Object.assign( document.createElement('a'),{href, style:"display:none", download:filename });
                         document.body.appendChild(a);
                         a.click();
