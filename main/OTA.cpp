@@ -68,7 +68,8 @@ void OTA::doSoftwareUpdate( ){
 	size_t yOffset = 70;
 	size_t xOffset = 0;
 
-	const char *wifiText = "WIFI: esp32-ota";
+	char wifiText[50];
+	sprintf(wifiText,"WIFI: %s", wifi_password);
 	size_t strWidth = egl->getStrWidth(text);
 	egl->setPrintPos(10, 68);
     egl->print(wifiText);
