@@ -4,6 +4,7 @@
 #include <eglib/hal/four_wire_spi/esp32/esp32_ili9341.h>
 #include "logdef.h"
 #include "SetupNG.h"
+#include "Colors.h"
 
 #define HSPI 2
 
@@ -40,6 +41,16 @@ uint8_t PROGMEM ucg_font_profont22_mr[] = {  UCG_FONT_PROFONT22_MR };
 uint8_t PROGMEM ucg_font_fub25_hn[] = { UCG_FONT_FUB25_HN };
 uint8_t PROGMEM ucg_font_fub11_hn[] = { UCG_FONT_FUB11_HN };
 uint8_t PROGMEM eglib_font_free_sansbold_66[] = { EGLIB_FONT_FREE_SANSBOLD_66 };
+
+
+uint8_t g_col_background=0; // black
+uint8_t g_col_highlight=255;
+uint8_t g_col_header_r=101+g_col_background/5;
+uint8_t g_col_header_g=108+g_col_background/5;
+uint8_t g_col_header_b=g_col_highlight;
+uint8_t g_col_header_light_r=161-g_col_background/4;
+uint8_t g_col_header_light_g=168-g_col_background/3;
+uint8_t g_col_header_light_b=g_col_highlight;
 
 static ili9341_config_t ili9341_config = {
 		.width = 320,
@@ -137,6 +148,7 @@ void AdaptUGC::setFont(uint8_t *f, bool filled ){    // adapter
 };
 
 #define EGL_DISPLAY_TOPDOWN 1
+#define EGL_WHITE_ON_BLACK 1
 
 void  AdaptUGC::begin() {
 	eglib = &myeglib;
@@ -148,7 +160,29 @@ void  AdaptUGC::begin() {
 
 	ESP_LOGI(FNAME, "eglib_Send() &eglib:%x  hal-driv:%x config:%x\n", (unsigned int)eglib, (unsigned int)&esp32_ili9341, (unsigned int)&esp32_ili9341_config );
 	eglib_Init( &myeglib, &esp32_ili9341, &esp32_ili9341_config, &ili9341, &ili9341_config );
-	setClipRange( 0,0, 320, 320 );
+	setClipRange( 0,0, 320, 172 );
+
+	if ( EGL_WHITE_ON_BLACK ) {
+		g_col_background = 0;
+		g_col_highlight = 255;
+		g_col_header_r=179;
+		g_col_header_g=171;
+		g_col_header_b=164;
+		g_col_header_light_r=94;
+		g_col_header_light_g=87;
+		g_col_header_light_b=0;
+	}
+	else {
+		g_col_background = 0;
+		g_col_highlight = 255;
+		g_col_header_r=179;
+		g_col_header_g=171;
+		g_col_header_b=164;
+		g_col_header_light_r=161;
+		g_col_header_light_g=168;
+		g_col_header_light_b=255;
+	}
+
 };
 
 void AdaptUGC::advanceCursor( size_t delta ){

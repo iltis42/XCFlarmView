@@ -22,6 +22,7 @@
 #include "Buzzer.h"
 #include "OTA.h"
 #include "Version.h"
+#include "Colors.h"
 
 
 AdaptUGC *egl = 0;
@@ -105,8 +106,21 @@ extern "C" void app_main(void)
     Buzzer::play2( BUZZ_C, 500,70, BUZZ_C, 1000, 0, 1 );
 
     Version V;
+    std::string ver( "SW Ver.: " );
+    ver += V.version();
+    egl->setFont(ucg_font_fub20_hn);
+    egl->setPrintPos( 50, 35 );
+    egl->setColor(COLOR_WHITE);
+    egl->print("XVFlarmView 2.0");
+    egl->setPrintPos( 10, 80 );
+    egl->printf("%s",ver.c_str() );
+    egl->setFont(ucg_font_ncenR14_hr);
+    egl->setPrintPos( 10, 110 );
+    egl->printf("Press Button for SW-Update");
+
     for(int i=0; i<30; i++){
     	if( Switch::isClosed() ){
+    		egl->clearScreen();
     		ota = new OTA();
     		ota->doSoftwareUpdate();
     		while(1){
@@ -115,7 +129,7 @@ extern "C" void app_main(void)
     	}
     	delay( 100 );
     }
-
+    egl->clearScreen();
     Flarm::begin();
     Serial::begin();
 

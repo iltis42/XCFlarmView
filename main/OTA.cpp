@@ -22,6 +22,7 @@
 #include "Webserver.h"
 #include "qrcodegen.h"
 #include "AdaptUGC.h"
+#include "Colors.h"
 
 extern AdaptUGC *egl;
 

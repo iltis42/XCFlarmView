@@ -31,7 +31,6 @@ typedef struct _ucg_color_t
 
 typedef enum _e_font_mode { UCG_FONT_MODE_TRANSPARENT, UCG_FONT_MODE_SOLID } e_font_mode;
 
-#define COLOR_WHITE 255,255,255
 
 typedef enum _fonts_enum {
 	UCG_FONT_9x15B_MF,
@@ -131,7 +130,7 @@ public:
 	inline int16_t getFontDescent() { const struct font_t *font; font = eglib->drawing.font; return font->descent; };
 
 	// scrolling, clipping, clear
-	inline void clearScreen(){ eglib_ClearScreen( eglib ); };
+	inline void clearScreen(uint8_t r=0, uint8_t g=0, uint8_t b=0){ setColor(r,g,b); eglib_ClearScreen( eglib ); };
 	inline void scrollLines(int16_t lines) {  eglib_scrollScreen( eglib, lines ); };     	    // display driver function  tbd.
 	inline void scrollSetMargins( int16_t top, int16_t bottom ) { eglib_setScrollMargins( eglib, top, bottom ); };                 // display driver function
 	inline void setClipRange( int16_t x, int16_t y, int16_t w, int16_t h ) { eglib_setClipRange(eglib, x, y, w, h );};

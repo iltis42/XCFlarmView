@@ -1,8 +1,7 @@
-if [ $2 == "-e" ]; then
+if [[ $2 == "-e" ]]; then
 echo "Erasing Flash"
 esptool.py --chip esp32 -p /dev/ttyACM0 -b 460800 erase_flash
 fi
 
 echo "Flashing $1"
-esptool.py --chip esp32s2 -p /dev/ttyACM0 -b 460800 --before=default_reset --after=hard_reset write_flash --flash_mode dio --flash_freq 80m --flash_size 4MB 0x1000 bootloader/bootloader.bin 0x10000 xcflarmview.bin 0x8000 partition_table/partition-table.bin 0xd000 ota_data_initial.bin
-esptool.py v3.3.4-dev $1
+esptool.py --chip esp32s2 -p /dev/ttyACM0 -b 460800 --before=default_reset --after=hard_reset write_flash --flash_mode dio --flash_freq 80m --flash_size 4MB 0x1000 ./build/bootloader/bootloader.bin 0x10000 $1 0x8000 ./build/partition_table/partition-table.bin 0xd000 ./build/ota_data_initial.bin 
