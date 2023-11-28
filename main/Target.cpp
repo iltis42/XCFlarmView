@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <AdaptUGC.h>
 #include "vector.h"
+#include "flarmnetdata.h"
 
 extern AdaptUGC *egl;
 
@@ -31,7 +32,14 @@ void Target::drawInfo(bool erase){
 
 	egl->setFont( ucg_font_fub20_hf ); // big letters are a bit spacey
 	// Flarm ID right down
-	sprintf(s,"%06X ", pflaa.ID );
+	if( reg ){
+		if( comp )
+			sprintf(s,"  %s %s", reg, comp );
+		else
+			sprintf(s,"    %s", reg );
+	}else{
+		sprintf(s,"    %06X", pflaa.ID );
+	}
 	w=egl->getStrWidth(s);
 	egl->setPrintPos( 310-w, 170 );
 	egl->printf("%s",s);
@@ -169,6 +177,14 @@ Target::Target( nmea_pflaa_s a_pflaa ) {
 	prox=10000.0;
 	// ESP_LOGI(FNAME,"Target (ID %06X) Creation()", pflaa.ID );
 	recalc();
+	reg=0;
+	comp=0;
+	for( int i=0; i<(sizeof(flarmnet)/sizeof(flarmnet[0])); i++){
+		if( pflaa.ID == flarmnet[i].flarmID ){
+			reg=(char*)flarmnet[i].reg;
+			comp=(char*)flarmnet[i].comp;
+		}
+	}
 }
 
 void Target::update( nmea_pflaa_s a_pflaa ){

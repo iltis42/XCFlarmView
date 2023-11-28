@@ -39,6 +39,8 @@ private:
 	float rel_target_dir;
 	float dist, prox, old_track;
 	int x,y,old_x, old_y, old_size, old_closest;
+	char * reg;  // registration from flarmnet DB
+	char * comp; // competition ID
 	void recalc();
 };
 
