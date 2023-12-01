@@ -31,7 +31,7 @@ jobs:
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
 
       run:  touch $PWD/main/Version.h;
-            python $PWD/tools/fln2head.py >$PWD/main/flarmnetdata.h;   # update flarmnet
+            python $PWD/tools/fln2head.py >$PWD/main/flarmnetdata.h;   
             docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.4 idf.py build;
             mkdir -p artifacts;
             cp $PWD/build/xcflarmview.bin $PWD/artifacts/xcflarmview-${{ env.FILE_VERSION }}.bin;
