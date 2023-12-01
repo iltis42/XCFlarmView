@@ -23,6 +23,7 @@
 #include "OTA.h"
 #include "Version.h"
 #include "Colors.h"
+#include "flarmnetdata.h"
 
 
 AdaptUGC *egl = 0;
@@ -108,17 +109,24 @@ extern "C" void app_main(void)
     Version V;
     std::string ver( "SW Ver.: " );
     ver += V.version();
+
     egl->setFont(ucg_font_fub20_hn);
-    egl->setPrintPos( 50, 35 );
     egl->setColor(COLOR_WHITE);
+    egl->setPrintPos( 50, 35 );
     egl->print("XVFlarmView 2.0");
+
     egl->setPrintPos( 10, 80 );
     egl->printf("%s",ver.c_str() );
+
+    egl->setPrintPos( 10, 115 );
+    egl->printf("Flarmnet: %s", FLARMNET_VERSION );
+
     egl->setFont(ucg_font_ncenR14_hr);
-    egl->setPrintPos( 10, 110 );
+    egl->setPrintPos( 10, 150 );
     egl->printf("Press Button for SW-Update");
 
-    for(int i=0; i<30; i++){
+
+    for(int i=0; i<40; i++){
     	if( Switch::isClosed() ){
     		egl->clearScreen();
     		ota = new OTA();

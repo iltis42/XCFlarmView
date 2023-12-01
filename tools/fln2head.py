@@ -13,7 +13,7 @@ root = tree.getroot()
 
 
 print("#include \"flarmnet.h\"")
-print("#define FLARMNET_VERSION " + root.get('Version') )
+print("#define FLARMNET_VERSION \"" + root.get('Version') + "\"")
 print("t_flarmnet flarmnet[] = {")
 
 
