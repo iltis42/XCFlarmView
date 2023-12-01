@@ -11,7 +11,9 @@ open("iglide_dec.fln", "wb").write(response.content)
 tree = ET.parse("iglide_dec.fln")
 root = tree.getroot()
 
+
 print("#include \"flarmnet.h\"")
+print("#define FLARMNET_VERSION " + root.get('Version') )
 print("t_flarmnet flarmnet[] = {")
 
 
