@@ -154,7 +154,7 @@ void Target::draw( bool closest ){
 	if( age < 30 ){
 		int brightness=int(255.0 - 255.0 * std::min(1.0, (age/30.0)) ); // fade out with growing age
 		if( (dist < 1.0) && sameAlt() ){
-			egl->setColor( brightness, 0, 0 );
+			egl->setColor( brightness, 120, 120 );
 		}
 		else{
 			egl->setColor( 0, brightness, 0 );
