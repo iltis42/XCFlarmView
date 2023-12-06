@@ -134,11 +134,11 @@ void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, boo
 
 void Target::checkAlarm(){
 	if( pflaa.alarmLevel == 1 ){
-		Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 150, 0, 3 );
+		Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 150, 0, 1 );
 	}else if( pflaa.alarmLevel == 2 ){
-		Buzzer::play2( BUZZ_E, 100,100, BUZZ_E, 100, 0, 5 );
+		Buzzer::play2( BUZZ_E, 100,100, BUZZ_E, 100, 0, 2 );
 	}else if( pflaa.alarmLevel == 3 ){
-		Buzzer::play2( BUZZ_F, 70,100, BUZZ_F, 70, 0, 7 );
+		Buzzer::play2( BUZZ_F, 70,100, BUZZ_F, 70, 0, 4 );
 	}
 }
 

@@ -230,7 +230,8 @@ void Flarm::flarmSim(){
 			parseNMEA( str, strlen(str) );
 			ESP_LOGI(FNAME,"Serial FLARM SIM: %s",  str );
 		}
-		sim_tick++;
+		if( !(_tick%2) )
+			sim_tick++;
 	}else{
 		// sim_tick=0; // endless loop
 	}
