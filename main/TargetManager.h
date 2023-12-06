@@ -18,10 +18,11 @@ public:
 	virtual ~TargetManager();
 	static void receiveTarget( nmea_pflaa_s &target );
 	static void tick();
-	static void drawAirplane( int x, int y );
+	static void drawAirplane( int x, int y, float north=0.0 );
 private:
 	static std::map< unsigned int, Target> targets;
-
+	static float oldN;
+	static void drawN( int x, int y, bool erase, float north );
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */

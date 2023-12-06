@@ -228,8 +228,8 @@ int Flarm::getNMEACheckSum(const char *nmea) {
 	return cs;
 }
 
-// #define END_SIM NUM_PFLAA2_SIM
-#define END_SIM 150
+#define END_SIM NUM_PFLAA2_SIM
+// #define END_SIM 150
 
 void Flarm::flarmSim(){
 	// ESP_LOGI(FNAME,"flarmSim sim-tick: %d", sim_tick);
@@ -247,7 +247,7 @@ void Flarm::flarmSim(){
 		}
 		sim_tick++;
 	}else{
-		// sim_tick=0; // endless loop
+		sim_tick=0; // endless loop
 	}
 }
 

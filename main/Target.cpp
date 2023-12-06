@@ -157,16 +157,16 @@ void Target::draw( bool closest ){
 		if( (dist < 1.0) && sameAlt() ){
 			if( haveAlarm() ){
 				if( !(blink%2) )
-					egl->setColor( brightness, brightness, brightness );
+					egl->setColor( brightness, brightness, brightness ); // white
 				else
-					egl->setColor( brightness, 0, 0 );
+					egl->setColor( brightness, 0, 0 );  // red
 				blink++;
 			}else{
-				egl->setColor( brightness, brightness, brightness );
+				egl->setColor( brightness, brightness, brightness ); // white
 			}
 		}
 		else{
-			egl->setColor( 0, brightness, 0 );
+			egl->setColor( 0, brightness, 0 ); // green
 		}
 		if( x > 0 && x < 320 && y > 0 && y < 172 ){
 			// ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );

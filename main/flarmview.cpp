@@ -29,40 +29,6 @@
 AdaptUGC *egl = 0;
 OTA *ota = 0;
 
-void drawAirplane( int x, int y, bool fromBehind=false, bool smallSize=false ){
-	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
-	egl->setColor( 255, 255, 255 );
-	if( fromBehind ){
-		egl->drawTetragon( x-30,y-2, x-30,y+2, x+30,y+2, x+30,y-2 );
-		egl->drawTetragon( x-2,y-2, x-2,y-10, x+2,y-10, x+2,y-2 );
-		egl->drawTetragon( x-8,y-12, x-8,y-16, x+8,y-16, x+8,y-12 );
-		egl->drawDisc( x,y, 4, UCG_DRAW_ALL );
-	}else{
-		if( smallSize ){
-			egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
-			egl->drawTetragon( x-1,y+10, x-1,y-3, x+1,y-3, x+1,y+10 ); // fuselage
-			egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
-
-		}else{
-			egl->drawTetragon( x-30,y-2, x-30,y+2, x+30,y+2, x+30,y-2 );  // wings
-			egl->drawTetragon( x-2,y+25, x-2,y-10, x+2,y-10, x+2,y+25 ); // fuselage
-			egl->drawTetragon( x-8,y+25, x-8,y+21, x+8,y+21, x+8,y+25 ); // elevator
-		}
-	}
-}
-
-void drawFlarmTarget( int x, int y, float bearing, int sideLength ){
-	 float radians = (bearing-90.0) * M_PI / 180;
-	  // Calculate the triangle's vertices
-	  int x0 = x + sideLength * cos(radians);
-	  int y0 = y + sideLength * sin(radians);
-	  int x1 = x + sideLength/2 * cos(radians + 2 * M_PI / 3);
-	  int y1 = y + sideLength/2 * sin(radians + 2 * M_PI / 3);
-	  int x2 = x + sideLength/2 * cos(radians - 2 * M_PI / 3);
-	  int y2 = y + sideLength/2 * sin(radians - 2 * M_PI / 3);
-	  egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
-}
-
 extern "C" void app_main(void)
 {
     initArduino();
