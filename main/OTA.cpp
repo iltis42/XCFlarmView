@@ -49,28 +49,33 @@ void OTA::doSoftwareUpdate( ){
 	// egl->clearScreen();
 	int line=1;
 	char text[80];
-	writeText(line++,"ESP32 OTA: http://192.168.4.1");
+	writeText(line++, "Software Update" );
+	sprintf(text,    "WIFI SSID: %s", ssid);
+	writeText(line++, text );
+	sprintf(text,"WIFI Password : %s", wifi_password );
+	writeText(line++,text);
+	writeText(line++, "URL: http://192.168.4.1");
+
 	// sprintf(text, "                  PW: %s", wifi_password );
 	// writeText(line++,text );
 
-	enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW; // Error correction level
+	// enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW; // Error correction level
 	// ESP_LOGI(FNAME, "Generate QRCODE");
 
 	// Make and print the QR Code symbol
-	const size_t textBufferSize = 128;
-	char *textBuffer = (char *)malloc(textBufferSize);
-	uint8_t *tempBuffer = (uint8_t *)malloc(qrcodegen_BUFFER_LEN_FOR_VERSION(4));
-	uint8_t *qrcodeBuffer = (uint8_t *)malloc(qrcodegen_BUFFER_LEN_FOR_VERSION(4));
+	// const size_t textBufferSize = 128;
+	// char *textBuffer = (char *)malloc(textBufferSize);
+	// uint8_t *tempBuffer = (uint8_t *)malloc(qrcodegen_BUFFER_LEN_FOR_VERSION(4));
+	// uint8_t *qrcodeBuffer = (uint8_t *)malloc(qrcodegen_BUFFER_LEN_FOR_VERSION(4));
 
-	snprintf(textBuffer, textBufferSize, "WIFI:S:%s;T:WPA;P:%s;;", ssid, wifi_password);
-	bool qrSuccess = qrcodegen_encodeText(textBuffer, tempBuffer, qrcodeBuffer, errCorLvl, 4, 4, qrcodegen_Mask_AUTO, true);
-
+	// snprintf(textBuffer, textBufferSize, "WIFI:S:%s;T:WPA;P:%s;;", ssid, wifi_password);
+	// bool qrSuccess = qrcodegen_encodeText(textBuffer, tempBuffer, qrcodeBuffer, errCorLvl, 4, 4, qrcodegen_Mask_AUTO, true);
+/*
 	size_t qrCodeMaxWidth = 114;
 	size_t yOffset = 70;
 	size_t xOffset = 0;
 
-	char wifiText[50];
-	sprintf(wifiText,"WIFI: %s", wifi_password);
+
 	size_t strWidth = egl->getStrWidth(text);
 	egl->setPrintPos(10, 68);
     egl->print(wifiText);
@@ -131,6 +136,7 @@ void OTA::doSoftwareUpdate( ){
 	free(textBuffer);
 	free(qrcodeBuffer);
 	free(tempBuffer);
+	*/
 
     Webserver.start();
 
