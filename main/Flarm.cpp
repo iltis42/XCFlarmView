@@ -30,22 +30,10 @@ extern xSemaphoreHandle spiMutex;
 #define TASK_PERIOD 250  // ms
 #define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
 
-// Option to simulate FLARM sentences
-const char *flarm[] = {
-		"$PFLAU,3,1,2,1,1,-60,2,-100,355,1234*\n",
-		"$PFLAU,3,1,2,1,1,-20,2,-100,255,1234*\n",
-		"$PFLAU,3,1,2,1,1,-10,2,-80,175,1234*\n",
-		"$PFLAU,3,1,2,1,2,10,2,-40,150,1234*\n",
-		"$PFLAU,3,1,2,1,2,20,2,-20,130,1234*\n",
-		"$PFLAU,3,1,2,1,3,30,2,0,120,1234*\n",
-		"$PFLAU,3,1,2,1,3,60,2,20,125,1234*\n",
-		"$PFLAU,3,1,2,1,2,80,2,40,160,1234*\n",
-		"$PFLAU,3,1,2,1,1,90,2,80,210,1234*\n",
-		"$PFLAU,3,1,2,1,1,90,2,80,280,1234*\n"
-};
-#define NUM_SIM_DATASETS 10
-int Flarm::sim_tick=NUM_SIM_DATASETS*2;
+// #define END_SIM NUM_PFLAA2_SIM
+#define END_SIM 200
 
+int Flarm::sim_tick=0;
 
 void Flarm::begin(){
 	xTaskCreatePinnedToCore(&taskFlarm, "taskFlarm", 4096, NULL, 14, &pid, 0);
@@ -228,9 +216,6 @@ int Flarm::getNMEACheckSum(const char *nmea) {
 	return cs;
 }
 
-#define END_SIM NUM_PFLAA2_SIM
-// #define END_SIM 150
-
 void Flarm::flarmSim(){
 	// ESP_LOGI(FNAME,"flarmSim sim-tick: %d", sim_tick);
 	if( flarm_sim ){
@@ -247,7 +232,7 @@ void Flarm::flarmSim(){
 		}
 		sim_tick++;
 	}else{
-		sim_tick=0; // endless loop
+		// sim_tick=0; // endless loop
 	}
 }
 
@@ -432,9 +417,6 @@ F = static object
  */
 
 void Flarm::parsePFLAU( const char *pflau, bool sim_data ) {
-	if( !sim_data && (sim_tick < NUM_SIM_DATASETS*2) ){
-		return;  // drop FLARM data during simulation
-	}
 	// ESP_LOGI(FNAME,"parsePFLAU");
 	int cs;
 	int id;
