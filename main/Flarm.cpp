@@ -228,6 +228,8 @@ int Flarm::getNMEACheckSum(const char *nmea) {
 	return cs;
 }
 
+// #define END_SIM NUM_PFLAA2_SIM
+#define END_SIM 150
 
 void Flarm::flarmSim(){
 	// ESP_LOGI(FNAME,"flarmSim sim-tick: %d", sim_tick);
@@ -235,7 +237,7 @@ void Flarm::flarmSim(){
 		sim_tick=0;
 		flarm_sim=false;
 	}
-	if( sim_tick < NUM_PFLAA2_SIM  ){
+	if( sim_tick < END_SIM  ){
 		if( sim_tick >= 0 ){
 			// int cs = calcNMEACheckSum( (char *)pflaa2[sim_tick] );
 			char str[80];
@@ -245,7 +247,7 @@ void Flarm::flarmSim(){
 		}
 		sim_tick++;
 	}else{
-		sim_tick=0; // endless loop
+		// sim_tick=0; // endless loop
 	}
 }
 
