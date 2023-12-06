@@ -18,6 +18,29 @@ Target::Target() {
 	ESP_LOGI(FNAME,"Target DAFAULT constructor");
 }
 
+Target::Target( nmea_pflaa_s a_pflaa ) {
+	pflaa = a_pflaa;
+	old_x=-1000;
+	old_y=-1000;
+	old_closest=false;
+	old_track = 0;
+	_buzzedHoldDown = 0;
+	dist=10000.0;
+	prox=10000.0;
+	// ESP_LOGI(FNAME,"Target (ID %06X) Creation()", pflaa.ID );
+	recalc();
+	reg=0;
+	comp=0;
+	is_nearest=false;
+	for( int i=0; i<(sizeof(flarmnet)/sizeof(flarmnet[0])); i++){
+		if( pflaa.ID == flarmnet[i].flarmID ){
+			reg=(char*)flarmnet[i].reg;
+			comp=(char*)flarmnet[i].comp;
+		}
+	}
+}
+
+
 void Target::drawInfo(bool erase){
 	char s[32];
 	int w=0;
@@ -175,26 +198,6 @@ void Target::draw( bool closest ){
 	}
 }
 
-Target::Target( nmea_pflaa_s a_pflaa ) {
-	pflaa = a_pflaa;
-	old_x=-1000;
-	old_y=-1000;
-	old_closest=false;
-	old_track = 0;
-	_buzzedHoldDown = 0;
-	dist=10000.0;
-	prox=10000.0;
-	// ESP_LOGI(FNAME,"Target (ID %06X) Creation()", pflaa.ID );
-	recalc();
-	reg=0;
-	comp=0;
-	for( int i=0; i<(sizeof(flarmnet)/sizeof(flarmnet[0])); i++){
-		if( pflaa.ID == flarmnet[i].flarmID ){
-			reg=(char*)flarmnet[i].reg;
-			comp=(char*)flarmnet[i].comp;
-		}
-	}
-}
 
 void Target::update( nmea_pflaa_s a_pflaa ){
 	pflaa = a_pflaa;

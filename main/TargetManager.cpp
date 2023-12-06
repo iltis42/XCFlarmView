@@ -79,6 +79,9 @@ void TargetManager::tick(){
 			if( (it->second.getProximity() < min_dist)  ){
 				min_dist = it->second.getDist();
 				min_id = it->first;
+				it->second.nearest(true);
+			}else{
+				it->second.nearest(false);
 			}
 			++it;
 		}
