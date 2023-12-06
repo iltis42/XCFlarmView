@@ -20,7 +20,7 @@ public:
 	static void tick();
 	static void drawAirplane( int x, int y );
 private:
-	static std::map< unsigned int, Target *> targets;
+	static std::map< unsigned int, Target> targets;
 
 };
 

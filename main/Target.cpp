@@ -142,6 +142,7 @@ void Target::checkAlarm(){
 	}
 }
 
+int blink = 0;
 
 void Target::draw( bool closest ){
 	checkAlarm();
@@ -154,7 +155,15 @@ void Target::draw( bool closest ){
 	if( age < 30 ){
 		int brightness=int(255.0 - 255.0 * std::min(1.0, (age/30.0)) ); // fade out with growing age
 		if( (dist < 1.0) && sameAlt() ){
-			egl->setColor( brightness, 120, 120 );
+			if( haveAlarm() ){
+				if( !(blink%2) )
+					egl->setColor( brightness, brightness, brightness );
+				else
+					egl->setColor( brightness, 0, 0 );
+				blink++;
+			}else{
+				egl->setColor( brightness, brightness, brightness );
+			}
 		}
 		else{
 			egl->setColor( 0, brightness, 0 );

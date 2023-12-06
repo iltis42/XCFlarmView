@@ -10,7 +10,7 @@
 #include "Flarm.h"
 #include "Buzzer.h"
 
-std::map< unsigned int, Target*> TargetManager::targets;
+std::map< unsigned int, Target> TargetManager::targets;
 extern AdaptUGC *egl;
 
 TargetManager::TargetManager() {
@@ -22,11 +22,11 @@ void TargetManager::receiveTarget( nmea_pflaa_s &pflaa ){
 
     // ESP_LOGI(FNAME,"ID %06X (dec) %d ", pflaa.ID, pflaa.ID );
     if( targets.find(pflaa.ID) == targets.end() ){
-    	targets[ pflaa.ID ] = new Target ( pflaa );
+    	targets[ pflaa.ID ] = Target ( pflaa );
     }
     else
-    	targets[ pflaa.ID ]->update( pflaa );
-    targets[ pflaa.ID ]->dumpInfo();
+    	targets[ pflaa.ID ].update( pflaa );
+    targets[ pflaa.ID ].dumpInfo();
 
 }
 
@@ -49,37 +49,35 @@ void TargetManager::tick(){
 	unsigned int min_id = 0;
 	drawAirplane( 160,86 );
 	for (auto it=targets.begin(); it!=targets.end(); ){
-		it->second->ageTarget();
-		if( it->second->getAge() > 35 ){
-			ESP_LOGI(FNAME,"ID %06X, ERASE from ageout", it->second->getID() );
-			it->second->draw(true);
-			delete it->second;
+		it->second.ageTarget();
+		if( it->second.getAge() > 35 ){
+			ESP_LOGI(FNAME,"ID %06X, ERASE from ageout", it->second.getID() );
+			it->second.draw(true);
 			targets.erase( it++ );
 		}else{
-			if( (it->second->getProximity() < min_dist)  ){
-				min_dist = it->second->getDist();
+			if( (it->second.getProximity() < min_dist)  ){
+				min_dist = it->second.getDist();
 				min_id = it->first;
 			}
 			++it;
 		}
-		//		ESP_LOGI(FNAME,"ID %06X, AGE: %d ", it->first, it->second->getAge() );
+		//		ESP_LOGI(FNAME,"ID %06X, AGE: %d ", it->first, it->second.getAge() );
 	}
 	for (auto it=targets.begin(); it!=targets.end(); it++ ){
-		if( it->second->getAge() < 30 ){
-			if( it->first == min_id || it->second->haveAlarm() ){
-				it->second->draw(true);
-				// it->second->dumpInfo();
-				it->second->drawInfo();
+		if( it->second.getAge() < 30 ){
+			if( it->first == min_id || it->second.haveAlarm() ){
+				it->second.draw(true);
+				it->second.drawInfo();
 			}
 			else{
-				// it->second->dumpInfo();
-				it->second->draw();
+				it->second.draw();
 			}
-			it->second->checkClose();
+			// it->second.dumpInfo();
+			it->second.checkClose();
 		}else{
 			if( it->first == min_id ){
-				it->second->drawInfo(true);
-				it->second->draw(true);
+				it->second.drawInfo(true);
+				it->second.draw(true);
 			}
 		}
 	}

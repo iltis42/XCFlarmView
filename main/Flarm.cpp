@@ -2,7 +2,7 @@
 #include "logdef.h"
 #include "Colors.h"
 #include "math.h"
-#include "pflaa3.h"
+#include "pflaa2.h"
 #include "TargetManager.h"
 #include <iostream>
 #include <sstream>
@@ -27,7 +27,7 @@ e_audio_alarm_type_t Flarm::alarm = AUDIO_ALARM_OFF;
 
 extern xSemaphoreHandle spiMutex;
 
-#define TASK_PERIOD 500  // ms
+#define TASK_PERIOD 250  // ms
 #define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
 
 // Option to simulate FLARM sentences
@@ -244,6 +244,8 @@ void Flarm::flarmSim(){
 			ESP_LOGI(FNAME,"Serial FLARM SIM: %s",  str );
 		}
 		sim_tick++;
+	}else{
+		sim_tick=0; // endless loop
 	}
 }
 
