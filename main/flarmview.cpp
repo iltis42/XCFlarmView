@@ -60,8 +60,6 @@ extern "C" void app_main(void)
 
     printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
 
-    // begin(unsigned long baud, uint32_t config=SERIAL_8N1, int8_t rxPin=-1, int8_t txPin=-1)
-
     delay(100);
     //  serial1_speed.set( 1 );  // test for autoBaud
 
@@ -91,7 +89,6 @@ extern "C" void app_main(void)
     egl->setPrintPos( 10, 150 );
     egl->printf("Press Button for SW-Update");
 
-
     for(int i=0; i<40; i++){
     	if( Switch::isClosed() ){
     		egl->clearScreen();
@@ -104,22 +101,28 @@ extern "C" void app_main(void)
     	delay( 100 );
     }
     egl->clearScreen();
+    egl->setColor(COLOR_WHITE);
+   	egl->setPrintPos( 10, 35 );
+    egl->printf("Press Button for a Demo");
+    for(int i=0; i<20; i++){
+       	if( Switch::isClosed() ){
+       		Flarm::startSim();
+       	    egl->setPrintPos( 10, 80 );
+       		egl->printf("Button pressed, Demo starts");
+       		delay( 2000 );
+       		break;
+       	}
+    	delay( 100 );
+    }
+    egl->clearScreen();
     Flarm::begin();
     Serial::begin();
 
     Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 1000, 0, 1 );
 
     if( Serial::selfTest() )
-    	printf("Self TEST OK");
+    	printf("Serial Loop Test OK");
     else
-    	printf("Self TEST Failed");
-/*
-    while( 1 ){
-    	delay(100);
-    }
+    	printf("Self Loop Test Failed");
 
-    printf("Restarting now.\n");
-    fflush(stdout);
-    esp_restart();
-    */
 }

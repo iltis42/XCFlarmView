@@ -30,8 +30,8 @@ extern xSemaphoreHandle spiMutex;
 #define TASK_PERIOD 250  // ms
 #define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
 
-// #define END_SIM NUM_PFLAA2_SIM
-#define END_SIM 200
+#define END_SIM NUM_PFLAA2_SIM
+// #define END_SIM 200
 
 int Flarm::sim_tick=0;
 
@@ -218,10 +218,6 @@ int Flarm::getNMEACheckSum(const char *nmea) {
 
 void Flarm::flarmSim(){
 	// ESP_LOGI(FNAME,"flarmSim sim-tick: %d", sim_tick);
-	if( flarm_sim ){
-		sim_tick=0;
-		flarm_sim=false;
-	}
 	if( sim_tick < END_SIM  ){
 		if( sim_tick >= 0 ){
 			// int cs = calcNMEACheckSum( (char *)pflaa2[sim_tick] );
@@ -233,7 +229,7 @@ void Flarm::flarmSim(){
 		if( !(_tick%2) )
 			sim_tick++;
 	}else{
-		// sim_tick=0; // endless loop
+		flarm_sim=false; // end sim mode
 	}
 }
 
@@ -243,8 +239,10 @@ void Flarm::progress(){  // once per second
 		timeout--;
 	}
 	// ESP_LOGI(FNAME,"progress, timeout=%d", timeout );
-	flarmSim();
-	flarmSim();
+	if( flarm_sim ){
+		flarmSim();
+		flarmSim();
+	}
 }
 
 
