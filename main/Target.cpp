@@ -64,38 +64,38 @@ void Target::drawInfo(bool erase){
 		sprintf(s,"    %06X", pflaa.ID );
 	}
 	w=egl->getStrWidth(s);
-	egl->setPrintPos( 310-w, 170 );
+	egl->setPrintPos( 310-w, 165 );
 	egl->printf("%s",s);
 
 	egl->setFont( ucg_font_fub25_hf );
 	// Distance left up
-	sprintf(s,"%.2f ", dist );
+	sprintf(s,"%.2f  ", dist );
 	w=egl->getStrWidth(s);
-	egl->setPrintPos( 310-w, 35 );
+	egl->setPrintPos( 310-w, 30 );
 	egl->printf(s,"%.2f  ", dist );
 
 	// relative vertical
-	egl->setPrintPos( 5, 170 );
+	egl->setPrintPos( 5, 165 );
 	if( pflaa.relVertical > 0 )
-		egl->printf("+%d   ", pflaa.relVertical );
+		egl->printf("+%d    ", pflaa.relVertical );
 	else
-		egl->printf("%d   ", pflaa.relVertical );
-	egl->setPrintPos( 5, 35 );
+		egl->printf("%d    ", pflaa.relVertical );
+	egl->setPrintPos( 5, 30 );
 
 	// climb rate
 	if( pflaa.climbRate > 0 )
-		sprintf(s,"+%.1f ", pflaa.climbRate);
+		sprintf(s,"+%.1f  ", pflaa.climbRate);
 	else
-		sprintf(s," %.1f ", pflaa.climbRate);
+		sprintf(s," %.1f  ", pflaa.climbRate);
 	egl->printf("%s", s);
 
 	// Units
 	if( !erase )
 		egl->setColor( 0, 0, 255 );
 	egl->setFont( ucg_font_fub14_hf );
-	egl->setPrintPos( 255, 55 );
+	egl->setPrintPos( 255, 50 );
 	egl->print(" km");
-	egl->setPrintPos( 5, 55 );
+	egl->setPrintPos( 5, 50 );
 	egl->print("  m/s");
 	egl->setPrintPos( 25, 135 );
 	egl->print("m ");
