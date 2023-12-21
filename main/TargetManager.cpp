@@ -14,7 +14,7 @@
 
 std::map< unsigned int, Target> TargetManager::targets;
 extern AdaptUGC *egl;
-float TargetManager::oldN = 0.0;
+float TargetManager::oldN = -1.0;
 int TargetManager::old_TX = -1;
 int TargetManager::old_GPS = -1;
 
@@ -41,27 +41,27 @@ TargetManager::~TargetManager() {
 
 void TargetManager::drawN( int x, int y, bool erase, float north ){
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
-	if(erase)
-		egl->setColor(COLOR_BLACK);
-	else
-		egl->setColor(0,0,255); // G=0 R=Max B=0
 	egl->setFontPosCenter();
 	egl->setPrintPos( x-25*sin(D2R(north))-5, y+25*cos(D2R(north))+6 );
 	egl->setFont(ucg_font_ncenR14_hr);
-	egl->printf("N");
+	if(erase)
+		egl->setColor(COLOR_BLACK);
+	else
+		egl->setColor(COLOR_GREEN);
+	egl->print("N");
 	oldN = north;
 }
 
 void TargetManager::drawAirplane( int x, int y, float north ){
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
-	egl->setColor( 255, 255, 255 );
+	egl->setColor( COLOR_WHITE );
 	egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
 	egl->drawTetragon( x-1,y+10, x-1,y-6, x+1,y-6, x+1,y+10 ); // fuselage
 	egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
-	egl->setColor( 0, 255, 0 ); // green
+	egl->setColor(COLOR_GREEN);
 	egl->drawCircle( x,y, 25 );
 	if( north != oldN ){
-		if( oldN != 0.0 )
+		if( oldN != -1.0 )
 			drawN( x,y, true, oldN );
 		drawN( x,y, false, north );
 	}
@@ -69,9 +69,9 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 
 void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
 	if( inactive == 0 ){
-		egl->setColor(0,255,0); // G=0 R=255 B=0  RED Color
+		egl->setColor(COLOR_RED); // G=0 R=255 B=0  RED Color
 	}else{
-		egl->setColor(0,0,0);
+		egl->setColor(COLOR_BLACK);
 	}
 	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos( x, y );

@@ -14,7 +14,6 @@
 #define SPI_SCLK       GPIO_NUM_6      // SPI Clock pin
 #define SPI_MOSI       GPIO_NUM_7      // SPI SDO Master Out Slave In pin
 #define RESET_Display  GPIO_NUM_8      // Reset pin for Display
-
 #define SPI_MISO       GPIO_NUM_10     // dummy, not applicable to ER-TFT1.47
 
 static eglib_t myeglib;
@@ -43,19 +42,11 @@ uint8_t PROGMEM ucg_font_fub11_hn[] = { UCG_FONT_FUB11_HN };
 uint8_t PROGMEM eglib_font_free_sansbold_66[] = { EGLIB_FONT_FREE_SANSBOLD_66 };
 
 
-uint8_t g_col_background=0; // black
-uint8_t g_col_highlight=255;
-uint8_t g_col_header_r=101+g_col_background/5;
-uint8_t g_col_header_g=108+g_col_background/5;
-uint8_t g_col_header_b=g_col_highlight;
-uint8_t g_col_header_light_r=161-g_col_background/4;
-uint8_t g_col_header_light_g=168-g_col_background/3;
-uint8_t g_col_header_light_b=g_col_highlight;
 
 static ili9341_config_t ili9341_config = {
 		.width = 320,
 		.height = 320,
-		.color = ILI9341_COLOR_16_BIT,
+		.color = ILI9341_COLOR_18_BIT,
 		.page_address = ILI9341_PAGE_ADDRESS_BOTTOM_TO_TOP,
 		.colum_address = ILI9341_COLUMN_ADDRESS_LEFT_TO_RIGHT,
 		.page_column_order = ILI9341_PAGE_COLUMN_ORDER_REVERSE,
@@ -161,27 +152,6 @@ void  AdaptUGC::begin() {
 	ESP_LOGI(FNAME, "eglib_Send() &eglib:%x  hal-driv:%x config:%x\n", (unsigned int)eglib, (unsigned int)&esp32_ili9341, (unsigned int)&esp32_ili9341_config );
 	eglib_Init( &myeglib, &esp32_ili9341, &esp32_ili9341_config, &ili9341, &ili9341_config );
 	setClipRange( 0,0, 320, 172 );
-
-	if ( EGL_WHITE_ON_BLACK ) {
-		g_col_background = 0;
-		g_col_highlight = 255;
-		g_col_header_r=179;
-		g_col_header_g=171;
-		g_col_header_b=164;
-		g_col_header_light_r=94;
-		g_col_header_light_g=87;
-		g_col_header_light_b=0;
-	}
-	else {
-		g_col_background = 0;
-		g_col_highlight = 255;
-		g_col_header_r=179;
-		g_col_header_g=171;
-		g_col_header_b=164;
-		g_col_header_light_r=161;
-		g_col_header_light_g=168;
-		g_col_header_light_b=255;
-	}
 
 };
 

@@ -65,6 +65,7 @@ void eglib_SetIndexColor(
   eglib->drawing.color_index[idx].r = r;
   eglib->drawing.color_index[idx].g = g;
   eglib->drawing.color_index[idx].b = b;
+  // ESP_LOGI("eglib_SetIndexColor","R:%d G:%d B:%d", eglib->drawing.color_index[0].r, eglib->drawing.color_index[0].g, eglib->drawing.color_index[0].b );
 }
 
 //
@@ -1200,6 +1201,8 @@ struct font_t {
 void eglib_DrawGlyph(eglib_t *eglib, coordinate_t x, coordinate_t y, const struct glyph_t *glyph) {
 	if(glyph == NULL)
 		return;
+
+	// ESP_LOGI("eglib_DrawGlyph", "eglib_DrawGlyph color: R:%d G:%d B:%d", eglib->drawing.color_index[0].r, eglib->drawing.color_index[0].g, eglib->drawing.color_index[0].b );
 	uint8_t *buffer;
 	int ascent = eglib->drawing.font->ascent;
 	int descent = eglib->drawing.font->descent;
@@ -1226,7 +1229,7 @@ void eglib_DrawGlyph(eglib_t *eglib, coordinate_t x, coordinate_t y, const struc
 	int lenx = 0;
 	int leny = 0;
 
-	buffer = malloc( height*width*2 );
+	buffer = malloc( height*width*3 );
 	int y1 = 0;
 	if( eglib->drawing.filled_mode == false ){
 		y1 =  height/8;   // WA as fonts bounding boxes to high over the top
@@ -1254,7 +1257,7 @@ void eglib_DrawGlyph(eglib_t *eglib, coordinate_t x, coordinate_t y, const struc
 						// line[u] = 'X';
 					}
 				}
-				pos3 +=2;
+				pos3 +=3;
 			}
 		}
 		// line[width] = 0;

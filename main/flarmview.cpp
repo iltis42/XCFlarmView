@@ -65,8 +65,8 @@ extern "C" void app_main(void)
 
     egl = new AdaptUGC();
     egl->begin();
+    // egl->setRedBlueTwist( true );
     egl->clearScreen();
-    egl->setRedBlueTwist( true );
     Buzzer::init(2700);
     Buzzer::play2( BUZZ_C, 500,70, BUZZ_C, 1000, 0, 1 );
 

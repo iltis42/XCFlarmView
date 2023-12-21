@@ -92,14 +92,10 @@ public:
 	inline void undoClipRange() { eglib_undoClipRange(eglib);};
 	// color
 	inline void setColor( uint8_t idx, uint8_t r, uint8_t g, uint8_t b ) {
-		twistRB?
-			eglib_SetIndexColor(eglib, idx, invertDisp?~b:b, invertDisp?~g:g, invertDisp?~r:r):
-			eglib_SetIndexColor(eglib, idx, invertDisp?~r:r, invertDisp?~g:g, invertDisp?~b:b);
+		eglib_SetIndexColor(eglib, idx, r, g, b);
 	}
 	inline void setColor( uint8_t r, uint8_t g, uint8_t b ) {
-		twistRB?
-			eglib_SetIndexColor(eglib, 0, invertDisp?~b:b, invertDisp?~g:g, invertDisp?~r:r):
-			eglib_SetIndexColor(eglib, 0, invertDisp?~r:r, invertDisp?~g:g, invertDisp?~b:b);
+		eglib_SetIndexColor(eglib, 0, r, g, b);
 	}	
 	// graphics
 	inline void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1)  { eglib_DrawLine(eglib, x0, y0, x1, y1); }
