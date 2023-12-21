@@ -91,6 +91,8 @@ public:
 	static void begin();
 	static void taskFlarm(void *pvParameters);
 	static void startSim() { flarm_sim = true; };
+	static inline int getTXBit() { return TX; };
+	static inline int getGPSBit() { return GPS; };
 
 private:
 	static int calcNMEACheckSum(const char *nmea);
@@ -121,6 +123,7 @@ private:
 	static e_audio_alarm_type_t alarm;
 	static TaskHandle_t pid;
 	static bool flarm_sim;
+	static int pflau_timeout;
 };
 
 #endif

@@ -15,6 +15,8 @@
 std::map< unsigned int, Target> TargetManager::targets;
 extern AdaptUGC *egl;
 float TargetManager::oldN = 0.0;
+int TargetManager::old_TX = -1;
+int TargetManager::old_GPS = -1;
 
 TargetManager::TargetManager() {
 	// TODO Auto-generated constructor stub
@@ -65,9 +67,33 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 	}
 }
 
+void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
+	if( inactive == 0 ){
+		egl->setColor(0,255,0); // G=0 R=255 B=0  RED Color
+	}else{
+		egl->setColor(0,0,0);
+	}
+	egl->setFont(ucg_font_ncenR14_hr);
+	egl->setPrintPos( x, y );
+	egl->printf( alarm );
+}
+
+
 void TargetManager::tick(){
 	float min_dist = 10000;
 	unsigned int min_id = 0;
+	int tx=Flarm::getTXBit();  // 0 or 1
+	if( old_TX != tx){
+		ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
+		printAlarm( "TX", 10, 90, tx );
+		old_TX = tx;
+	}
+	int gps=Flarm::getGPSBit();
+	if( old_GPS != gps ){  // 0,1 or 2
+			ESP_LOGI(FNAME,"GPS changed, old: %d, new: %d", old_GPS, gps );
+			printAlarm( "GPS", 10, 110, gps );
+			old_GPS = gps;
+	}
 	drawAirplane( 160,86, Flarm::getGndCourse() );
 	for (auto it=targets.begin(); it!=targets.end(); ){
 		it->second.ageTarget();

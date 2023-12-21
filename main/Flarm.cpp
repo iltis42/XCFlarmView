@@ -7,9 +7,14 @@
 #include <iostream>
 #include <sstream>
 
+#define TASK_PERIOD 250  // ms
+
+#define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
+#define PFLAU_TIMEOUT (10* (1000/TASK_PERIOD))
+
 int Flarm::RX = 0;
-int Flarm::TX = 0;
-int Flarm::GPS = 0;
+int Flarm::TX = 1;
+int Flarm::GPS = 1;
 int Flarm::Power = 0;
 int Flarm::AlarmLevel = 0;
 int Flarm::RelativeBearing = 0;
@@ -21,14 +26,12 @@ float Flarm::gndCourse = 0;
 bool Flarm::myGPS_OK = false;
 char Flarm::ID[20] = "";
 int Flarm::bincom = 0;
+int Flarm::pflau_timeout = PFLAU_TIMEOUT;
 TaskHandle_t Flarm::pid = 0;
 AdaptUGC* Flarm::ucg;
 e_audio_alarm_type_t Flarm::alarm = AUDIO_ALARM_OFF;
 
 extern xSemaphoreHandle spiMutex;
-
-#define TASK_PERIOD 250  // ms
-#define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
 
 #define END_SIM NUM_PFLAA2_SIM
 // #define END_SIM 200
@@ -234,7 +237,7 @@ void Flarm::flarmSim(){
 }
 
 
-void Flarm::progress(){  // once per second
+void Flarm::progress(){  //  per second
 	if( timeout ){
 		timeout--;
 	}
@@ -242,6 +245,14 @@ void Flarm::progress(){  // once per second
 	if( flarm_sim ){
 		flarmSim();
 		flarmSim();
+	}else{  // no PFLAU in flarm Simulation
+		if( pflau_timeout ){
+			pflau_timeout--;
+			if( pflau_timeout == 0 ){
+				TX = 0;
+				GPS = 0;
+			}
+		}
 	}
 }
 
@@ -394,9 +405,20 @@ void Flarm::parsePFLAE( const char *pflae ) {
 		The most dangerous of these aircraft is at 11 o’clock, position 32m below and 755m away. It is a level 2 alarm
 
 
+<TX>
+Decimal integer value. Range: from 0 to 1.
+Transmission status: 1 for OK and 0 for no transmission
+
+<GPS>
+Decimal integer value. Range: from 0 to 2.
+GPS status:
+0 = no GPS reception
+1 = 3d-fix on ground, i.e. not airborne
+2 = 3d-fix when airborne
+If <GPS> goes to 0, FLARM will not work. Nevertheless,
+wait for some seconds to issue any warnings
 
 <AcftType>
-
 0 = unknown
 1 = glider / motor glider
 2 = tow / tug plane
@@ -430,6 +452,7 @@ void Flarm::parsePFLAU( const char *pflau, bool sim_data ) {
 	sprintf( ID,"%06x", id );
 	_tick=0;
 	timeout = FLARM_TIMEOUT;
+	pflau_timeout = PFLAU_TIMEOUT;
 }
 
 void Flarm::parsePFLAX( const char *msg, int port ) {

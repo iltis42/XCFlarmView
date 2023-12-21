@@ -23,6 +23,9 @@ private:
 	static std::map< unsigned int, Target> targets;
 	static float oldN;
 	static void drawN( int x, int y, bool erase, float north );
+	static void printAlarm( const char*alarm, int x, int y, int inactive );
+	static int old_TX;
+	static int old_GPS;
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */
