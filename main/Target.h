@@ -24,11 +24,12 @@ public:
 	inline float getProximity() { return prox; };
 	void dumpInfo();
 	void drawInfo(bool erase=false);
-	void draw( bool closest=false );
+	void draw();
 	void checkClose();
 	inline bool haveAlarm(){ return pflaa.alarmLevel != 0; };
 	inline bool sameAlt( uint tolerance=150 ) { return( abs( pflaa.relVertical )< tolerance ); };
 	inline void nearest( bool n ) { is_nearest=n; };
+	inline bool isNearest() { return is_nearest; };
 
 private:
 	void checkAlarm();

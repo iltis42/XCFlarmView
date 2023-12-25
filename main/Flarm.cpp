@@ -227,7 +227,7 @@ void Flarm::flarmSim(){
 			char str[80];
 			sprintf( str, "%s", pflaa2[sim_tick] );
 			parseNMEA( str, strlen(str) );
-			ESP_LOGI(FNAME,"Serial FLARM SIM: %s",  str );
+			// ESP_LOGI(FNAME,"Serial FLARM SIM: %s",  str );
 		}
 		if( !(_tick%2) )
 			sim_tick++;
@@ -258,7 +258,7 @@ void Flarm::progress(){  //  per second
 
 
 void Flarm::parseNMEA( const char *str, int len ){
-	ESP_LOGI(FNAME,"parseNMEA: %s, len: %d", str,  strlen(str) );
+	// ESP_LOGI(FNAME,"parseNMEA: %s, len: %d", str,  strlen(str) );
 
 	if( !strncmp( str+1, "PFLAE,", 5 )) {  // On Task declaration or re-connect
 		parsePFLAE( str );

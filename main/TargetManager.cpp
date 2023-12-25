@@ -11,12 +11,31 @@
 #include "Buzzer.h"
 #include "Colors.h"
 #include "vector.h"
+#include "Switch.h"
 
 std::map< unsigned int, Target> TargetManager::targets;
+std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.end();
 extern AdaptUGC *egl;
-float TargetManager::oldN = -1.0;
-int TargetManager::old_TX = -1;
-int TargetManager::old_GPS = -1;
+float TargetManager::oldN   = -1.0;
+int TargetManager::old_TX   = -1;
+int TargetManager::old_GPS  = -1;
+int TargetManager::id_timer =  0;
+int TargetManager::_tick =  0;
+int TargetManager::holddown =  0;
+TaskHandle_t TargetManager::pid = 0;
+
+#define TASK_PERIOD 100
+
+void TargetManager::begin(){
+	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 13, &pid, 0);
+}
+
+void TargetManager::taskTargetMgr(void *pvParameters){
+	while(1){
+		tick();
+		delay(TASK_PERIOD);
+	}
+}
 
 TargetManager::TargetManager() {
 	// TODO Auto-generated constructor stub
@@ -25,13 +44,13 @@ TargetManager::TargetManager() {
 
 void TargetManager::receiveTarget( nmea_pflaa_s &pflaa ){
 
-    // ESP_LOGI(FNAME,"ID %06X (dec) %d ", pflaa.ID, pflaa.ID );
-    if( targets.find(pflaa.ID) == targets.end() ){
-    	targets[ pflaa.ID ] = Target ( pflaa );
-    }
-    else
-    	targets[ pflaa.ID ].update( pflaa );
-    targets[ pflaa.ID ].dumpInfo();
+	// ESP_LOGI(FNAME,"ID %06X (dec) %d ", pflaa.ID, pflaa.ID );
+	if( targets.find(pflaa.ID) == targets.end() ){
+		targets[ pflaa.ID ] = Target ( pflaa );
+	}
+	else
+		targets[ pflaa.ID ].update( pflaa );
+	targets[ pflaa.ID ].dumpInfo();
 
 }
 
@@ -78,56 +97,101 @@ void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
 	egl->printf( alarm );
 }
 
+void TargetManager::nextTarget(){
+	ESP_LOGI(FNAME,"nextTarget size:%d", targets.size() );
+	if( ++id_iter == targets.end() )
+		id_iter = targets.begin();
+	if( id_iter != targets.end() )
+		ESP_LOGI( FNAME, "next target: %06X", id_iter->first );
+}
 
 void TargetManager::tick(){
 	float min_dist = 10000;
 	unsigned int min_id = 0;
+	_tick++;
+	if( holddown )
+		holddown--;
 	int tx=Flarm::getTXBit();  // 0 or 1
-	if( old_TX != tx){
-		ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
-		printAlarm( "TX", 10, 90, tx );
-		old_TX = tx;
+	if( !holddown && Switch::isClosed() ){
+		ESP_LOGI(FNAME,"SW closed");
+		id_timer = 10 * (1000/TASK_PERIOD);
+		nextTarget();
+		holddown=5;
+	}else{
+		if( id_timer )
+			id_timer --;
 	}
-	int gps=Flarm::getGPSBit();
-	if( old_GPS != gps ){  // 0,1 or 2
+	if( !(_tick%5) ){
+		if( old_TX != tx){
+			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
+			printAlarm( "TX", 10, 90, tx );
+			old_TX = tx;
+		}
+		int gps=Flarm::getGPSBit();
+		if( old_GPS != gps ){  // 0,1 or 2
 			ESP_LOGI(FNAME,"GPS changed, old: %d, new: %d", old_GPS, gps );
 			printAlarm( "GPS", 10, 110, gps );
 			old_GPS = gps;
-	}
-	drawAirplane( 160,86, Flarm::getGndCourse() );
-	for (auto it=targets.begin(); it!=targets.end(); ){
-		it->second.ageTarget();
-		if( it->second.getAge() > 35 ){
-			ESP_LOGI(FNAME,"ID %06X, ERASE from ageout", it->second.getID() );
-			it->second.draw(true);
-			targets.erase( it++ );
-		}else{
-			if( (it->second.getProximity() < min_dist)  ){
-				min_dist = it->second.getDist();
-				min_id = it->first;
+		}
+		drawAirplane( 160,86, Flarm::getGndCourse() );
+
+
+		for (auto it=targets.begin(); it!=targets.end(); ){
+			it->second.ageTarget();
+			it->second.nearest(false);
+			if( it->second.getAge() > 35 ){
+				ESP_LOGI(FNAME,"ID %06X, ERASE from ageout", it->first );
+				it->second.draw();
+				if( id_iter->first == it->first ){
+					id_iter++;
+				}
+				targets.erase( it++ );
+			}else{
+				if( it->second.haveAlarm() )
+					id_timer=0;
+				if( !id_timer ){
+					if( (it->second.getProximity() < min_dist)  ){
+						min_dist = it->second.getDist();
+						min_id = it->first;
+						it->second.nearest(true);
+					}else{
+						it->second.nearest(false);
+					}
+				}else{
+					if( id_iter != targets.end() && it->first == id_iter->first ){
+						it->second.nearest(true);
+					}else{
+						it->second.nearest(false);
+					}
+				}
+				++it;
+			}
+			//		ESP_LOGI(FNAME,"ID %06X, AGE: %d ", it->first, it->second.getAge() );
+		}
+		for (auto it=targets.begin(); it!=targets.end(); it++ ){
+			if( !id_timer )
+			{	if( it->first == min_id ){
 				it->second.nearest(true);
 			}else{
 				it->second.nearest(false);
 			}
-			++it;
-		}
-		//		ESP_LOGI(FNAME,"ID %06X, AGE: %d ", it->first, it->second.getAge() );
-	}
-	for (auto it=targets.begin(); it!=targets.end(); it++ ){
-		if( it->second.getAge() < 30 ){
-			if( it->first == min_id || it->second.haveAlarm() ){
-				it->second.draw(true);
-				it->second.drawInfo();
 			}
-			else{
-				it->second.draw();
-			}
-			// it->second.dumpInfo();
-			it->second.checkClose();
-		}else{
-			if( it->first == min_id ){
-				it->second.drawInfo(true);
-				it->second.draw(true);
+
+			if( it->second.getAge() < 30 ){
+				if( it->second.isNearest() || it->second.haveAlarm() ){
+					it->second.draw();  // closest == true
+					it->second.drawInfo();
+				}
+				else{
+					it->second.draw();
+				}
+				// it->second.dumpInfo();
+				it->second.checkClose();
+			}else{
+				if( it->second.isNearest() ){   // why only nearest here ?
+					it->second.drawInfo(true); // erase == true
+					it->second.draw();     // age/erase
+				}
 			}
 		}
 	}

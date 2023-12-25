@@ -24,6 +24,7 @@
 #include "Version.h"
 #include "Colors.h"
 #include "flarmnetdata.h"
+#include "TargetManager.h"
 
 
 AdaptUGC *egl = 0;
@@ -117,6 +118,7 @@ extern "C" void app_main(void)
     egl->clearScreen();
     Flarm::begin();
     Serial::begin();
+    TargetManager::begin();
 
     Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 1000, 0, 1 );
 

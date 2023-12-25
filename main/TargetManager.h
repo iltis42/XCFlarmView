@@ -19,13 +19,21 @@ public:
 	static void receiveTarget( nmea_pflaa_s &target );
 	static void tick();
 	static void drawAirplane( int x, int y, float north=0.0 );
+	static void begin();
 private:
 	static std::map< unsigned int, Target> targets;
+	static std::map< unsigned int, Target>::iterator id_iter;
 	static float oldN;
 	static void drawN( int x, int y, bool erase, float north );
 	static void printAlarm( const char*alarm, int x, int y, int inactive );
+	static void nextTarget();
+	static void taskTargetMgr(void *pvParameters);
 	static int old_TX;
 	static int old_GPS;
+	static int id_timer;
+	static int _tick;
+	static int holddown;
+	static TaskHandle_t pid;
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */

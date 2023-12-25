@@ -130,7 +130,8 @@ void Serial::parse_NMEA( char c ){
 				pos++;
 				framebuffer[pos] = 0;  // framebuffer is zero terminated
 				// pos++;
-				Flarm::parseNMEA( framebuffer, pos );
+				if( !Flarm::getSim() )
+					Flarm::parseNMEA( framebuffer, pos );
 				state = GET_NMEA_SYNC;
 				pos = 0;
 			}else{
@@ -175,8 +176,8 @@ void Serial::serialHandler(void *pvParameters)
 		// ESP_LOGI(FNAME,"S1 RX, len=%d", length );
 		if( length ){
 			uint16_t rxBytes = uart_read_bytes( uart_num, (uint8_t*)buf, length, 512);  // read out all characters from the RX queue
-			ESP_LOGI(FNAME,"S1: RX: read %d bytes, avail were: %d bytes", rxBytes, length );
-			ESP_LOG_BUFFER_HEXDUMP(FNAME,buf, rxBytes, ESP_LOG_INFO);
+			// ESP_LOGI(FNAME,"S1: RX: read %d bytes, avail were: %d bytes", rxBytes, length );
+			// ESP_LOG_BUFFER_HEXDUMP(FNAME,buf, rxBytes, ESP_LOG_INFO);
 			buf[rxBytes] = 0;
 			process( buf, rxBytes );
 		}

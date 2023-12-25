@@ -91,6 +91,7 @@ public:
 	static void begin();
 	static void taskFlarm(void *pvParameters);
 	static void startSim() { flarm_sim = true; };
+	static inline bool getSim() { return flarm_sim; };
 	static inline int getTXBit() { return TX; };
 	static inline int getGPSBit() { return GPS; };
 

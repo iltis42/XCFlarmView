@@ -58,11 +58,11 @@ void Target::drawInfo(bool erase){
 	// Flarm ID right down
 	if( reg ){
 		if( comp )
-			sprintf(s,"  %s %s", reg, comp );
+			sprintf(s,"   %s %s", reg, comp );
 		else
-			sprintf(s,"    %s", reg );
+			sprintf(s,"      %s", reg );
 	}else{
-		sprintf(s,"    %06X", pflaa.ID );
+		sprintf(s,"      %06X", pflaa.ID );
 	}
 	w=egl->getStrWidth(s);
 	egl->setPrintPos( 310-w, 165 );
@@ -158,17 +158,17 @@ void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, boo
 
 void Target::checkAlarm(){
 	if( pflaa.alarmLevel == 1 ){
-		Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 150, 0, 1 );
+		Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 150, 0, 2 );
 	}else if( pflaa.alarmLevel == 2 ){
-		Buzzer::play2( BUZZ_E, 100,100, BUZZ_E, 100, 0, 2 );
+		Buzzer::play2( BUZZ_E, 100,100, BUZZ_E, 100, 0, 3 );
 	}else if( pflaa.alarmLevel == 3 ){
-		Buzzer::play2( BUZZ_F, 70,100, BUZZ_F, 70, 0, 4 );
+		Buzzer::play2( BUZZ_F, 70,100, BUZZ_F, 70, 0, 5 );
 	}
 }
 
 int blink = 0;
 
-void Target::draw( bool closest ){
+void Target::draw(){
 	checkAlarm();
 	int size = std::min( 30.0, std::min( 80.0, 10.0+10.0/dist )  );
 	if( old_x != -1000 && x != -1000 ){
@@ -194,7 +194,7 @@ void Target::draw( bool closest ){
 		}
 		if( x > 0 && x < 320 && y > 0 && y < 172 ){
 			// ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );
-			drawFlarmTarget( x, y, rel_target_heading, size, false, closest );
+			drawFlarmTarget( x, y, rel_target_heading, size, false, is_nearest );
 		}
 	}
 }
@@ -214,7 +214,7 @@ void Target::ageTarget(){
 }
 
 void Target::dumpInfo(){
-	ESP_LOGI(FNAME,"Target (ID %06X) age:%d alt:%d m, dis:%.2lf km, var:%.1f m/s, trck:%d", pflaa.ID, age, pflaa.relVertical, dist, pflaa.climbRate, pflaa.track );
+	// ESP_LOGI(FNAME,"Target (ID %06X) age:%d alt:%d m, dis:%.2lf km, var:%.1f m/s, trck:%d", pflaa.ID, age, pflaa.relVertical, dist, pflaa.climbRate, pflaa.track );
 }
 
 Target::~Target() {
