@@ -14,7 +14,7 @@
 #include "Switch.h"
 
 std::map< unsigned int, Target> TargetManager::targets;
-std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.end();
+std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.begin();
 extern AdaptUGC *egl;
 float TargetManager::oldN   = -1.0;
 int TargetManager::old_TX   = -1;
@@ -23,6 +23,8 @@ int TargetManager::id_timer =  0;
 int TargetManager::_tick =  0;
 int TargetManager::holddown =  0;
 TaskHandle_t TargetManager::pid = 0;
+unsigned int TargetManager::min_id = 0;
+
 
 #define TASK_PERIOD 100
 
@@ -97,25 +99,31 @@ void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
 	egl->printf( alarm );
 }
 
-void TargetManager::nextTarget(){
+void TargetManager::nextTarget(int timer){
 	ESP_LOGI(FNAME,"nextTarget size:%d", targets.size() );
 	if( ++id_iter == targets.end() )
 		id_iter = targets.begin();
+	if( (timer == 0) && (id_iter != targets.end()) ){ // move away on first call from closest (displayed per default)
+		if( id_iter->first == min_id ){
+			if( ++id_iter == targets.end() )
+				id_iter = targets.begin();
+		}
+	}
 	if( id_iter != targets.end() )
 		ESP_LOGI( FNAME, "next target: %06X", id_iter->first );
 }
 
+
 void TargetManager::tick(){
 	float min_dist = 10000;
-	unsigned int min_id = 0;
 	_tick++;
 	if( holddown )
 		holddown--;
 	int tx=Flarm::getTXBit();  // 0 or 1
 	if( !holddown && Switch::isClosed() ){
 		ESP_LOGI(FNAME,"SW closed");
+		nextTarget( id_timer );
 		id_timer = 10 * (1000/TASK_PERIOD);
-		nextTarget();
 		holddown=5;
 	}else{
 		if( id_timer )

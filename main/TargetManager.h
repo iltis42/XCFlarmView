@@ -26,7 +26,7 @@ private:
 	static float oldN;
 	static void drawN( int x, int y, bool erase, float north );
 	static void printAlarm( const char*alarm, int x, int y, int inactive );
-	static void nextTarget();
+	static void nextTarget(int timer);
 	static void taskTargetMgr(void *pvParameters);
 	static int old_TX;
 	static int old_GPS;
@@ -34,6 +34,7 @@ private:
 	static int _tick;
 	static int holddown;
 	static TaskHandle_t pid;
+	static unsigned int min_id;
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */
