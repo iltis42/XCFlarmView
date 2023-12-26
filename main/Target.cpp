@@ -123,7 +123,7 @@ void Target::recalc(){
 	float f=1.0;
 	if( dist*SCALE < 30 ){
 		float d = dist*SCALE < 1.0 ? 1.0 : dist;
-		f=40/(d*SCALE);
+		f=1/d;
 	}
 	x=160+(dist*f*SCALE)*sin(D2R(rel_target_dir));
 	y=86-(dist*f*SCALE)*cos(D2R(rel_target_dir));
