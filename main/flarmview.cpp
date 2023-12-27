@@ -25,10 +25,27 @@
 #include "Colors.h"
 #include "flarmnetdata.h"
 #include "TargetManager.h"
-
+#include "Switch.h"
 
 AdaptUGC *egl = 0;
 OTA *ota = 0;
+
+
+class Test: public SwitchObserver
+{
+public:
+	Test(const char* name) : SwitchObserver() {
+		ESP_LOGI(FNAME,"attach me %s", name );
+		Switch::attach(this);
+	};
+	~Test() {};
+	void longPress() { ESP_LOGI(FNAME,"LONGPRESS"); };
+	void press() { ESP_LOGI(FNAME,"PRESS");};
+	void doubleClick() {  ESP_LOGI(FNAME,"DPCLICK"); };
+	void release() {  ESP_LOGI(FNAME,"RELEASE"); };
+};
+
+
 
 extern "C" void app_main(void)
 {
@@ -89,7 +106,7 @@ extern "C" void app_main(void)
     egl->setFont(ucg_font_ncenR14_hr);
     egl->setPrintPos( 10, 150 );
     egl->printf("Press Button for SW-Update");
-
+    Switch::begin(GPIO_NUM_0);
     for(int i=0; i<40; i++){
     	if( Switch::isClosed() ){
     		egl->clearScreen();
@@ -119,12 +136,19 @@ extern "C" void app_main(void)
     Flarm::begin();
     Serial::begin();
     TargetManager::begin();
+    Switch::startTask();
 
     Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 1000, 0, 1 );
+
+    Test t("myfirst");
 
     if( Serial::selfTest() )
     	printf("Serial Loop Test OK");
     else
     	printf("Self Loop Test Failed");
+
+    while(1){
+    	delay(1000);
+    }
 
 }

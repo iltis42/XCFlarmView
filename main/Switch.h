@@ -6,9 +6,14 @@
  */
 
 #include <driver/gpio.h>
+#include <list>
+
+#pragma once
 
 #ifndef MAIN_SWITCH_H_
 #define MAIN_SWITCH_H_
+
+class SwitchObserver;
 
 class Switch {
 public:
@@ -18,11 +23,41 @@ public:
 	static bool isClosed();
 	static bool isOpen();
 	static void tick();   // call al least every 100 mS
+    static void attach( SwitchObserver *obs);
+	static void detach( SwitchObserver *obs);
+    static void sendRelease();
+	static void sendPress();
+	static void sendLongPress();
+	static void sendDoubleClick();
+	static void startTask();
+
 private:
+	static void switchTask(void *pvParameters);
+	static std::list<SwitchObserver *> observers;
 	static gpio_num_t _sw;
 	static bool _closed;
 	static int _holddown;
 	static int _tick;
+	static int _closed_timer;
+	static int _long_timer;
+	static TaskHandle_t pid;
+	static int _click_timer;
+	static int _clicks;
 };
 
 #endif /* MAIN_SWITCH_H_ */
+
+
+class SwitchObserver{
+public:
+		SwitchObserver(){};
+        virtual void press() = 0;
+        virtual void release() = 0;
+        virtual void longPress() = 0;
+        virtual void doubleClick() = 0;
+        virtual ~SwitchObserver() {};
+        void attach( SwitchObserver *instance) { Switch::attach( instance ); }
+        void detach( SwitchObserver *instance) { Switch::detach( instance ); }
+        bool isClosed() {  return( Switch::isClosed() ); }
+private:
+};

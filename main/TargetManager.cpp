@@ -63,7 +63,7 @@ TargetManager::~TargetManager() {
 void TargetManager::drawN( int x, int y, bool erase, float north ){
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setFontPosCenter();
-	egl->setPrintPos( x-25*sin(D2R(north))-5, y+25*cos(D2R(north))+6 );
+	egl->setPrintPos( x-25*sin(D2R(north))-5, y-25*cos(D2R(north))+6 );
 	egl->setFont(ucg_font_ncenR14_hr);
 	if(erase)
 		egl->setColor(COLOR_BLACK);
@@ -101,16 +101,18 @@ void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
 
 void TargetManager::nextTarget(int timer){
 	ESP_LOGI(FNAME,"nextTarget size:%d", targets.size() );
-	if( ++id_iter == targets.end() )
-		id_iter = targets.begin();
-	if( (timer == 0) && (id_iter != targets.end()) ){ // move away on first call from closest (displayed per default)
-		if( id_iter->first == min_id ){
-			if( ++id_iter == targets.end() )
-				id_iter = targets.begin();
+	if( targets.size() ){
+		if( ++id_iter == targets.end() )
+			id_iter = targets.begin();
+		if( (timer == 0) && (id_iter != targets.end()) ){ // move away on first call from closest (displayed per default)
+			if( id_iter->first == min_id ){
+				if( ++id_iter == targets.end() )
+					id_iter = targets.begin();
+			}
 		}
+		if( id_iter != targets.end() )
+			ESP_LOGI( FNAME, "next target: %06X", id_iter->first );
 	}
-	if( id_iter != targets.end() )
-		ESP_LOGI( FNAME, "next target: %06X", id_iter->first );
 }
 
 

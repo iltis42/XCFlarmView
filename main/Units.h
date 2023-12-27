@@ -3,6 +3,8 @@
 
 #include "logdef.h"
 #include "SetupNG.h"
+#include <cmath>
+
 #pragma once
 
 class Units {
