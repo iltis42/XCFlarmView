@@ -100,7 +100,7 @@ void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
 }
 
 void TargetManager::nextTarget(int timer){
-	ESP_LOGI(FNAME,"nextTarget size:%d", targets.size() );
+	// ESP_LOGI(FNAME,"nextTarget size:%d", targets.size() );
 	if( targets.size() ){
 		if( ++id_iter == targets.end() )
 			id_iter = targets.begin();
@@ -123,7 +123,7 @@ void TargetManager::tick(){
 		holddown--;
 	int tx=Flarm::getTXBit();  // 0 or 1
 	if( !holddown && Switch::isClosed() ){
-		ESP_LOGI(FNAME,"SW closed");
+		// ESP_LOGI(FNAME,"SW closed");
 		nextTarget( id_timer );
 		id_timer = 10 * (1000/TASK_PERIOD);
 		holddown=5;

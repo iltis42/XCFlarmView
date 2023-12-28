@@ -15,6 +15,8 @@
 
 class SwitchObserver;
 
+typedef enum e_button_state { B_IDLE, B_PRESSED, B_ONCE_RELEASED, B_TWICE_CLOSED, B_LONG_PRESS } t_button_state;
+
 class Switch {
 public:
 	Switch( );
@@ -43,6 +45,9 @@ private:
 	static TaskHandle_t pid;
 	static int _click_timer;
 	static int _clicks;
+	static long int p_time;
+	static long int r_time;
+	static t_button_state _state;
 };
 
 #endif /* MAIN_SWITCH_H_ */

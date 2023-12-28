@@ -33,6 +33,9 @@ std::list<SwitchObserver *> Switch::observers;
 TaskHandle_t Switch::pid = 0;
 int Switch::_click_timer=0;
 int Switch::_clicks=0;
+t_button_state Switch::_state=B_IDLE;
+long int Switch::p_time = 0;
+long int Switch::r_time = 0;
 
 gpio_num_t Switch::_sw = GPIO_NUM_0;
 
@@ -45,18 +48,18 @@ Switch::~Switch() {
 }
 
 void Switch::attach(SwitchObserver *obs) {
-        // ESP_LOGI(FNAME,"Attach obs: %p", obs );
-        observers.push_back(obs);
+	// ESP_LOGI(FNAME,"Attach obs: %p", obs );
+	observers.push_back(obs);
 }
 
 void Switch::detach(SwitchObserver *obs) {
-        // ESP_LOGI(FNAME,"Detach obs: %p", obs );
+	// ESP_LOGI(FNAME,"Detach obs: %p", obs );
 	/*
         auto it = std::find(observers.begin(), observers.end(), obs);
         if ( it != observers.end() ) {
                 observers.erase(it);
         }
-        */
+	 */
 }
 
 
@@ -93,84 +96,98 @@ bool Switch::isOpen() {
 	return( !isClosed() );
 }
 
+
 void Switch::tick() {
 	_tick++;
-	if( _click_timer ){
-		_click_timer--;
-		if( _clicks == 2 ){
-			sendDoubleClick();
-			_clicks = 0;
-			_click_timer = 0;
+	// ESP_LOGI(FNAME,"tick %d", _tick );
+	switch( _state ) {
+	case B_IDLE:
+		// ESP_LOGI(FNAME,"time %ld IDLE", millis()  );
+		if( isClosed() ){
+			_state = B_PRESSED;
+			p_time = millis();
+			r_time = millis();
 		}
-	}else{
-		_clicks = 0;
-	}
-	// ESP_LOGI(FNAME,"tick %d", _tick);
-	if( _closed ) {   // state is switch closed
-		_closed_timer++;
-		_long_timer++;
-		// ESP_LOGI(FNAME,"closed: %d clicks: %d clicks_timer: %d", _closed_timer, _clicks, _click_timer );
-		if( _long_timer > 50 ){
-			sendLongPress();
-			_long_timer = 0;
-		}
-		if( !isClosed() ){
-			if( _holddown ){   // debouncing
-				_holddown--;
-			}else{
-				_closed = false;
-				_holddown=2;
-				if( _closed_timer < 50 ){
-					sendPress();  // we sent at quick release the press
-					_closed_timer = 0;
-				}
+		break;
+
+	case B_PRESSED:
+		// ESP_LOGI(FNAME,"time %ld PRESSED", millis()  );
+		if( isOpen() ){
+			if( (millis() - p_time ) > 350 ){
+				sendLongPress();
+				_state = B_IDLE;
+			}else if( (millis() - p_time ) > 50 ){
+				_state = B_ONCE_RELEASED;
+				r_time = millis();
+				// ESP_LOGI(FNAME,"->ONCE_RELEASED after %ld ms", millis() - p_time );
+			}
+			else{
+				_state = B_IDLE;
 			}
 		}
-	}
-	else {  // state is switch open
-		if( isClosed() ) {
-			if( _holddown ){   // debouncing
-				_holddown--;
-			}else{
-				_closed = true;
-				_closed_timer = 0;
-				_long_timer = 0;
-				_holddown = 2;
-				_clicks++;
-				_click_timer = 25;
+		break;
+
+	case B_ONCE_RELEASED:
+		// ESP_LOGI(FNAME,"time %ld ONCE_RELEASED", millis()  );
+		if( isClosed() ){
+			p_time = millis();
+			_state = B_TWICE_CLOSED;
+			// ESP_LOGI(FNAME,"->TWICE CLOSED after %ld ms", millis() - r_time );
+		}
+		else{ // remains open
+			int rdelta = millis() - r_time;
+			if(  rdelta > 150  ){ // timeout for DoubleClick, its a single click then
+				// ESP_LOGI(FNAME,"PRESS and ->IDLE after released %d ms", rdelta );
+				sendPress();
+				_state = B_IDLE;
 			}
 		}
+		break;
+
+	case B_TWICE_CLOSED:
+		// ESP_LOGI(FNAME,"time %ld TWICE_CLOSED", millis()  );
+		if( isOpen() ){
+			if( (millis() - p_time ) < 150 ){
+				sendDoubleClick();
+				_state = B_IDLE;
+			}else{
+				_state = B_IDLE;
+			}
+		}
+		break;
+	case B_LONG_PRESS:
+		break;
 	}
 }
 
 
 void Switch::sendRelease(){
-        ESP_LOGI(FNAME,"send release");
-        for (auto &observer : observers)
-                observer->release();
-        // ESP_LOGI(FNAME,"End switch release action");
+	ESP_LOGI(FNAME,"send release");
+	for (auto &observer : observers)
+		observer->release();
+	// ESP_LOGI(FNAME,"End switch release action");
 }
 
 void Switch::sendPress(){
-        ESP_LOGI(FNAME,"send press");
-        for (auto &observer : observers)
-                observer->press();
-        // ESP_LOGI(FNAME,"End pressed action");
+	ESP_LOGI(FNAME,"send press p: %ld  r: %ld", millis()-p_time, millis()-r_time );
+	for (auto &observer : observers)
+		observer->press();
+	// ESP_LOGI(FNAME,"End pressed action");
 
 }
 
 void Switch::sendLongPress(){
-        ESP_LOGI(FNAME,"send longPress");
-        for (auto &observer : observers)
-                observer->longPress();
-        // ESP_LOGI(FNAME,"End long pressed action");
+	ESP_LOGI(FNAME,"send longPress %ld", millis()-p_time );
+	for (auto &observer : observers)
+		observer->longPress();
+	// ESP_LOGI(FNAME,"End long pressed action");
 }
 
 void Switch::sendDoubleClick(){
-        ESP_LOGI(FNAME,"send doubleClick");
-        for (auto &observer : observers)
-                observer->doubleClick();
-        // ESP_LOGI(FNAME,"End long pressed action");
+	ESP_LOGI(FNAME,"send doubleClick p:%ld r:%ld", millis()-p_time, millis()-r_time );
+	for (auto &observer : observers)
+		observer->doubleClick();
+	// ESP_LOGI(FNAME,"End long pressed action");
 }
 
 

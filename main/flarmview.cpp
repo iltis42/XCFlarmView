@@ -121,6 +121,7 @@ extern "C" void app_main(void)
     egl->clearScreen();
     egl->setColor(COLOR_WHITE);
    	egl->setPrintPos( 10, 35 );
+
     egl->printf("Press Button for a Demo");
     for(int i=0; i<20; i++){
        	if( Switch::isClosed() ){
