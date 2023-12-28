@@ -7,6 +7,8 @@
 
 #include <driver/gpio.h>
 #include <list>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #pragma once
 

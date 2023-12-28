@@ -7,7 +7,7 @@
 
 
 #define COLOR_HEADER       90,90,120   // Azureish gray
-#define COLOR_HEADER_LIGHT 170,170,200  // Azureish ligher
+#define COLOR_HEADER_LIGHT 255,170,200  // Azureish ligher
 #define COLOR_WHITE  255,255,255
 #define COLOR_BLACK  0, 0, 0
 #define COLOR_GREEN  0, 255, 0   // B,G,R

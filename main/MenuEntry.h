@@ -45,8 +45,6 @@ public:
 	void clear();
 	void uprintf( int x, int y, const char* format, ...);
 	void uprint( int x, int y, const char* str );
-	void semaphoreTake();
-    void semaphoreGive();
     void restart();
     bool get_restart() { return _restart; };
     void addCreator( void (menu_create)(MenuEntry*ptr) ){ menu_create_ptr=menu_create; }
@@ -61,7 +59,6 @@ public:
 	int16_t    hypos;
 	void (*menu_create_ptr)(MenuEntry*);
 	uint8_t subtree_created;
-	static AdaptUGC *ucg;
 	static MenuEntry *root;
 	static MenuEntry *selected;
 	static bool _restart;

@@ -18,9 +18,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include "Colors.h"
+#include "AdaptUGC.h"
 
-
-AdaptUGC *MenuEntry::ucg = 0;
 MenuEntry* MenuEntry::root = 0;
 MenuEntry* MenuEntry::selected = 0;
 bool MenuEntry::_restart = false;
@@ -38,36 +37,32 @@ MenuEntry::~MenuEntry()
 }
 
 void MenuEntry::uprintf( int x, int y, const char* format, ...) {
-	if( ucg == 0 ) {
-		ESP_LOGE(FNAME,"Error UCG not initialized !");
+	if( egl == 0 ) {
+		ESP_LOGE(FNAME,"Error egl not initialized !");
 		return;
 	}
 	va_list argptr;
 	va_start(argptr, format);
-	xSemaphoreTake(spiMutex,portMAX_DELAY );
-	ucg->setPrintPos(x,y);
-	ucg->printf( format, argptr );
-	xSemaphoreGive(spiMutex );
+	egl->setPrintPos(x,y);
+	egl->printf( format, argptr );
 	va_end(argptr);
 }
 
 void MenuEntry::restart(){
 	clear();
-	ucg->setPrintPos( 10, 50 );
-	ucg->print("...rebooting now" );
+	egl->setPrintPos( 10, 50 );
+	egl->print("...rebooting now" );
 	delay(2000);
 	esp_restart();
 }
 
 void MenuEntry::uprint( int x, int y, const char* str ) {
-	if( ucg == 0 ) {
-		ESP_LOGE(FNAME,"Error UCG not initialized !");
+	if( egl == 0 ) {
+		ESP_LOGE(FNAME,"Error egl not initialized !");
 		return;
 	}
-	xSemaphoreTake(spiMutex,portMAX_DELAY );
-	ucg->setPrintPos(x,y);
-	ucg->print( str );
-	xSemaphoreGive(spiMutex );
+	egl->setPrintPos(x,y);
+	egl->print( str );
 }
 
 MenuEntry* MenuEntry::getFirst() const {
@@ -155,19 +150,17 @@ void MenuEntry::showhelp( int y ){
 		// ESP_LOGI(FNAME,"showhelp number of words: %d", w);
 		int x=1;
 		int y=hypos;
-		ucg->setFont(ucg_font_ncenR14_hr);
+		egl->setFont(ucg_font_ncenR14_hr);
 		for( int p=0; p<w; p++ )
 		{
-			int len = ucg->getStrWidth( words[p] );
+			int len = egl->getStrWidth( words[p] );
 			// ESP_LOGI(FNAME,"showhelp pix len word #%d = %d, %s ", p, len, words[p]);
-			if( x+len > 239 ) {   // does still fit on line
+			if( x+len > 319 ) {   // does still fit on line
 				y+=25;
 				x=1;
 			}
-			xSemaphoreTake(spiMutex,portMAX_DELAY );
-			ucg->setPrintPos(x, y);
-			ucg->print( words[p] );
-			xSemaphoreGive(spiMutex );
+			egl->setPrintPos(x, y);
+			egl->print( words[p] );
 			x+=len+5;
 		}
 		free( buf );
@@ -177,22 +170,11 @@ void MenuEntry::showhelp( int y ){
 void MenuEntry::clear()
 {
 	// ESP_LOGI(FNAME,"MenuEntry::clear");
-	xSemaphoreTake(spiMutex,portMAX_DELAY );
-	ucg->setColor(COLOR_BLACK);
-	ucg->drawBox( 0,0,240,320 );
-	// ucg->begin(UCG_FONT_MODE_SOLID);
-	ucg->setFont(ucg_font_ncenR14_hr);
-	ucg->setPrintPos( 1, 30 );
-	ucg->setColor(COLOR_WHITE);
-	xSemaphoreGive(spiMutex );
+	egl->setColor(COLOR_BLACK);
+	egl->drawBox( 0,0,320,176 );
+	egl->setFont(ucg_font_ncenR14_hr);
+	egl->setPrintPos( 1, 30 );
+	egl->setColor(COLOR_WHITE);
 }
 
-void MenuEntry::semaphoreTake()
-{
-  xSemaphoreTake( spiMutex, portMAX_DELAY );
-}
 
-void MenuEntry::semaphoreGive()
-{
-  xSemaphoreGive( spiMutex );
-}

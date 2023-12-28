@@ -26,6 +26,7 @@
 #include "flarmnetdata.h"
 #include "TargetManager.h"
 #include "Switch.h"
+#include "SetupMenu.h"
 
 AdaptUGC *egl = 0;
 OTA *ota = 0;
@@ -72,7 +73,6 @@ extern "C" void app_main(void)
         printf("Get flash size failed");
         return;
     }
-
     printf("%" PRIu32 "MB %s flash\n", flash_size / (uint32_t)(1024 * 1024),
            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
@@ -107,7 +107,7 @@ extern "C" void app_main(void)
     egl->setPrintPos( 10, 150 );
     egl->printf("Press Button for SW-Update");
     Switch::begin(GPIO_NUM_0);
-    for(int i=0; i<40; i++){
+    for(int i=0; i<10; i++){  // 40
     	if( Switch::isClosed() ){
     		egl->clearScreen();
     		ota = new OTA();
@@ -122,13 +122,20 @@ extern "C" void app_main(void)
     egl->setColor(COLOR_WHITE);
    	egl->setPrintPos( 10, 35 );
 
+    Switch::startTask();
+    SetupMenu *menu = new SetupMenu();
+    menu->begin();
+
+    while(1)
+    	delay(100);
+
     egl->printf("Press Button for a Demo");
     for(int i=0; i<20; i++){
        	if( Switch::isClosed() ){
        		Flarm::startSim();
        	    egl->setPrintPos( 10, 80 );
        		egl->printf("Button pressed, Demo starts");
-       		delay( 2000 );
+       		delay( 1000 );  // 2000
        		break;
        	}
     	delay( 100 );
@@ -137,7 +144,6 @@ extern "C" void app_main(void)
     Flarm::begin();
     Serial::begin();
     TargetManager::begin();
-    Switch::startTask();
 
     Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 1000, 0, 1 );
 

@@ -1,0 +1,46 @@
+/*
+ * SetupMenu.h
+ *
+ *  Created on: Feb 4, 2018
+ *      Author: iltis
+ */
+
+#ifndef _SetupMenu_H_
+#define _SetupMenu_H_
+#include "MenuEntry.h"
+#include <string>
+#include <driver/gpio.h>
+#include "SetupMenuValFloat.h"
+
+class IpsDisplay;
+class ESPRotary;
+class PressureSensor;
+class AnalogInput;
+
+class SetupMenu:  public MenuEntry {
+public:
+	SetupMenu();
+	SetupMenu( const char* title );
+	virtual ~SetupMenu();
+	void begin();
+	void setup();
+	void display( int mode=0 );
+	const char *value() { return 0; };
+	void up( int count );  // step up to parent
+	void down( int count );
+	void press();
+	void longPress();
+	void escape();
+	void showMenu();
+	void create_subtree();
+	void delete_subtree();
+
+
+	static void catchFocus( bool activate );
+	static bool focus;
+
+	static void setup_create_root( MenuEntry *top );
+	static void options_menu_create_units( MenuEntry *top );
+};
+
+#endif

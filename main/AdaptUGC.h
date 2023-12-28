@@ -141,3 +141,5 @@ private:
 	bool twistRB;
 	bool invertDisp;
 };
+
+extern AdaptUGC *egl;

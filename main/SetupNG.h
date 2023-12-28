@@ -27,6 +27,7 @@
 #include "logdef.h"
 #include "SetupCommon.h"
 #include "ESP32NVS.h"
+#include "SetupMenuValCommon.h"
 
 
 /*
@@ -53,7 +54,6 @@ typedef enum e_dst_unit { DST_UNIT_KM, DST_UNIT_FT, DST_UNIT_MILES } e_dst_unit_
 typedef enum e_speed_unit { SPEED_UNIT_KMH, SPEED_UNIT_MPH, SPEED_UNIT_KNOTS } e_speed_unit_t;
 typedef enum e_vario_unit { VARIO_UNIT_MS, VARIO_UNIT_FPM, VARIO_UNIT_KNOTS } e_vario_unit_t;
 typedef enum e_data_monitor { MON_OFF, MON_BLUETOOTH, MON_WIFI_8880, MON_WIFI_8881, MON_WIFI_8882, MON_S1, MON_S2, MON_CAN  }  e_data_monitor_t;
-
 
 void change_bal();
 
@@ -326,5 +326,9 @@ extern SetupNG<int>         ias_unit;
 extern SetupNG<int>         alt_unit;
 extern SetupNG<int>         dst_unit;
 extern SetupNG<int>         vario_unit;
+
+extern SetupNG<int>  		display_test;
+extern SetupNG<float>  		audio_volume;
+extern SetupNG<int> 		data_monitor;
 
 
