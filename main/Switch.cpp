@@ -62,7 +62,6 @@ void Switch::detach(SwitchObserver *obs) {
 	 */
 }
 
-
 void Switch::switchTask(void *pvParameters){
 	while(1){
 		tick();
@@ -102,21 +101,18 @@ void Switch::tick() {
 	// ESP_LOGI(FNAME,"tick %d", _tick );
 	switch( _state ) {
 	case B_IDLE:
-		// ESP_LOGI(FNAME,"time %ld IDLE", millis()  );
-		if( isClosed() ){
+		if( isClosed() ){   // button pressed
 			_state = B_PRESSED;
 			p_time = millis();
-			r_time = millis();
 		}
 		break;
 
 	case B_PRESSED:
-		// ESP_LOGI(FNAME,"time %ld PRESSED", millis()  );
 		if( isOpen() ){
-			if( (millis() - p_time ) > 350 ){
+			if( (millis() - p_time ) > 350 ){    // was this a long press?
 				sendLongPress();
 				_state = B_IDLE;
-			}else if( (millis() - p_time ) > 50 ){
+			}else if( (millis() - p_time ) > 50 ){   // if not, filter bounces and go to released state
 				_state = B_ONCE_RELEASED;
 				r_time = millis();
 				// ESP_LOGI(FNAME,"->ONCE_RELEASED after %ld ms", millis() - p_time );
@@ -128,14 +124,13 @@ void Switch::tick() {
 		break;
 
 	case B_ONCE_RELEASED:
-		// ESP_LOGI(FNAME,"time %ld ONCE_RELEASED", millis()  );
-		if( isClosed() ){
+		if( isClosed() ){             // closed again ?
 			p_time = millis();
 			_state = B_TWICE_CLOSED;
 			// ESP_LOGI(FNAME,"->TWICE CLOSED after %ld ms", millis() - r_time );
 		}
 		else{ // remains open
-			int rdelta = millis() - r_time;
+			int rdelta = millis() - r_time;    // nope, after timeout its a normal press
 			if(  rdelta > 150  ){ // timeout for DoubleClick, its a single click then
 				// ESP_LOGI(FNAME,"PRESS and ->IDLE after released %d ms", rdelta );
 				sendPress();
@@ -145,21 +140,17 @@ void Switch::tick() {
 		break;
 
 	case B_TWICE_CLOSED:
-		// ESP_LOGI(FNAME,"time %ld TWICE_CLOSED", millis()  );
-		if( isOpen() ){
-			if( (millis() - p_time ) < 150 ){
+		if( isOpen() ){   // second press ended ?
+			if( (millis() - p_time ) < 150 ){   // had a second short press ?
 				sendDoubleClick();
 				_state = B_IDLE;
 			}else{
-				_state = B_IDLE;
+				_state = B_IDLE;   // nope, so throw this odd short/long press event
 			}
 		}
 		break;
-	case B_LONG_PRESS:
-		break;
 	}
 }
-
 
 void Switch::sendRelease(){
 	ESP_LOGI(FNAME,"send release");

@@ -15,7 +15,7 @@
 
 class SwitchObserver;
 
-typedef enum e_button_state { B_IDLE, B_PRESSED, B_ONCE_RELEASED, B_TWICE_CLOSED, B_LONG_PRESS } t_button_state;
+typedef enum e_button_state { B_IDLE, B_PRESSED, B_ONCE_RELEASED, B_TWICE_CLOSED } t_button_state;
 
 class Switch {
 public:
