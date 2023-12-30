@@ -58,7 +58,6 @@ class SwitchObserver{
 public:
 		SwitchObserver(){};
         virtual void press() = 0;
-        virtual void release() = 0;
         virtual void longPress() = 0;
         virtual void doubleClick() = 0;
         virtual ~SwitchObserver() {};

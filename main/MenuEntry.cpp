@@ -24,6 +24,7 @@ MenuEntry* MenuEntry::root = 0;
 MenuEntry* MenuEntry::selected = 0;
 bool MenuEntry::_restart = false;
 
+
 xSemaphoreHandle spiMutex=NULL;
 
 MenuEntry::~MenuEntry()
@@ -90,7 +91,8 @@ MenuEntry* MenuEntry::getFirst() const {
 }
 
 MenuEntry* MenuEntry::addEntry( MenuEntry * item ) {
-	// ESP_LOGI(FNAME,"MenuEntry addMenu() title %s", item->_title );
+	ESP_LOGI(FNAME,"MenuEntry addMenu() title %s", item->_title );
+	/*
 	if( root == 0 ){
 		ESP_LOGI(FNAME,"Init root menu");
 		root = item;
@@ -99,11 +101,12 @@ MenuEntry* MenuEntry::addEntry( MenuEntry * item ) {
 		return item;
 	}
 	else{
+	*/
 		// ESP_LOGI(FNAME,"add to childs");
 		item->_parent = this;
 		_childs.push_back( item );
 		return item;
-	}
+	// }
 }
 
 MenuEntry* MenuEntry::addEntry( MenuEntry * item, const MenuEntry* after ) {

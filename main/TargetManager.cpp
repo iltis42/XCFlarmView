@@ -12,6 +12,7 @@
 #include "Colors.h"
 #include "vector.h"
 #include "Switch.h"
+#include "SetupMenu.h"
 
 std::map< unsigned int, Target> TargetManager::targets;
 std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.begin();
@@ -34,7 +35,9 @@ void TargetManager::begin(){
 
 void TargetManager::taskTargetMgr(void *pvParameters){
 	while(1){
-		tick();
+		if( !SetupMenu::isActive() ){
+			tick();
+		}
 		delay(TASK_PERIOD);
 	}
 }
@@ -134,13 +137,13 @@ void TargetManager::tick(){
 	if( !(_tick%5) ){
 		if( old_TX != tx){
 			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
-			printAlarm( "TX", 10, 90, tx );
+			printAlarm( "NO TX", 10, 90, tx );
 			old_TX = tx;
 		}
 		int gps=Flarm::getGPSBit();
 		if( old_GPS != gps ){  // 0,1 or 2
 			ESP_LOGI(FNAME,"GPS changed, old: %d, new: %d", old_GPS, gps );
-			printAlarm( "GPS", 10, 110, gps );
+			printAlarm( "NO GPS", 10, 110, gps );
 			old_GPS = gps;
 		}
 		drawAirplane( 160,86, Flarm::getGndCourse() );

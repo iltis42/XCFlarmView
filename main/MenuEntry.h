@@ -49,7 +49,6 @@ public:
     void restart();
     bool get_restart() { return _restart; };
     void addCreator( void (menu_create)(MenuEntry*ptr) ){ menu_create_ptr=menu_create; }
-    static void setRoot( MenuEntry *root ) { selected = root; };
 	void create_subtree();
 	void delete_subtree();
 
@@ -67,5 +66,4 @@ public:
 	static MenuEntry *root;
 	static MenuEntry *selected;
 	static bool _restart;
-
 };

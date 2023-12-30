@@ -160,7 +160,7 @@ void SetupMenuValFloat::longPress(){
 		return;
 	ESP_LOGI(FNAME,"SetupMenuValFloat longPress %d", pressed );
 	if ( pressed ){
-		ESP_LOGI(FNAME,"pressed, value: %f", _value );
+		ESP_LOGI(FNAME,"long pressed, value: %f", _value );
 		_nvs->set( _value );
 		display( 1 );
 		if( bits._end_menu )

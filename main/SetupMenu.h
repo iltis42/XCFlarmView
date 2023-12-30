@@ -32,9 +32,11 @@ public:
 	void longPress();
 	void escape();
 	void showMenu();
+	static inline bool isActive() { return _menu_active; };
 
 	static void catchFocus( bool activate );
 	static bool focus;
+	static bool _menu_active;
 
 	static void setup_create_root( MenuEntry *top );
 	static void options_menu_create_units( MenuEntry *top );

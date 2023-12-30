@@ -330,5 +330,6 @@ extern SetupNG<int>         vario_unit;
 extern SetupNG<int>  		display_test;
 extern SetupNG<float>  		audio_volume;
 extern SetupNG<int> 		data_monitor;
+extern SetupNG<int> 		traffic_demo;
 
 

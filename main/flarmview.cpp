@@ -32,21 +32,22 @@ AdaptUGC *egl = 0;
 OTA *ota = 0;
 
 
-class Test: public SwitchObserver
+class SwitchObs: public SwitchObserver
 {
 public:
-	Test(const char* name) : SwitchObserver() {
+	SwitchObs(const char* name) : SwitchObserver() {
 		ESP_LOGI(FNAME,"attach me %s", name );
 		Switch::attach(this);
 	};
-	~Test() {};
-	void longPress() { ESP_LOGI(FNAME,"LONGPRESS"); };
-	void press() { ESP_LOGI(FNAME,"PRESS");};
-	void doubleClick() {  ESP_LOGI(FNAME,"DPCLICK"); };
-	void release() {  ESP_LOGI(FNAME,"RELEASE"); };
+	~SwitchObs() {};
+	void doubleClick() {};
+	void press() {};
+	void longPress() {  ESP_LOGI(FNAME,"LONGPRESS");
+
+					 };
 };
 
-
+static SetupMenu *menu=0;
 
 extern "C" void app_main(void)
 {
@@ -107,7 +108,7 @@ extern "C" void app_main(void)
     egl->setPrintPos( 10, 150 );
     egl->printf("Press Button for SW-Update");
     Switch::begin(GPIO_NUM_0);
-    for(int i=0; i<10; i++){  // 40
+    for(int i=0; i<20; i++){  // 40
     	if( Switch::isClosed() ){
     		egl->clearScreen();
     		ota = new OTA();
@@ -122,32 +123,21 @@ extern "C" void app_main(void)
     egl->setColor(COLOR_WHITE);
    	egl->setPrintPos( 10, 35 );
 
-    Switch::startTask();
-    SetupMenu *menu = new SetupMenu();
+    // SwitchObs obs("main");
+    menu = new SetupMenu();
     menu->begin();
+    Switch::startTask();
 
-    while(1)
-    	delay(100);
-
-    egl->printf("Press Button for a Demo");
-    for(int i=0; i<20; i++){
-       	if( Switch::isClosed() ){
-       		Flarm::startSim();
-       	    egl->setPrintPos( 10, 80 );
-       		egl->printf("Button pressed, Demo starts");
-       		delay( 1000 );  // 2000
-       		break;
-       	}
-    	delay( 100 );
+    if( traffic_demo.get() ){
+    	Flarm::startSim();
+    	traffic_demo.set(0);
     }
+
     egl->clearScreen();
     Flarm::begin();
     Serial::begin();
     TargetManager::begin();
-
     Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 1000, 0, 1 );
-
-    Test t("myfirst");
 
     if( Serial::selfTest() )
     	printf("Serial Loop Test OK");

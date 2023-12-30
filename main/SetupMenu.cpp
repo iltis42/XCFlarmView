@@ -26,12 +26,13 @@
 
 SetupMenuSelect * audio_range_sm = 0;
 SetupMenuSelect * mpu = 0;
+static bool enable_restart = false;
 
 // Menu for flap setup
 
 float elev_step = 1;
 bool SetupMenu::focus = false;
-
+bool SetupMenu::_menu_active = false;
 
 int do_display_test(SetupMenuSelect * p){
 	if( display_test.get() ){
@@ -88,7 +89,19 @@ SetupMenu::~SetupMenu()
 void SetupMenu::begin(){
 	ESP_LOGI(FNAME,"SetupMenu() begin");
 	setup();
-	root->display();
+}
+
+void SetupMenu::setup( )
+{
+	ESP_LOGI(FNAME,"SetupMenu setup()");
+	SetupMenu * root = new SetupMenu( PROGMEM"Setup" );
+	root->setHelp(PROGMEM"Short press <scroll>, long press <enter>", 145 );
+	root->addCreator( setup_create_root );
+	root->create_subtree();
+	selected = root;
+	root->pressed = true;
+	root->_parent = 0;
+	ESP_LOGI(FNAME,"%p pressed %d", root, root->pressed );
 }
 
 void SetupMenu::catchFocus( bool activate ){
@@ -172,14 +185,14 @@ void SetupMenu::press(){
 }
 
 void SetupMenu::showMenu(){
-	ESP_LOGI(FNAME,"showMenu()");
+	ESP_LOGI(FNAME,"showMenu(%s) s:%p parent %p", _title, this,  _parent );
 	// default is not pressed, so just display, but we toogle pressed state at the end
 	// so next time we either step up to parent,
 	if( pressed )
 	{
 		if( highlight == -1 ) {
-			ESP_LOGI(FNAME,"SetupMenu to parent");
 			if( _parent != 0 ){
+				ESP_LOGI(FNAME,"SetupMenu to parent");
 				selected = _parent;
 				selected->highlight = -1;
 				selected->pressed = true;
@@ -187,8 +200,8 @@ void SetupMenu::showMenu(){
 			}
 		}
 		else {
-			ESP_LOGI(FNAME,"SetupMenu to child %d size: %d", highlight, _childs.size() );
 			if( (highlight >=0) && (highlight < (int)(_childs.size()) ) ){
+				ESP_LOGI(FNAME,"SetupMenu to child %d size: %d", highlight, _childs.size() );
 				selected = _childs[highlight];
 				selected->create_subtree();
 				selected->pressed = false;
@@ -199,22 +212,27 @@ void SetupMenu::showMenu(){
 	}
 	if( (_parent == 0) && (highlight == -1) ) // entering setup menu root
 	{
-		ESP_LOGI(FNAME,"End Setup Menu");
-		if( selected->get_restart() )
-			selected->restart();
-		esp_restart();
-
+		ESP_LOGI(FNAME,"Check End Setup Menu");
+		if( enable_restart ){
+			ESP_LOGI(FNAME,"Restart enabled");
+			if( selected->get_restart() )
+				selected->restart();
+			esp_restart();
+		}else{
+			ESP_LOGI(FNAME,"Now enable Restart");
+			enable_restart = true;
+		}
 	}
 	ESP_LOGI(FNAME,"end showMenu()");
 }
 
-
 void SetupMenu::longPress(){
-	ESP_LOGI(FNAME,"Longpress() %s s:%p t:%p", _title, selected, this );
+	ESP_LOGI(FNAME,"Longpress() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
 	if( selected != this ){
 		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
+	_menu_active = true;
 	showMenu();
 	if( pressed )
 		pressed = false;
@@ -249,7 +267,7 @@ void SetupMenu::options_menu_create_units( MenuEntry *top ){
 
 void SetupMenu::setup_create_root(MenuEntry *top ){
 	ESP_LOGI(FNAME,"setup_create_root()");
-	SetupMenuValFloat * vol = new SetupMenuValFloat( PROGMEM"Buzzer Volume", "%", 0.0, 100, 10, vol_adj, true, &audio_volume );
+	SetupMenuValFloat * vol = new SetupMenuValFloat( PROGMEM"Buzzer Volume", "%", 0.0, 100, 10, vol_adj, false, &audio_volume );
 	vol->setHelp(PROGMEM"Buzzer volume maximum level", 110 );
 	top->addEntry( vol );
 
@@ -257,15 +275,13 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 	top->addEntry( un );
 	un->setHelp( PROGMEM"Setup imperial units for alt(itude), dis(tance), var(iometer)", 125);
 	un->addCreator(options_menu_create_units);
+
+	SetupMenuSelect * demo = new SetupMenuSelect( PROGMEM"Traffic Demo", RST_ON_EXIT, 0, true, &traffic_demo );
+	demo->addEntry( PROGMEM"Start");
+	demo->addEntry( PROGMEM"Cancel");
+	top->addEntry( demo );
+
 }
 
 
-void SetupMenu::setup( )
-{
-	ESP_LOGI(FNAME,"SetupMenu setup()");
-	SetupMenu * root = new SetupMenu( PROGMEM"Setup" );
-	root->setHelp(PROGMEM"Short press <scroll>, long press <enter>", 110 );
-	root->addEntry( root );
-	setup_create_root( root );
-	root->setRoot( root );
-}
+
