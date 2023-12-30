@@ -249,8 +249,8 @@ void SetupMenu::options_menu_create_units( MenuEntry *top ){
 
 void SetupMenu::setup_create_root(MenuEntry *top ){
 	ESP_LOGI(FNAME,"setup_create_root()");
-	SetupMenuValFloat * vol = new SetupMenuValFloat( PROGMEM"Audio Volume", "%", 0.0, 100, 1, vol_adj, true, &audio_volume );
-	vol->setHelp(PROGMEM"Audio volume level for variometer tone on internal and external speaker");
+	SetupMenuValFloat * vol = new SetupMenuValFloat( PROGMEM"Buzzer Volume", "%", 0.0, 100, 10, vol_adj, true, &audio_volume );
+	vol->setHelp(PROGMEM"Buzzer volume maximum level", 110 );
 	top->addEntry( vol );
 
 	SetupMenu * un = new SetupMenu( PROGMEM"Units" );
@@ -264,6 +264,7 @@ void SetupMenu::setup( )
 {
 	ESP_LOGI(FNAME,"SetupMenu setup()");
 	SetupMenu * root = new SetupMenu( PROGMEM"Setup" );
+	root->setHelp(PROGMEM"Short press <scroll>, long press <enter>", 110 );
 	root->addEntry( root );
 	setup_create_root( root );
 	root->setRoot( root );

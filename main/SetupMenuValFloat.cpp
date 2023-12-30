@@ -57,7 +57,7 @@ const char *SetupMenuValFloat::value(){
 	const char * final_unit = _unit;
 	if( strlen( _unit ) == 0 )
 		final_unit = Units::unit( _nvs->unitType() );
-	sprintf(_val_str,"%0.*f %s   ", bits._precision, uval, final_unit );
+	sprintf(_val_str,"%0.*f %s     ", bits._precision, uval, final_unit );
 	return _val_str;
 }
 
@@ -91,7 +91,7 @@ void SetupMenuValFloat::display( int mode ){
 	}
 	else if (mode == 1){   // save mode, do show only "Saved"true
 		y+=24;
-		egl->setPrintPos( 1, 300 );
+		egl->setPrintPos( 1, 140 );
 		egl->print(PROGMEM"Saved");
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
@@ -141,28 +141,26 @@ void SetupMenuValFloat::up( int count ){
 		return;
 	// ESP_LOGI(FNAME,"val up %d times ", count );
 	_value = _nvs->get();
-	while( (_value < _max) && count ) {
-		_value += step( _step );
-		count--;
+	_value += step( _step );
+	if( _value > _max ) {
+		_value = _min;
 	}
-	if( _value > _max )
-		_value = _max;
 	_nvs->set(_value );
 	displayVal();
 	if( _action != 0 )
 		(*_action)( this );
 }
 
-void SetupMenuValFloat::longPress(){
-	press(); // implicit trigger also on long press actions when in Setup menu.
+void SetupMenuValFloat::press(){
+	up(1); // implicit trigger also on long press actions when in Setup menu.
 }
 
-void SetupMenuValFloat::press(){
+void SetupMenuValFloat::longPress(){
 	if( selected != this )
 		return;
-	ESP_LOGI(FNAME,"SetupMenuValFloat press %d", pressed );
+	ESP_LOGI(FNAME,"SetupMenuValFloat longPress %d", pressed );
 	if ( pressed ){
-		// ESP_LOGI(FNAME,"pressed, value: %f", _value );
+		ESP_LOGI(FNAME,"pressed, value: %f", _value );
 		_nvs->set( _value );
 		display( 1 );
 		if( bits._end_menu )
@@ -186,6 +184,7 @@ void SetupMenuValFloat::press(){
 		pressed = false;
 		if( bits._end_menu )
 			selected->press();
+		selected->display();
 	}
 	else
 	{
