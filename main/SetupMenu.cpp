@@ -107,7 +107,7 @@ void SetupMenu::display( int mode ){
 	egl->setPrintPos(1,y);
 	egl->setFontPosBottom();
 	egl->printf("<< %s",selected->_title);
-	egl->drawFrame( 1,(selected->highlight+1)*25+3,238,25 );
+	egl->drawFrame( 1,(selected->highlight+1)*25+3,318,25 );
 	for (int i=0; i<_childs.size(); i++ ){
 		MenuEntry * child = _childs[i];
 		egl->setPrintPos(1,(i+1)*25+25);
@@ -136,14 +136,14 @@ void SetupMenu::down(int count){
 	if( focus )
 		return;
 	egl->setColor(COLOR_BLACK);
-	egl->drawFrame( 1,(highlight+1)*25+3,238,25 );
+	egl->drawFrame( 1,(highlight+1)*25+3,318,25 );
 	egl->setColor(COLOR_WHITE);
 	if( highlight  > -1 ){
 		highlight --;
 	}
 	else
 		highlight = (int)(_childs.size() -1 );
-	egl->drawFrame( 1,(highlight+1)*25+3,238,25 );
+	egl->drawFrame( 1,(highlight+1)*25+3,318,25 );
 	pressed = true;
 }
 
@@ -154,14 +154,14 @@ void SetupMenu::press(){
 	if( focus )
 		return;
 	egl->setColor(COLOR_BLACK);
-	egl->drawFrame( 1,(highlight+1)*25+3,238,25 );
+	egl->drawFrame( 1,(highlight+1)*25+3,318,25 );
 	egl->setColor(COLOR_WHITE);
 	if( highlight < (int)(_childs.size()-1) ){
 		highlight ++;
 	}
 	else
 		highlight = -1;
-	egl->drawFrame( 1,(highlight+1)*25+3,238,25 );
+	egl->drawFrame( 1,(highlight+1)*25+3,318,25 );
 	pressed = true;
 }
 
@@ -218,9 +218,11 @@ void SetupMenu::delete_subtree(){
 }
 
 void SetupMenu::longPress(){
-	if( selected != this )
+	ESP_LOGI(FNAME,"Longpress() %s s:%p t:%p", _title, selected, this );
+	if( selected != this ){
+		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
-	ESP_LOGI(FNAME,"Longpress() %s", _title  );
+	}
 	create_subtree();
 	showMenu();
 	if( pressed )

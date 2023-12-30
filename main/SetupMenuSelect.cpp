@@ -143,15 +143,15 @@ void SetupMenuSelect::display( int mode ){
 				egl->setPrintPos( 1, 50+25*i );
 				egl->print( _values[i] );
 			}
-			egl->drawFrame( 1,(_select+1)*25+3,238,25 );
+			egl->drawFrame( 1,(_select+1)*25+3,318,25 );
 		}
 
 		int y=_numval*25+50;
 		showhelp( y );
 		if(mode == 1 && bits._save == true ){
 			egl->setColor( COLOR_BLACK );
-			egl->drawBox( 1,280,240,40 );
-			egl->setPrintPos( 1, 300 );
+			egl->drawBox( 1,130,320,40 );
+			egl->setPrintPos( 1, 160 );
 			egl->setColor( COLOR_WHITE );
 			egl->print(PROGMEM"Saved" );
 		}
@@ -174,12 +174,12 @@ void SetupMenuSelect::down(int count){
 		egl->printf("%s                  ",_values[_select] );
 	}else {
 		egl->setColor(COLOR_BLACK);
-		egl->drawFrame( 1,(_select+1)*25+3,238,25 );  // blank old frame
+		egl->drawFrame( 1,(_select+1)*25+3,318,25 );  // blank old frame
 		egl->setColor(COLOR_WHITE);
 		if( (_select) >  0 )
 			(_select)--;
 		ESP_LOGI(FNAME,"val down %d", _select );
-		egl->drawFrame( 1,(_select+1)*25+3,238,25 );  // draw new frame
+		egl->drawFrame( 1,(_select+1)*25+3,318,25 );  // draw new frame
 	}
 }
 
@@ -198,14 +198,14 @@ void SetupMenuSelect::up(int count){
 		egl->printf("%s                   ", _values[_select] );
 	}else {
 		egl->setColor(COLOR_BLACK);
-		egl->drawFrame( 1,(_select+1)*25+3,238,25 );  // blank old frame
+		egl->drawFrame( 1,(_select+1)*25+3,318,25 );  // blank old frame
 		egl->setColor(COLOR_WHITE);
 		if ( (_select) < _numval-1 )
 			(_select)++;
 		else
 			_select = 0;
 		ESP_LOGI(FNAME,"val up %d", _select );
-		egl->drawFrame( 1,(_select+1)*25+3,238,25 );  // draw new frame
+		egl->drawFrame( 1,(_select+1)*25+3,318,25 );  // draw new frame
 	}
 }
 
@@ -221,8 +221,6 @@ void SetupMenuSelect::longPress(){
 	if ( pressed ){
 		if( _select_save != _select )
 			display( 1 );
-		//else
-		//	display();
 		if( bits._end_menu ){
 			ESP_LOGI(FNAME,"press() end_menu");
 			selected = root;
@@ -254,6 +252,7 @@ void SetupMenuSelect::longPress(){
 		if( bits._end_menu ){
 			selected->press();
 		}
+		selected->display();
 	}
 	else{
 		pressed = true;
