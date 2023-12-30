@@ -36,6 +36,25 @@ MenuEntry::~MenuEntry()
     }
 }
 
+void MenuEntry::create_subtree(){
+	if( !subtree_created && menu_create_ptr ){
+		(menu_create_ptr)(this);
+		subtree_created = true;
+		// ESP_LOGI(FNAME,"create_subtree() %d", _childs.size() );
+	}
+}
+
+void MenuEntry::delete_subtree(){
+	// ESP_LOGI(FNAME,"delete_subtree() %d", _childs.size() );
+	if( subtree_created && menu_create_ptr ){
+		subtree_created = false;
+		for (int i=0; i<_childs.size(); i++ ){
+			delete _childs[i];
+		}
+		_childs.clear();
+	}
+}
+
 void MenuEntry::uprintf( int x, int y, const char* format, ...) {
 	if( egl == 0 ) {
 		ESP_LOGE(FNAME,"Error egl not initialized !");

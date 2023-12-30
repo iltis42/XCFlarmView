@@ -152,13 +152,6 @@ void Switch::tick() {
 	}
 }
 
-void Switch::sendRelease(){
-	ESP_LOGI(FNAME,"send release");
-	for (auto &observer : observers)
-		observer->release();
-	// ESP_LOGI(FNAME,"End switch release action");
-}
-
 void Switch::sendPress(){
 	ESP_LOGI(FNAME,"send press p: %ld  r: %ld", millis()-p_time, millis()-r_time );
 	for (auto &observer : observers)

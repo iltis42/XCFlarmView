@@ -29,7 +29,6 @@ public:
 	static void tick();   // call al least every 100 mS
     static void attach( SwitchObserver *obs);
 	static void detach( SwitchObserver *obs);
-    static void sendRelease();
 	static void sendPress();
 	static void sendLongPress();
 	static void sendDoubleClick();

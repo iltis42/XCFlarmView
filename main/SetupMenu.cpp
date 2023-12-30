@@ -96,10 +96,16 @@ void SetupMenu::catchFocus( bool activate ){
 }
 
 void SetupMenu::display( int mode ){
-	ESP_LOGI(FNAME,"SetupMenu display s:%p t:%p", selected, this );
-	if( (selected != this) )
+	ESP_LOGI(FNAME,"SetupMenu display (%s) s:%p t:%p", _title, selected, this );
+	if( (selected != this) ){
+		ESP_LOGI(FNAME,"Not me: return");
 		return;
-	ESP_LOGI(FNAME,"SetupMenu display( %s) %d", _title, focus  );
+	}
+	if( !dirty ){
+		ESP_LOGI(FNAME,"Not dirty: return");
+		return;
+	}
+	ESP_LOGI(FNAME,"SetupMenu display(%s) %d", _title, focus );
 	clear();
 	int y=25;
 	// ESP_LOGI(FNAME,"Title: %s y=%d child size:%d", selected->_title,y, _childs.size()  );
@@ -177,45 +183,31 @@ void SetupMenu::showMenu(){
 				selected = _parent;
 				selected->highlight = -1;
 				selected->pressed = true;
-				delete_subtree();
+				// delete_subtree();
 			}
 		}
 		else {
 			ESP_LOGI(FNAME,"SetupMenu to child %d size: %d", highlight, _childs.size() );
 			if( (highlight >=0) && (highlight < (int)(_childs.size()) ) ){
 				selected = _childs[highlight];
+				selected->create_subtree();
 				selected->pressed = false;
 			}
 		}
+		selected->dirty = true;
+		selected->display();
 	}
 	if( (_parent == 0) && (highlight == -1) ) // entering setup menu root
 	{
 		ESP_LOGI(FNAME,"End Setup Menu");
 		if( selected->get_restart() )
 			selected->restart();
+		esp_restart();
 
 	}
 	ESP_LOGI(FNAME,"end showMenu()");
 }
 
-void SetupMenu::create_subtree(){
-	if( !subtree_created && menu_create_ptr ){
-		(menu_create_ptr)(this);
-		subtree_created = true;
-		// ESP_LOGI(FNAME,"create_subtree() %d", _childs.size() );
-	}
-}
-
-void SetupMenu::delete_subtree(){
-	// ESP_LOGI(FNAME,"delete_subtree() %d", _childs.size() );
-	if( subtree_created && menu_create_ptr ){
-		subtree_created = false;
-		for (int i=0; i<_childs.size(); i++ ){
-			delete _childs[i];
-		}
-		_childs.clear();
-	}
-}
 
 void SetupMenu::longPress(){
 	ESP_LOGI(FNAME,"Longpress() %s s:%p t:%p", _title, selected, this );
@@ -223,13 +215,12 @@ void SetupMenu::longPress(){
 		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
-	create_subtree();
 	showMenu();
 	if( pressed )
 		pressed = false;
 	else
 		pressed = true;
-	display();
+	ESP_LOGI(FNAME,"End Longpress()");
 }
 
 void SetupMenu::escape(){

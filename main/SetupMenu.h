@@ -32,9 +32,6 @@ public:
 	void longPress();
 	void escape();
 	void showMenu();
-	void create_subtree();
-	void delete_subtree();
-
 
 	static void catchFocus( bool activate );
 	static bool focus;

@@ -217,7 +217,7 @@ void SetupMenuSelect::longPress(){
 	if( selected != this )
 		return;
 	ESP_LOGI(FNAME,"longPress() ext handler: %d press: %d _select: %d selected %p", bits._ext_handler, pressed, _select, selected );
-	display();
+	// display();
 	if ( pressed ){
 		if( _select_save != _select )
 			display( 1 );

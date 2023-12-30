@@ -26,6 +26,7 @@ public:
 		_title = 0;
 		subtree_created = 0;
 		menu_create_ptr = 0;
+		dirty=true;
 	};
 	virtual ~MenuEntry();
 	virtual void display( int mode=0 ) = 0;
@@ -49,6 +50,9 @@ public:
     bool get_restart() { return _restart; };
     void addCreator( void (menu_create)(MenuEntry*ptr) ){ menu_create_ptr=menu_create; }
     static void setRoot( MenuEntry *root ) { selected = root; };
+	void create_subtree();
+	void delete_subtree();
+
 public:
 	std::vector<MenuEntry*>  _childs;
 	MenuEntry *_parent;
@@ -59,7 +63,9 @@ public:
 	int16_t    hypos;
 	void (*menu_create_ptr)(MenuEntry*);
 	uint8_t subtree_created;
+	bool dirty;
 	static MenuEntry *root;
 	static MenuEntry *selected;
 	static bool _restart;
+
 };
