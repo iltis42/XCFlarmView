@@ -277,8 +277,8 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 	un->addCreator(options_menu_create_units);
 
 	SetupMenuSelect * demo = new SetupMenuSelect( PROGMEM"Traffic Demo", RST_ON_EXIT, 0, true, &traffic_demo );
-	demo->addEntry( PROGMEM"Start");
 	demo->addEntry( PROGMEM"Cancel");
+	demo->addEntry( PROGMEM"Start");
 	top->addEntry( demo );
 
 }
