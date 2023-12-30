@@ -129,8 +129,10 @@ extern "C" void app_main(void)
     Switch::startTask();
 
     if( traffic_demo.get() ){
-    	Flarm::startSim();
+    	ESP_LOGI(FNAME,"Traffic Demo");
     	traffic_demo.set(0);
+    	traffic_demo.commit();
+    	Flarm::startSim();
     }
 
     egl->clearScreen();

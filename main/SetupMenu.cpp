@@ -167,7 +167,7 @@ void SetupMenu::down(int count){
 }
 
 void SetupMenu::press(){
-	if( (selected != this) )
+	if( (selected != this) || !_menu_active )
 		return;
 	ESP_LOGI(FNAME,"SetupMenu::up %d %d", highlight, _childs.size() );
 	if( focus )
