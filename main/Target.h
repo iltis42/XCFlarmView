@@ -11,6 +11,9 @@
 #ifndef MAIN_TARGET_H_
 #define MAIN_TARGET_H_
 
+
+#define SCALE 30  // 1km
+
 class Target {
 public:
 	Target();

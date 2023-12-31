@@ -66,7 +66,7 @@ TargetManager::~TargetManager() {
 void TargetManager::drawN( int x, int y, bool erase, float north ){
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setFontPosCenter();
-	egl->setPrintPos( x-25*sin(D2R(north))-5, y-25*cos(D2R(north))+6 );
+	egl->setPrintPos( x-SCALE*sin(D2R(north))-5, y-SCALE*cos(D2R(north))+6 );
 	egl->setFont(ucg_font_ncenR14_hr);
 	if(erase)
 		egl->setColor(COLOR_BLACK);

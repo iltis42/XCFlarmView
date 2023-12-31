@@ -11,6 +11,9 @@
 #include "vector.h"
 #include "flarmnetdata.h"
 #include "Colors.h"
+#include <cmath>
+#include <algorithm>
+
 
 extern AdaptUGC *egl;
 
@@ -70,7 +73,7 @@ void Target::drawInfo(bool erase){
 
 	egl->setFont( ucg_font_fub25_hf );
 	// Distance right upper corner, constant dist to right end
-	sprintf(s,"%.2f  ", Units::Distance( dist ) );
+	sprintf(s,"%.2f   ", Units::Distance( dist ) );
 	w=egl->getStrWidth(s);
 	egl->setPrintPos( 318-w, 30 );
 	egl->printf("%s", s );
@@ -113,7 +116,7 @@ void Target::checkClose(){
 	}
 }
 
-#define SCALE 30
+
 // Transform to heading from ground track
 void Target::recalc(){
 	age = 0;  // reset age
@@ -122,13 +125,11 @@ void Target::recalc(){
 	dist = sqrt( pflaa.relNorth*pflaa.relNorth + pflaa.relEast*pflaa.relEast )/1000.0; // distance in km float
 	float relV=float(pflaa.relVertical/1000.0);
 	prox=sqrt( relV*relV + dist*dist );
-	float f=1.0;
-	if( dist*SCALE < 30 ){
-		float d = dist*SCALE < 1.0 ? 1.0 : dist;
-		f=1/d;
-	}
-	x=160+(dist*f*SCALE)*sin(D2R(rel_target_dir));
-	y=86-(dist*f*SCALE)*cos(D2R(rel_target_dir));
+	float logs = log( 2+prox );
+	float pix = fmax( logs*SCALE, 30.0 );
+	// ESP_LOGI(FNAME,"prox: %f, log:%f, pix:%f", prox, logs, pix );
+	x=160+pix*sin(D2R(rel_target_dir));
+	y=86-pix*cos(D2R(rel_target_dir));
 	// ESP_LOGI(FNAME,"recalc ID: %06X, own heading:%d targ-head:%d rel-target-head:%d (N:%.2f, E:%.2f) x:%d y:%d", pflaa.ID, int(Flarm::getGndCourse()), int(rel_target_heading), int(rel_target_dir) , pflaa.relNorth, pflaa.relEast, x, y ) ;
 }
 
