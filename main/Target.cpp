@@ -69,25 +69,27 @@ void Target::drawInfo(bool erase){
 	egl->printf("%s",s);
 
 	egl->setFont( ucg_font_fub25_hf );
-	// Distance left up
-	sprintf(s,"%.2f  ", dist );
+	// Distance right upper corner, constant dist to right end
+	sprintf(s,"%.2f  ", Units::Distance( dist ) );
 	w=egl->getStrWidth(s);
-	egl->setPrintPos( 310-w, 30 );
-	egl->printf(s,"%.2f  ", dist );
+	egl->setPrintPos( 318-w, 30 );
+	egl->printf("%s", s );
 
 	// relative vertical
 	egl->setPrintPos( 5, 165 );
+	int alt = (int)(Units::Altitude( (float)pflaa.relVertical)+0.5);
 	if( pflaa.relVertical > 0 )
-		egl->printf("+%d    ", pflaa.relVertical );
+		egl->printf("+%d    ", alt );
 	else
-		egl->printf("%d    ", pflaa.relVertical );
+		egl->printf("%d    ", alt );
 	egl->setPrintPos( 5, 30 );
 
 	// climb rate
-	if( pflaa.climbRate > 0 )
-		sprintf(s,"+%.1f  ", pflaa.climbRate);
+	float climb = Units::Vario( (float)pflaa.climbRate );
+	if( climb > 0 )
+		sprintf(s,"+%.1f  ", climb );
 	else
-		sprintf(s," %.1f  ", pflaa.climbRate);
+		sprintf(s," %.1f  ", climb );
 	egl->printf("%s", s);
 
 	// Units
@@ -95,18 +97,18 @@ void Target::drawInfo(bool erase){
 		egl->setColor( COLOR_BLUE );
 	egl->setFont( ucg_font_fub14_hf );
 	egl->setPrintPos( 255, 50 );
-	egl->print(" km");
+	egl->printf(" %s ", Units::DistanceUnit() );
 	egl->setPrintPos( 5, 50 );
-	egl->print("  m/s");
+	egl->printf("  %s", Units::VarioUnit() );
 	egl->setPrintPos( 25, 135 );
-	egl->print("m ");
+	egl->printf(" %s ", Units::AltitudeUnit() );
 }
 
 void Target::checkClose(){
 	// ESP_LOGI(FNAME,"ID %06X, close Target Buzzer dist=%.2f Holddown= %d", pflaa.ID, dist, _buzzedHoldDown );
 	if( dist < 2.0 && (_buzzedHoldDown == 0) ){
 		ESP_LOGI(FNAME,"BUZZ dist=%.2f", dist );
-		Buzzer::play2( BUZZ_DH, 200,100, BUZZ_E, 200, 100 );
+		Buzzer::play2( BUZZ_DH, 200,audio_volume.get() , BUZZ_E, 200, audio_volume.get() );
 		_buzzedHoldDown = 300;
 	}
 }
@@ -158,11 +160,11 @@ void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, boo
 
 void Target::checkAlarm(){
 	if( pflaa.alarmLevel == 1 ){
-		Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 150, 0, 2 );
+		Buzzer::play2( BUZZ_DH, 150,audio_volume.get(), BUZZ_DH, 150, 0, 2 );
 	}else if( pflaa.alarmLevel == 2 ){
-		Buzzer::play2( BUZZ_E, 100,100, BUZZ_E, 100, 0, 3 );
+		Buzzer::play2( BUZZ_E, 100,audio_volume.get(), BUZZ_E, 100, 0, 3 );
 	}else if( pflaa.alarmLevel == 3 ){
-		Buzzer::play2( BUZZ_F, 70,100, BUZZ_F, 70, 0, 5 );
+		Buzzer::play2( BUZZ_F, 70,audio_volume.get(), BUZZ_F, 70, 0, 5 );
 	}
 }
 

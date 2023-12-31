@@ -87,7 +87,7 @@ extern "C" void app_main(void)
     // egl->setRedBlueTwist( true );
     egl->clearScreen();
     Buzzer::init(2700);
-    Buzzer::play2( BUZZ_C, 500,70, BUZZ_C, 1000, 0, 1 );
+    Buzzer::play2( BUZZ_C, 500,audio_volume.get(), BUZZ_C, 1000, 0, 1 );
 
     Version V;
     std::string ver( "SW Ver.: " );
@@ -139,7 +139,7 @@ extern "C" void app_main(void)
     Flarm::begin();
     Serial::begin();
     TargetManager::begin();
-    Buzzer::play2( BUZZ_DH, 150,100, BUZZ_DH, 1000, 0, 1 );
+    Buzzer::play2( BUZZ_DH, 150,audio_volume.get(), BUZZ_DH, 1000, 0, 1 );
 
     if( Serial::selfTest() )
     	printf("Serial Loop Test OK");

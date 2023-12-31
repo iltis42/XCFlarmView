@@ -149,7 +149,7 @@ public:
 		if( vario_unit.get() == VARIO_UNIT_MS )
 			return("m/s");
 		else if( vario_unit.get() == VARIO_UNIT_FPM )
-			return("ft/m");
+			return("fpm");
 		else if( vario_unit.get() == VARIO_UNIT_KNOTS )
 			return("kt");
 		else
