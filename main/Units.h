@@ -237,8 +237,8 @@ public:
 			u=dst_unit.get();
 		if( u == DST_UNIT_KM )      // kilometers km
 			return( "km" );
-		else if( u == DST_UNIT_FT ) // hundreds feet
-			return( "ft" );
+		else if( u == DST_UNIT_FT ) // kilo-feet
+			return( "kft" );
 		else if( u == DST_UNIT_MILES ) // Miles mi
 			return( "mi" );
 		else

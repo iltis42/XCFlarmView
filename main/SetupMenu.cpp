@@ -258,8 +258,9 @@ void SetupMenu::options_menu_create_units( MenuEntry *top ){
         vau->addEntry( PROGMEM"Knots (kt)");
         top->addEntry( vau );
         SetupMenuSelect * dst = new SetupMenuSelect( PROGMEM"Distance", RST_NONE , 0, true, &dst_unit );
-        dst->addEntry( PROGMEM"Meter (m)");
-        dst->addEntry( PROGMEM"Feet (ft)");
+        dst->addEntry( PROGMEM"KiloMeter (km)");
+        dst->addEntry( PROGMEM"KiloFeet (kft)");
+        dst->addEntry( PROGMEM"Miles     (mi)");
         top->addEntry( dst );
 }
 
