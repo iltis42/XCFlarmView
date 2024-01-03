@@ -26,8 +26,8 @@ public:
 			return( d );
 		else if( dst_unit.get() == DST_UNIT_FT ) // ft
 			return( d*3.28084 );
-		else if( dst_unit.get() == DST_UNIT_MILES ) // mi
-			return( d*0.621371 );
+		else if( dst_unit.get() == DST_UNIT_MILES ) // nautical miles, nm
+			return( d*0.539957 );
 		else
 			ESP_LOGE(FNAME,"Wrong unit for Distance");
 		return d;
@@ -240,7 +240,7 @@ public:
 		else if( u == DST_UNIT_FT ) // kilo-feet
 			return( "kft" );
 		else if( u == DST_UNIT_MILES ) // Miles mi
-			return( "mi" );
+			return( "nm" );
 		else
 			ESP_LOGE(FNAME,"Wrong unit for distance %d", u );
 		return "nan";

@@ -260,7 +260,7 @@ void SetupMenu::options_menu_create_units( MenuEntry *top ){
         SetupMenuSelect * dst = new SetupMenuSelect( PROGMEM"Distance", RST_NONE , 0, true, &dst_unit );
         dst->addEntry( PROGMEM"KiloMeter (km)");
         dst->addEntry( PROGMEM"KiloFeet (kft)");
-        dst->addEntry( PROGMEM"Miles     (mi)");
+        dst->addEntry( PROGMEM"NauticalMiles (nm)");
         top->addEntry( dst );
 }
 
