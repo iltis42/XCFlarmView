@@ -22,7 +22,7 @@ void eglib_setClipRange(
     coordinate_t w,
     coordinate_t h
 ) {
-    eglib->drawing.clip_xmax = eglib_GetHeight(eglib);
+    eglib->drawing.clip_xmax = eglib_GetWidth(eglib);
     eglib->drawing.clip_xmin = 0;
     eglib->drawing.clip_ymax = eglib_GetHeight(eglib);
     eglib->drawing.clip_ymin = 0;
@@ -30,7 +30,7 @@ void eglib_setClipRange(
     if ( ((x+w) >= eglib->drawing.clip_xmin) && ((x+w) < eglib->drawing.clip_xmax)) eglib->drawing.clip_xmax = x+w;
     if ( (y >= eglib->drawing.clip_ymin) && (y < eglib->drawing.clip_ymax)) eglib->drawing.clip_ymin = y;
     if ( ((y+h) >= eglib->drawing.clip_ymin) && ((y+h) < eglib->drawing.clip_ymax)) eglib->drawing.clip_ymax = y+h;
-    // ESP_LOGI( "dl1", "S xmin:%d xmax:%d ymin:%d ymax:%d", eglib->drawing.clip_xmin, eglib->drawing.clip_xmax, eglib->drawing.clip_ymin, eglib->drawing.clip_ymax );
+    ESP_LOGI( "dl1", "S xmin:%d xmax:%d ymin:%d ymax:%d", eglib->drawing.clip_xmin, eglib->drawing.clip_xmax, eglib->drawing.clip_ymin, eglib->drawing.clip_ymax );
     return;
 };
 
@@ -46,7 +46,7 @@ void eglib_undoClipRange( eglib_t *eglib){
     eglib->drawing.clip_xmin = 0;
     eglib->drawing.clip_ymax = eglib_GetHeight(eglib);
     eglib->drawing.clip_ymin = 0;
-    // ESP_LOGI( "dl1", "U xmin:%d xmax:%d ymin:%d ymax:%d", eglib->drawing.clip_xmin, eglib->drawing.clip_xmax, eglib->drawing.clip_ymin, eglib->drawing.clip_ymax );
+    ESP_LOGI( "dl1", "U xmin:%d xmax:%d ymin:%d ymax:%d", eglib->drawing.clip_xmin, eglib->drawing.clip_xmax, eglib->drawing.clip_ymin, eglib->drawing.clip_ymax );
     return;
 };
 
@@ -65,7 +65,6 @@ void eglib_SetIndexColor(
   eglib->drawing.color_index[idx].r = r;
   eglib->drawing.color_index[idx].g = g;
   eglib->drawing.color_index[idx].b = b;
-  // ESP_LOGI("eglib_SetIndexColor","R:%d G:%d B:%d", eglib->drawing.color_index[0].r, eglib->drawing.color_index[0].g, eglib->drawing.color_index[0].b );
 }
 
 //
@@ -81,7 +80,6 @@ bool eglib_inClipArea(eglib_t * eglib, coordinate_t x, coordinate_t y ){
 		return true;
 	}
 	else{
-		// ESP_LOGI("ili", "outside clip %d %d", x,y );
 		return false;
 	}
 }
@@ -225,7 +223,7 @@ static void draw_fast_90_line(
     if(length < 1)
       return;
 
-    // ESP_LOGI( "dl1", "x:%d y:%d, len:%d", x1, y1, length );
+    ESP_LOGI( "dl1", "x:%d y:%d, len:%d", x1, y1, length );
     eglib->display.driver->draw_line(
       eglib,
       x1, y1,
@@ -790,7 +788,6 @@ void eglib_DrawRoundBox(
 }
 
 void eglib_ClearScreen(eglib_t *eglib) {
-
   eglib_DrawBox(eglib, 0, 0, eglib_GetWidth(eglib), eglib_GetHeight(eglib));
 }
 
@@ -1201,8 +1198,6 @@ struct font_t {
 void eglib_DrawGlyph(eglib_t *eglib, coordinate_t x, coordinate_t y, const struct glyph_t *glyph) {
 	if(glyph == NULL)
 		return;
-
-	// ESP_LOGI("eglib_DrawGlyph", "eglib_DrawGlyph color: R:%d G:%d B:%d", eglib->drawing.color_index[0].r, eglib->drawing.color_index[0].g, eglib->drawing.color_index[0].b );
 	uint8_t *buffer;
 	int ascent = eglib->drawing.font->ascent;
 	int descent = eglib->drawing.font->descent;

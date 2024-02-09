@@ -31,6 +31,8 @@
 AdaptUGC *egl = 0;
 OTA *ota = 0;
 
+// global color variables for adaptable display variant
+
 
 class SwitchObs: public SwitchObserver
 {
@@ -84,7 +86,8 @@ extern "C" void app_main(void)
 
     egl = new AdaptUGC();
     egl->begin();
-    // egl->setRedBlueTwist( true );
+    egl->setColor(0, COLOR_WHITE );
+    egl->setColor(1, COLOR_BLACK );
     egl->clearScreen();
     Buzzer::init(2700);
     Buzzer::play2( BUZZ_C, 500,audio_volume.get(), BUZZ_C, 1000, 0, 1 );
