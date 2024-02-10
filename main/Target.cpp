@@ -68,25 +68,26 @@ void Target::drawInfo(bool erase){
 		sprintf(s,"      %06X", pflaa.ID );
 	}
 	w=egl->getStrWidth(s);
-	egl->setPrintPos( 310-w, 165 );
+	egl->setPrintPos( (DISPLAY_W-10)-w, DISPLAY_H-7 );
 	egl->printf("%s",s);
 
 	egl->setFont( ucg_font_fub25_hf );
 	// Distance right upper corner, constant dist to right end
 	sprintf(s,"%.2f   ", Units::Distance( dist ) );
 	w=egl->getStrWidth(s);
-	egl->setPrintPos( 318-w, 30 );
+	egl->setPrintPos( (DISPLAY_W-2)-w, 30 );
 	egl->printf("%s", s );
 
 	// relative vertical
-	egl->setPrintPos( 5, 165 );
+	egl->setPrintPos( 5, DISPLAY_H-7 );
 	int alt = (int)(Units::Altitude( (float)pflaa.relVertical)+0.5);
 	if( pflaa.relVertical > 0 )
 		egl->printf("+%d    ", alt );
 	else
 		egl->printf("%d    ", alt );
-	egl->setPrintPos( 5, 30 );
 
+
+	egl->setPrintPos( 5, 30 );
 	// climb rate
 	float climb = Units::Vario( (float)pflaa.climbRate );
 	if( climb > 0 )
@@ -99,11 +100,11 @@ void Target::drawInfo(bool erase){
 	if( !erase )
 		egl->setColor( COLOR_BLUE );
 	egl->setFont( ucg_font_fub14_hf );
-	egl->setPrintPos( 255, 50 );
+	egl->setPrintPos( DISPLAY_W-65, 50 );
 	egl->printf(" %s ", Units::DistanceUnit() );
 	egl->setPrintPos( 5, 50 );
 	egl->printf("  %s", Units::VarioUnit() );
-	egl->setPrintPos( 25, 135 );
+	egl->setPrintPos( 25, DISPLAY_H-37 );
 	egl->printf(" %s ", Units::AltitudeUnit() );
 }
 
@@ -128,8 +129,8 @@ void Target::recalc(){
 	float logs = log( 2+prox );
 	float pix = fmax( logs*SCALE, 30.0 );
 	// ESP_LOGI(FNAME,"prox: %f, log:%f, pix:%f", prox, logs, pix );
-	x=160+pix*sin(D2R(rel_target_dir));
-	y=86-pix*cos(D2R(rel_target_dir));
+	x=(DISPLAY_W/2)+pix*sin(D2R(rel_target_dir));
+	y=(DISPLAY_H/2)-pix*cos(D2R(rel_target_dir));
 	// ESP_LOGI(FNAME,"recalc ID: %06X, own heading:%d targ-head:%d rel-target-head:%d (N:%.2f, E:%.2f) x:%d y:%d", pflaa.ID, int(Flarm::getGndCourse()), int(rel_target_heading), int(rel_target_dir) , pflaa.relNorth, pflaa.relEast, x, y ) ;
 }
 
@@ -195,7 +196,7 @@ void Target::draw(){
 		else{
 			egl->setColor( 0, brightness, 0 ); // green
 		}
-		if( x > 0 && x < 320 && y > 0 && y < 172 ){
+		if( x > 0 && x < DISPLAY_W && y > 0 && y < DISPLAY_H ){
 			// ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );
 			drawFlarmTarget( x, y, rel_target_heading, size, false, is_nearest );
 		}

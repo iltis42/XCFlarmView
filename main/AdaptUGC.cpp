@@ -44,8 +44,8 @@ uint8_t PROGMEM eglib_font_free_sansbold_66[] = { EGLIB_FONT_FREE_SANSBOLD_66 };
 
 
 static ili9341_config_t ili9341_config = {
-		.width = 240,
-		.height = 320,
+		.width = DISPLAY_W,
+		.height = DISPLAY_H,
 		.color = ILI9341_COLOR_18_BIT,
 		.page_address = ILI9341_PAGE_ADDRESS_TOP_TO_BOTTOM,
 		.colum_address = ILI9341_COLUMN_ADDRESS_LEFT_TO_RIGHT,

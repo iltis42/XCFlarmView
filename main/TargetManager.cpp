@@ -146,7 +146,7 @@ void TargetManager::tick(){
 			printAlarm( "NO GPS", 10, 110, gps );
 			old_GPS = gps;
 		}
-		drawAirplane( 160,86, Flarm::getGndCourse() );
+		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
 
 
 		for (auto it=targets.begin(); it!=targets.end(); ){
