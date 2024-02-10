@@ -36,13 +36,13 @@ bool SetupMenu::_menu_active = false;
 
 int do_display_test(SetupMenuSelect * p){
 	if( display_test.get() ){
-		egl->setColor( 255,255,255 );
+		egl->setColor( COLOR_WHITE );
 		egl->drawBox( 0, 0, 320, 176 );
 		while( Switch::isOpen() ){
 			delay(100);
 			ESP_LOGI(FNAME,"Wait for key press");
 		}
-		egl->setColor( 0,0,0 );
+		egl->setColor( COLOR_BLACK );
 		egl->drawBox( 0, 0, 320,176 );
 		while( Switch::isOpen() ){
 			delay(100);
