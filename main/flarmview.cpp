@@ -50,6 +50,7 @@ public:
 };
 
 static SetupMenu *menu=0;
+static bool inch2dot4=false;
 
 extern "C" void app_main(void)
 {
@@ -96,9 +97,16 @@ extern "C" void app_main(void)
     std::string ver( "SW Ver.: " );
     ver += V.version();
 
-    egl->setFont(ucg_font_fub20_hn);
+    if( DISPLAY_W == 240 )
+    	inch2dot4 = true;
+
+    if( inch2dot4 )
+    	egl->setFont(ucg_font_fub14_hn);
+    else
+    	egl->setFont(ucg_font_fub20_hn);
+
     egl->setColor(COLOR_WHITE);
-    egl->setPrintPos( 50, 35 );
+    egl->setPrintPos( 10, 35 );
     egl->print("XVFlarmView 2.0");
 
     egl->setPrintPos( 10, 80 );
@@ -108,8 +116,17 @@ extern "C" void app_main(void)
     egl->printf("Flarmnet: %s", FLARMNET_VERSION );
 
     egl->setFont(ucg_font_ncenR14_hr);
-    egl->setPrintPos( 10, 150 );
-    egl->printf("Press Button for SW-Update");
+
+    if( inch2dot4 ){
+    	egl->setPrintPos( 10, 240 );
+    	egl->printf("Press Button for");
+    	egl->setPrintPos( 10, 270 );
+    	egl->printf("SW-Update");
+    }
+    else{
+    	egl->setPrintPos( 10, 150 );
+    	egl->printf("Press Button for SW-Update");
+    }
     Switch::begin(GPIO_NUM_0);
     for(int i=0; i<20; i++){  // 40
     	if( Switch::isClosed() ){
