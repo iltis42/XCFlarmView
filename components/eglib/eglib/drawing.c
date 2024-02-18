@@ -30,7 +30,7 @@ void eglib_setClipRange(
     if ( ((x+w) >= eglib->drawing.clip_xmin) && ((x+w) < eglib->drawing.clip_xmax)) eglib->drawing.clip_xmax = x+w;
     if ( (y >= eglib->drawing.clip_ymin) && (y < eglib->drawing.clip_ymax)) eglib->drawing.clip_ymin = y;
     if ( ((y+h) >= eglib->drawing.clip_ymin) && ((y+h) < eglib->drawing.clip_ymax)) eglib->drawing.clip_ymax = y+h;
-    ESP_LOGI( "dl1", "S xmin:%d xmax:%d ymin:%d ymax:%d", eglib->drawing.clip_xmin, eglib->drawing.clip_xmax, eglib->drawing.clip_ymin, eglib->drawing.clip_ymax );
+    // ESP_LOGI( "dl1", "S xmin:%d xmax:%d ymin:%d ymax:%d", eglib->drawing.clip_xmin, eglib->drawing.clip_xmax, eglib->drawing.clip_ymin, eglib->drawing.clip_ymax );
     return;
 };
 
@@ -46,7 +46,7 @@ void eglib_undoClipRange( eglib_t *eglib){
     eglib->drawing.clip_xmin = 0;
     eglib->drawing.clip_ymax = eglib_GetHeight(eglib);
     eglib->drawing.clip_ymin = 0;
-    ESP_LOGI( "dl1", "U xmin:%d xmax:%d ymin:%d ymax:%d", eglib->drawing.clip_xmin, eglib->drawing.clip_xmax, eglib->drawing.clip_ymin, eglib->drawing.clip_ymax );
+    // ESP_LOGI( "dl1", "U xmin:%d xmax:%d ymin:%d ymax:%d", eglib->drawing.clip_xmin, eglib->drawing.clip_xmax, eglib->drawing.clip_ymin, eglib->drawing.clip_ymax );
     return;
 };
 
@@ -223,7 +223,7 @@ static void draw_fast_90_line(
     if(length < 1)
       return;
 
-    ESP_LOGI( "dl1", "x:%d y:%d, len:%d", x1, y1, length );
+    // ESP_LOGI( "dl1", "x:%d y:%d, len:%d", x1, y1, length );
     eglib->display.driver->draw_line(
       eglib,
       x1, y1,

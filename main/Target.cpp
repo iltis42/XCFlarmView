@@ -13,6 +13,7 @@
 #include "Colors.h"
 #include <cmath>
 #include <algorithm>
+#include <flarmview.h>
 
 
 extern AdaptUGC *egl;
@@ -100,12 +101,31 @@ void Target::drawInfo(bool erase){
 	if( !erase )
 		egl->setColor( COLOR_BLUE );
 	egl->setFont( ucg_font_fub14_hf );
-	egl->setPrintPos( DISPLAY_W-65, 50 );
-	egl->printf(" %s ", Units::DistanceUnit() );
+
+	if( inch2dot4 ){
+		egl->setPrintPos( DISPLAY_W-w-5, 50 );
+		egl->printf("Dis %s ", Units::DistanceUnit() );
+	}
+	else{
+		egl->setPrintPos( DISPLAY_W-65, 50 );
+		egl->printf("%s ", Units::DistanceUnit() );
+	}
+
 	egl->setPrintPos( 5, 50 );
-	egl->printf("  %s", Units::VarioUnit() );
-	egl->setPrintPos( 25, DISPLAY_H-37 );
-	egl->printf(" %s ", Units::AltitudeUnit() );
+	if( inch2dot4 )
+		egl->printf("Var %s ", Units::VarioUnit() );
+	else
+		egl->printf("%s ", Units::VarioUnit() );
+
+
+	if( inch2dot4 ){
+		egl->setPrintPos( 5, DISPLAY_H-37 );
+		egl->printf("Alt %s ", Units::AltitudeUnit() );
+	}
+	else{
+		egl->setPrintPos( 25, DISPLAY_H-37 );
+		egl->printf("%s ", Units::AltitudeUnit() );
+	}
 }
 
 void Target::checkClose(){

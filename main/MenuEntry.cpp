@@ -70,6 +70,7 @@ void MenuEntry::uprintf( int x, int y, const char* format, ...) {
 
 void MenuEntry::restart(){
 	clear();
+	ESP_LOGI(FNAME,"Restart now");
 	egl->setPrintPos( 10, 50 );
 	egl->print("...rebooting now" );
 	delay(2000);

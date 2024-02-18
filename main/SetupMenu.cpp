@@ -277,7 +277,7 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 	un->setHelp( PROGMEM"Setup imperial units for alt(itude), dis(tance), var(iometer)", 125);
 	un->addCreator(options_menu_create_units);
 
-	SetupMenuSelect * demo = new SetupMenuSelect( PROGMEM"Traffic Demo", RST_ON_EXIT, 0, true, &traffic_demo );
+	SetupMenuSelect * demo = new SetupMenuSelect( PROGMEM"Traffic Demo", RST_IMMEDIATE, 0, true, &traffic_demo );
 	demo->addEntry( PROGMEM"Cancel");
 	demo->addEntry( PROGMEM"Start");
 	top->addEntry( demo );

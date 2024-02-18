@@ -50,7 +50,7 @@ public:
 };
 
 static SetupMenu *menu=0;
-static bool inch2dot4=false;
+bool inch2dot4=false;
 
 extern "C" void app_main(void)
 {
@@ -90,8 +90,8 @@ extern "C" void app_main(void)
     egl->setColor(0, COLOR_WHITE );
     egl->setColor(1, COLOR_BLACK );
     egl->clearScreen();
-    Buzzer::init(2700);
-    Buzzer::play2( BUZZ_C, 500,audio_volume.get(), BUZZ_C, 1000, 0, 1 );
+    Buzzer::init();
+   	Buzzer::play( BUZZ_F, 500, 100 );
 
     Version V;
     std::string ver( "SW Ver.: " );
@@ -159,7 +159,7 @@ extern "C" void app_main(void)
     Flarm::begin();
     Serial::begin();
     TargetManager::begin();
-    Buzzer::play2( BUZZ_DH, 150,audio_volume.get(), BUZZ_DH, 1000, 0, 1 );
+    Buzzer::play( BUZZ_DH, 150,audio_volume.get());
 
     if( Serial::selfTest() )
     	printf("Serial Loop Test OK");
