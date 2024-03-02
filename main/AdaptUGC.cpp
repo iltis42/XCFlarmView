@@ -144,7 +144,7 @@ void AdaptUGC::setFont(uint8_t *f, bool filled ){    // adapter
 void  AdaptUGC::begin() {
 	eglib = &myeglib;
 
-	if( EGL_DISPLAY_TOPDOWN ){  // default is DISPLAY_NORMAL
+	if( display_orientation.get() == DISPLAY_TOPDOWN ){
 		ili9341_config.page_address =  ILI9341_PAGE_ADDRESS_BOTTOM_TO_TOP;
 		ili9341_config.colum_address = ILI9341_COLUMN_ADDRESS_RIGHT_TO_LEFT;
 	}

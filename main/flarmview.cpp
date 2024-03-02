@@ -34,23 +34,11 @@ OTA *ota = 0;
 // global color variables for adaptable display variant
 
 
-class SwitchObs: public SwitchObserver
-{
-public:
-	SwitchObs(const char* name) : SwitchObserver() {
-		ESP_LOGI(FNAME,"attach me %s", name );
-		Switch::attach(this);
-	};
-	~SwitchObs() {};
-	void doubleClick() {};
-	void press() {};
-	void longPress() {  ESP_LOGI(FNAME,"LONGPRESS");
-
-					 };
-};
-
 static SetupMenu *menu=0;
 bool inch2dot4=false;
+Switch swUp;
+Switch swDown;
+Switch swMode;
 
 extern "C" void app_main(void)
 {
@@ -127,9 +115,14 @@ extern "C" void app_main(void)
     	egl->setPrintPos( 10, 150 );
     	egl->printf("Press Button for SW-Update");
     }
-    Switch::begin(GPIO_NUM_0);
+
+    swUp.begin(GPIO_NUM_0, B_UP );
+    swDown.begin(GPIO_NUM_3, B_DOWN );
+    swMode.begin(GPIO_NUM_34, B_MODE );
+
+
     for(int i=0; i<20; i++){  // 40
-    	if( Switch::isClosed() ){
+    	if( swMode.isClosed() ){
     		egl->clearScreen();
     		ota = new OTA();
     		ota->doSoftwareUpdate();
@@ -143,7 +136,6 @@ extern "C" void app_main(void)
     egl->setColor(COLOR_WHITE);
    	egl->setPrintPos( 10, 35 );
 
-    // SwitchObs obs("main");
     menu = new SetupMenu();
     menu->begin();
     Switch::startTask();

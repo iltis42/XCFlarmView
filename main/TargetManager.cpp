@@ -13,6 +13,7 @@
 #include "vector.h"
 #include "Switch.h"
 #include "SetupMenu.h"
+#include "flarmview.h"
 
 std::map< unsigned int, Target> TargetManager::targets;
 std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.begin();
@@ -125,7 +126,7 @@ void TargetManager::tick(){
 	if( holddown )
 		holddown--;
 	int tx=Flarm::getTXBit();  // 0 or 1
-	if( !holddown && Switch::isClosed() ){
+	if( !holddown && swMode.isClosed() ){
 		// ESP_LOGI(FNAME,"SW closed");
 		nextTarget( id_timer );
 		id_timer = 10 * (1000/TASK_PERIOD);

@@ -194,7 +194,7 @@ void MenuEntry::clear()
 {
 	// ESP_LOGI(FNAME,"MenuEntry::clear");
 	egl->setColor(COLOR_BLACK);
-	egl->drawBox( 0,0,320,176 );
+	egl->drawBox( 0,0,DISPLAY_H,DISPLAY_W );
 	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos( 1, 30 );
 	egl->setColor(COLOR_WHITE);

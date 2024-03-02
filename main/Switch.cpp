@@ -22,30 +22,34 @@
 #include "average.h"
 #include "vector.h"
 #include "Units.h"
+#include "flarmview.h"
 
 
-bool Switch::_closed = false;
-int Switch::_holddown = 0;
-int Switch::_tick = 0;
-int Switch::_closed_timer = 0;
-int Switch::_long_timer = 0;
+
 std::list<SwitchObserver *> Switch::observers;
-TaskHandle_t Switch::pid = 0;
-int Switch::_click_timer=0;
-int Switch::_clicks=0;
-t_button_state Switch::_state=B_IDLE;
-long int Switch::p_time = 0;
-long int Switch::r_time = 0;
-
-gpio_num_t Switch::_sw = GPIO_NUM_0;
+TaskHandle_t Switch::pid;
 
 #define TASK_PERIOD 10
 
 Switch::Switch() {
+	_sw = GPIO_NUM_0;
+	_mode = B_MODE;
+	_closed = false;
+	_holddown = 0;
+	_tick = 0;
+	_closed_timer = 0;
+	_long_timer = 0;
+	pid = 0;
+	_click_timer=0;
+	_clicks=0;
+	_state=B_IDLE;
+	p_time = 0;
+	r_time = 0;
 }
 
 Switch::~Switch() {
 }
+
 
 void Switch::attach(SwitchObserver *obs) {
 	// ESP_LOGI(FNAME,"Attach obs: %p", obs );
@@ -64,7 +68,9 @@ void Switch::detach(SwitchObserver *obs) {
 
 void Switch::switchTask(void *pvParameters){
 	while(1){
-		tick();
+		swUp.tick();
+		swDown.tick();
+		swMode.tick();
 		delay(TASK_PERIOD);
 	}
 }
@@ -74,9 +80,10 @@ void Switch::startTask(){
 	xTaskCreatePinnedToCore(&switchTask, "Switch", 6096, NULL, 12, &pid, 0);
 }
 
-void Switch::begin( gpio_num_t sw ){
+void Switch::begin( gpio_num_t sw, t_button mode ){
 	ESP_LOGI(FNAME,"Switch::begin GPIO: %d", sw);
 	_sw = sw;
+	_mode = mode;
 	gpio_set_direction(_sw, GPIO_MODE_INPUT);
 	gpio_set_pull_mode(_sw, GPIO_PULLUP_ONLY);
 
@@ -154,8 +161,17 @@ void Switch::tick() {
 
 void Switch::sendPress(){
 	ESP_LOGI(FNAME,"send press p: %ld  r: %ld", millis()-p_time, millis()-r_time );
-	for (auto &observer : observers)
-		observer->press();
+	for (auto &observer : observers){
+		if( _mode == B_MODE ){
+			observer->press();
+		}
+		else if( _mode == B_UP ){
+			observer->up(1);
+		}
+		else if( _mode == B_DOWN ){
+			observer->down(1);
+		}
+	}
 	// ESP_LOGI(FNAME,"End pressed action");
 
 }

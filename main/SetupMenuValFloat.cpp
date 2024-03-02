@@ -118,7 +118,7 @@ float SetupMenuValFloat::step( float instep ){
 	return step;
 }
 
-void SetupMenuValFloat::down( int count ){
+void SetupMenuValFloat::up( int count ){
 	if( (selected != this) )
 		return;
 	// ESP_LOGI(FNAME,"val down %d times ", count );
@@ -136,7 +136,7 @@ void SetupMenuValFloat::down( int count ){
 		(*_action)( this );
 }
 
-void SetupMenuValFloat::up( int count ){
+void SetupMenuValFloat::down( int count ){
 	if( (selected != this) )
 		return;
 	// ESP_LOGI(FNAME,"val up %d times ", count );
@@ -152,7 +152,7 @@ void SetupMenuValFloat::up( int count ){
 }
 
 void SetupMenuValFloat::press(){
-	up(1); // implicit trigger also on long press actions when in Setup menu.
+	longPress(); // implicit trigger also on long press actions when in Setup menu.
 }
 
 void SetupMenuValFloat::longPress(){

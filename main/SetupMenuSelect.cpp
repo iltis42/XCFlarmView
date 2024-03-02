@@ -160,7 +160,7 @@ void SetupMenuSelect::display( int mode ){
 	}
 }
 
-void SetupMenuSelect::down(int count){
+void SetupMenuSelect::up(int count){
 	if( (selected != this)  )
 		return;
 	if( _numval > 9 ){
@@ -183,7 +183,7 @@ void SetupMenuSelect::down(int count){
 	}
 }
 
-void SetupMenuSelect::up(int count){
+void SetupMenuSelect::down(int count){
 	if( (selected != this) )
 		return;
 	if( _numval > 9 )
@@ -210,7 +210,7 @@ void SetupMenuSelect::up(int count){
 }
 
 void SetupMenuSelect::press(){
-	up(1);
+	longPress();
 }
 
 void SetupMenuSelect::longPress(){

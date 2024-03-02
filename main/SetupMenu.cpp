@@ -23,6 +23,7 @@
 #include <string>
 #include "SetupNG.h"
 #include "Colors.h"
+#include "flarmview.h"
 
 SetupMenuSelect * audio_range_sm = 0;
 SetupMenuSelect * mpu = 0;
@@ -38,13 +39,13 @@ int do_display_test(SetupMenuSelect * p){
 	if( display_test.get() ){
 		egl->setColor( COLOR_WHITE );
 		egl->drawBox( 0, 0, 320, 176 );
-		while( Switch::isOpen() ){
+		while( swMode.isOpen() ){
 			delay(100);
 			ESP_LOGI(FNAME,"Wait for key press");
 		}
 		egl->setColor( COLOR_BLACK );
 		egl->drawBox( 0, 0, 320,176 );
-		while( Switch::isOpen() ){
+		while( swMode.isOpen() ){
 			delay(100);
 			ESP_LOGI(FNAME,"Wait for key press");
 		}
@@ -95,7 +96,6 @@ void SetupMenu::setup( )
 {
 	ESP_LOGI(FNAME,"SetupMenu setup()");
 	SetupMenu * root = new SetupMenu( PROGMEM"Setup" );
-	root->setHelp(PROGMEM"Short press <scroll>, long press <enter>", 145 );
 	root->addCreator( setup_create_root );
 	root->create_subtree();
 	selected = root;
@@ -148,8 +148,8 @@ void SetupMenu::display( int mode ){
 	showhelp( y );
 }
 
-void SetupMenu::down(int count){
-	if( (selected != this) )
+void SetupMenu::up(int count){
+	if( (selected != this) || !_menu_active )
 		return;
 	ESP_LOGI(FNAME,"down %d %d", highlight, _childs.size() );
 	if( focus )
@@ -166,7 +166,7 @@ void SetupMenu::down(int count){
 	pressed = true;
 }
 
-void SetupMenu::press(){
+void SetupMenu::down(int count){
 	if( (selected != this) || !_menu_active )
 		return;
 	ESP_LOGI(FNAME,"SetupMenu::up %d %d", highlight, _childs.size() );
@@ -226,8 +226,8 @@ void SetupMenu::showMenu(){
 	ESP_LOGI(FNAME,"end showMenu()");
 }
 
-void SetupMenu::longPress(){
-	ESP_LOGI(FNAME,"Longpress() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
+void SetupMenu::press(){
+	ESP_LOGI(FNAME,"press() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
 	if( selected != this ){
 		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
@@ -238,6 +238,15 @@ void SetupMenu::longPress(){
 		pressed = false;
 	else
 		pressed = true;
+	ESP_LOGI(FNAME,"End Longpress()");
+}
+
+void SetupMenu::longPress(){
+	ESP_LOGI(FNAME,"Longpress() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
+	if( selected != this ){
+		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
+		return;
+	}
 	ESP_LOGI(FNAME,"End Longpress()");
 }
 
@@ -281,6 +290,16 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 	demo->addEntry( PROGMEM"Cancel");
 	demo->addEntry( PROGMEM"Start");
 	top->addEntry( demo );
+
+	// Orientation   _display_orientation
+	if( inch2dot4 ) {
+		SetupMenuSelect * diso = new SetupMenuSelect( "Orientation", RST_ON_EXIT, 0, true, &display_orientation );
+		top->addEntry( diso );
+		diso->setHelp( "Display Orientation. NORMAL means Up/Down on left side, TOPDOWN means Up/Down on the right (reboots)");
+		diso->addEntry( "NORMAL");
+		diso->addEntry( "TOPDOWN");
+	}
+
 
 }
 
