@@ -91,7 +91,7 @@ void SetupMenuValFloat::display( int mode ){
 	}
 	else if (mode == 1){   // save mode, do show only "Saved"true
 		y+=24;
-		egl->setPrintPos( 1, 140 );
+		egl->setPrintPos( 1, DISPLAY_H-30 );
 		egl->print(PROGMEM"Saved");
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
@@ -118,7 +118,7 @@ float SetupMenuValFloat::step( float instep ){
 	return step;
 }
 
-void SetupMenuValFloat::up( int count ){
+void SetupMenuValFloat::down( int count ){
 	if( (selected != this) )
 		return;
 	// ESP_LOGI(FNAME,"val down %d times ", count );
@@ -136,14 +136,14 @@ void SetupMenuValFloat::up( int count ){
 		(*_action)( this );
 }
 
-void SetupMenuValFloat::down( int count ){
+void SetupMenuValFloat::up( int count ){
 	if( (selected != this) )
 		return;
 	// ESP_LOGI(FNAME,"val up %d times ", count );
 	_value = _nvs->get();
 	_value += step( _step );
 	if( _value > _max ) {
-		_value = _min;
+		_value = _max;
 	}
 	_nvs->set(_value );
 	displayVal();

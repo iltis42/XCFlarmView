@@ -115,48 +115,27 @@ void Switch::tick() {
 		break;
 
 	case B_PRESSED:
-		if( isOpen() ){
+		if( isClosed() ){
 			if( (millis() - p_time ) > 350 ){    // was this a long press?
 				sendLongPress();
 				_state = B_IDLE;
-			}else if( (millis() - p_time ) > 50 ){   // if not, filter bounces and go to released state
-				_state = B_ONCE_RELEASED;
-				r_time = millis();
+			}
+			if( !((millis() - p_time ) % 250) ){   // if not, filter bounces and go to released state
+				_state = B_IDLE;
+				sendPress();
+				// ESP_LOGI(FNAME,"100 mS repeat");
+			}
+		}else{
+			if( (millis() - p_time ) > 50 ){   // if not, filter bounces and go to released state
+				_state = B_IDLE;
+				sendPress();
 				// ESP_LOGI(FNAME,"->ONCE_RELEASED after %ld ms", millis() - p_time );
 			}
-			else{
-				_state = B_IDLE;
-			}
-		}
-		break;
-
-	case B_ONCE_RELEASED:
-		if( isClosed() ){             // closed again ?
-			p_time = millis();
-			_state = B_TWICE_CLOSED;
-			// ESP_LOGI(FNAME,"->TWICE CLOSED after %ld ms", millis() - r_time );
-		}
-		else{ // remains open
-			int rdelta = millis() - r_time;    // nope, after timeout its a normal press
-			if(  rdelta > 150  ){ // timeout for DoubleClick, its a single click then
-				// ESP_LOGI(FNAME,"PRESS and ->IDLE after released %d ms", rdelta );
-				sendPress();
-				_state = B_IDLE;
-			}
-		}
-		break;
-
-	case B_TWICE_CLOSED:
-		if( isOpen() ){   // second press ended ?
-			if( (millis() - p_time ) < 150 ){   // had a second short press ?
-				sendDoubleClick();
-				_state = B_IDLE;
-			}else{
-				_state = B_IDLE;   // nope, so throw this odd short/long press event
-			}
+			_state = B_IDLE;
 		}
 		break;
 	}
+
 }
 
 void Switch::sendPress(){

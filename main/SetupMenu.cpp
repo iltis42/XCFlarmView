@@ -38,13 +38,13 @@ bool SetupMenu::_menu_active = false;
 int do_display_test(SetupMenuSelect * p){
 	if( display_test.get() ){
 		egl->setColor( COLOR_WHITE );
-		egl->drawBox( 0, 0, 320, 176 );
+		egl->drawBox( 0, 0, DISPLAY_W, DISPLAY_H );
 		while( swMode.isOpen() ){
 			delay(100);
 			ESP_LOGI(FNAME,"Wait for key press");
 		}
 		egl->setColor( COLOR_BLACK );
-		egl->drawBox( 0, 0, 320,176 );
+		egl->drawBox( 0, 0, DISPLAY_W,DISPLAY_H );
 		while( swMode.isOpen() ){
 			delay(100);
 			ESP_LOGI(FNAME,"Wait for key press");
@@ -220,14 +220,15 @@ void SetupMenu::showMenu(){
 			esp_restart();
 		}else{
 			ESP_LOGI(FNAME,"Now enable Restart");
+			delay(1000);
 			enable_restart = true;
 		}
 	}
 	ESP_LOGI(FNAME,"end showMenu()");
 }
 
-void SetupMenu::press(){
-	ESP_LOGI(FNAME,"press() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
+void SetupMenu::longPress(){
+	ESP_LOGI(FNAME,"LongPress() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
 	if( selected != this ){
 		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
@@ -241,13 +242,16 @@ void SetupMenu::press(){
 	ESP_LOGI(FNAME,"End Longpress()");
 }
 
-void SetupMenu::longPress(){
-	ESP_LOGI(FNAME,"Longpress() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
+void SetupMenu::press(){
+	ESP_LOGI(FNAME,"press() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
 	if( selected != this ){
-		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
+		// ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
-	ESP_LOGI(FNAME,"End Longpress()");
+	if( _menu_active ){
+	   longPress();
+	}
+	// ESP_LOGI(FNAME,"End press()");
 }
 
 void SetupMenu::escape(){
@@ -298,6 +302,7 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 		diso->setHelp( "Display Orientation. NORMAL means Up/Down on left side, TOPDOWN means Up/Down on the right (reboots)");
 		diso->addEntry( "NORMAL");
 		diso->addEntry( "TOPDOWN");
+		top->setHelp( "Press <Up>/<Down> button to modify, <ID> button to confirm", 200);
 	}
 
 

@@ -178,7 +178,7 @@ void MenuEntry::showhelp( int y ){
 		{
 			int len = egl->getStrWidth( words[p] );
 			// ESP_LOGI(FNAME,"showhelp pix len word #%d = %d, %s ", p, len, words[p]);
-			if( x+len > 319 ) {   // does still fit on line
+			if( x+len > DISPLAY_W ) {   // does still fit on line
 				y+=25;
 				x=1;
 			}
@@ -194,7 +194,7 @@ void MenuEntry::clear()
 {
 	// ESP_LOGI(FNAME,"MenuEntry::clear");
 	egl->setColor(COLOR_BLACK);
-	egl->drawBox( 0,0,DISPLAY_H,DISPLAY_W );
+	egl->drawBox( 0,0,DISPLAY_W,DISPLAY_H );
 	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos( 1, 30 );
 	egl->setColor(COLOR_WHITE);
