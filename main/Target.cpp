@@ -74,7 +74,7 @@ void Target::drawInfo(bool erase){
 
 	egl->setFont( ucg_font_fub25_hf );
 	// Distance right upper corner, constant dist to right end
-	sprintf(s,"%.2f   ", Units::Distance( dist ) );
+	sprintf(s,"  %.2f   ", Units::Distance( dist ) );
 	w=egl->getStrWidth(s);
 	egl->setPrintPos( (DISPLAY_W-2)-w, 30 );
 	egl->printf("%s", s );
@@ -103,8 +103,15 @@ void Target::drawInfo(bool erase){
 	egl->setFont( ucg_font_fub14_hf );
 
 	if( inch2dot4 ){
-		egl->setPrintPos( DISPLAY_W-w-5, 50 );
-		egl->printf("Dis %s ", Units::DistanceUnit() );
+		egl->setPrintPos( DISPLAY_W-40, DISPLAY_H-37 );
+		egl->printf("ID");
+	}
+
+	if( inch2dot4 ){
+		sprintf(s,"  Dis %s ", Units::DistanceUnit() );
+		w=egl->getStrWidth(s);
+		egl->setPrintPos( (DISPLAY_W-10)-w, 50 );
+		egl->printf("%s",s);
 	}
 	else{
 		egl->setPrintPos( DISPLAY_W-65, 50 );
