@@ -116,7 +116,7 @@ void Switch::tick() {
 
 	case B_PRESSED:
 		if( isClosed() ){
-			if( (millis() - p_time ) > 350 ){    // was this a long press?
+			if( (millis() - p_time ) > 550 ){    // was this a long press?
 				sendLongPress();
 				_state = B_IDLE;
 			}

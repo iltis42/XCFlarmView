@@ -37,9 +37,12 @@ public:
 	static void catchFocus( bool activate );
 	static bool focus;
 	static bool _menu_active;
+	static int hpos;
+
 
 	static void setup_create_root( MenuEntry *top );
 	static void options_menu_create_units( MenuEntry *top );
+	static void options_menu_create_settings( MenuEntry *top );
 };
 
 #endif
