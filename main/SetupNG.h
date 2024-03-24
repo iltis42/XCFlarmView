@@ -48,6 +48,7 @@ typedef enum e_sync { SYNC_NONE, SYNC_FROM_MASTER, SYNC_FROM_CLIENT, SYNC_BIDIR 
 typedef enum e_reset { RESET_NO, RESET_YES } e_reset_t;   // determines if data is reset to defaults on factory reset
 typedef enum e_volatility { VOLATILE, PERSISTENT, SEMI_VOLATILE } e_volatility_t;  // stored in RAM, FLASH, or into FLASH after a while
 typedef enum e_display_orientation { DISPLAY_NORMAL, DISPLAY_TOPDOWN } e_display_orientation_t;
+typedef enum e_display_mode { DISPLAY_MULTI, DISPLAY_SIMPLE } e_display_mode_t;
 typedef enum e_unit_type{ UNIT_NONE, UNIT_TEMPERATURE, UNIT_ALT, UNIT_SPEED, UNIT_VARIO, UNIT_QNH } e_unit_type_t;
 typedef enum e_alt_unit { ALT_UNIT_METER, ALT_UNIT_FT, ALT_UNIT_FL } e_alt_unit_t;
 typedef enum e_dst_unit { DST_UNIT_KM, DST_UNIT_FT, DST_UNIT_MILES } e_dst_unit_t;
@@ -331,5 +332,7 @@ extern SetupNG<int>  		display_test;
 extern SetupNG<float>  		audio_volume;
 extern SetupNG<int> 		data_monitor;
 extern SetupNG<int> 		traffic_demo;
+extern SetupNG<int>  		display_orientation;
+extern SetupNG<int>  		display_mode;
 
 
