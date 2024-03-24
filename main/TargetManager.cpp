@@ -146,9 +146,9 @@ void TargetManager::tick(){
 			printAlarm( "NO GPS", 10, 110, gps );
 			old_GPS = gps;
 		}
-		drawAirplane( 160,86, Flarm::getGndCourse() );
+		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
 
-
+		// Pass one: determine proximity
 		for (auto it=targets.begin(); it!=targets.end(); ){
 			it->second.ageTarget();
 			it->second.nearest(false);
@@ -181,6 +181,7 @@ void TargetManager::tick(){
 			}
 			//		ESP_LOGI(FNAME,"ID %06X, AGE: %d ", it->first, it->second.getAge() );
 		}
+		// Pass 2, draw targets
 		for (auto it=targets.begin(); it!=targets.end(); it++ ){
 			if( !id_timer )
 			{	if( it->first == min_id ){
@@ -189,7 +190,6 @@ void TargetManager::tick(){
 				it->second.nearest(false);
 			}
 			}
-
 			if( it->second.getAge() < 30 ){
 				if( it->second.isNearest() || it->second.haveAlarm() ){
 					it->second.draw();  // closest == true
