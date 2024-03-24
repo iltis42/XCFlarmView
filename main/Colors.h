@@ -26,5 +26,5 @@
 
 
 
-#define DISPLAY_H 320
-#define DISPLAY_W 172
+#define DISPLAY_H 172 
+#define DISPLAY_W 320

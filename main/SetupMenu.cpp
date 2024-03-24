@@ -33,6 +33,8 @@ static bool enable_restart = false;
 float elev_step = 1;
 bool SetupMenu::focus = false;
 bool SetupMenu::_menu_active = false;
+int SetupMenu::hpos = 125;
+
 
 int do_display_test(SetupMenuSelect * p){
 	if( display_test.get() ){
@@ -126,7 +128,7 @@ void SetupMenu::display( int mode ){
 	egl->setPrintPos(1,y);
 	egl->setFontPosBottom();
 	egl->printf("<< %s",selected->_title);
-	egl->drawFrame( 1,(selected->highlight+1)*25+3,318,25 );
+	egl->drawFrame( 1,(selected->highlight+1)*25+3,DISPLAY_W,25 );
 	for (int i=0; i<_childs.size(); i++ ){
 		MenuEntry * child = _childs[i];
 		egl->setPrintPos(1,(i+1)*25+25);
@@ -155,14 +157,14 @@ void SetupMenu::down(int count){
 	if( focus )
 		return;
 	egl->setColor(COLOR_BLACK);
-	egl->drawFrame( 1,(highlight+1)*25+3,318,25 );
+	egl->drawFrame( 1,(highlight+1)*25+3,DISPLAY_W,25 );
 	egl->setColor(COLOR_WHITE);
 	if( highlight  > -1 ){
 		highlight --;
 	}
 	else
 		highlight = (int)(_childs.size() -1 );
-	egl->drawFrame( 1,(highlight+1)*25+3,318,25 );
+	egl->drawFrame( 1,(highlight+1)*25+3,DISPLAY_W,25 );
 	pressed = true;
 }
 
@@ -173,14 +175,14 @@ void SetupMenu::press(){
 	if( focus )
 		return;
 	egl->setColor(COLOR_BLACK);
-	egl->drawFrame( 1,(highlight+1)*25+3,318,25 );
+	egl->drawFrame( 1,(highlight+1)*25+3,DISPLAY_W,25 );
 	egl->setColor(COLOR_WHITE);
 	if( highlight < (int)(_childs.size()-1) ){
 		highlight ++;
 	}
 	else
 		highlight = -1;
-	egl->drawFrame( 1,(highlight+1)*25+3,318,25 );
+	egl->drawFrame( 1,(highlight+1)*25+3,DISPLAY_W,25 );
 	pressed = true;
 }
 
@@ -264,20 +266,31 @@ void SetupMenu::options_menu_create_units( MenuEntry *top ){
         top->addEntry( dst );
 }
 
+void SetupMenu::options_menu_create_settings( MenuEntry *top ){
+	SetupMenuValFloat * vol = new SetupMenuValFloat( PROGMEM"Buzzer Volume", "%", 0.0, 100, 10, vol_adj, false, &audio_volume );
+	vol->setHelp(PROGMEM"Buzzer volume maximum level", hpos );
+	top->addEntry( vol );
+
+	SetupMenuSelect * mod = new SetupMenuSelect( PROGMEM"Display Mode", RST_NONE, 0, true, &display_mode );
+	mod->addEntry( PROGMEM"Normal");
+	mod->addEntry( PROGMEM"Simple");
+	top->addEntry( mod );
+	mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
+}
 
 
 void SetupMenu::setup_create_root(MenuEntry *top ){
-	ESP_LOGI(FNAME,"setup_create_root()");
-	SetupMenuValFloat * vol = new SetupMenuValFloat( PROGMEM"Buzzer Volume", "%", 0.0, 100, 10, vol_adj, false, &audio_volume );
-	vol->setHelp(PROGMEM"Buzzer volume maximum level", 110 );
-	top->addEntry( vol );
+	SetupMenu * set = new SetupMenu( PROGMEM"Settings" );
+	top->addEntry( set );
+	set->setHelp( PROGMEM"Setup volume and mode", hpos);
+	set->addCreator(options_menu_create_settings);
 
 	SetupMenu * un = new SetupMenu( PROGMEM"Units" );
 	top->addEntry( un );
-	un->setHelp( PROGMEM"Setup imperial units for alt(itude), dis(tance), var(iometer)", 125);
+	un->setHelp( PROGMEM"Setup imperial units for alt(itude), dis(tance), var(iometer)", hpos);
 	un->addCreator(options_menu_create_units);
 
-	SetupMenuSelect * demo = new SetupMenuSelect( PROGMEM"Traffic Demo", RST_ON_EXIT, 0, true, &traffic_demo );
+	SetupMenuSelect * demo = new SetupMenuSelect( PROGMEM"Traffic Demo", RST_IMMEDIATE, 0, true, &traffic_demo );
 	demo->addEntry( PROGMEM"Cancel");
 	demo->addEntry( PROGMEM"Start");
 	top->addEntry( demo );
