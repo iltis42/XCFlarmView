@@ -30,6 +30,7 @@
 
 AdaptUGC *egl = 0;
 OTA *ota = 0;
+bool inch2dot4=false;
 
 
 class SwitchObs: public SwitchObserver
