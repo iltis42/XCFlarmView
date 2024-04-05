@@ -44,6 +44,8 @@ Target::Target( nmea_pflaa_s a_pflaa ) {
 	}
 }
 
+// tick to debug artefacts
+// static int tick=0;
 
 void Target::drawInfo(bool erase){
 	char s[32];
@@ -73,7 +75,11 @@ void Target::drawInfo(bool erase){
 
 	egl->setFont( ucg_font_fub25_hf );
 	// Distance right upper corner, constant dist to right end
-	sprintf(s,"%.2f   ", Units::Distance( dist ) );
+	float d = Units::Distance( dist );
+	//if( !(tick % 10) )
+	//	d = d*100;
+
+	sprintf(s,"    %.2f ", d );
 	w=egl->getStrWidth(s);
 	egl->setPrintPos( 318-w, 30 );
 	egl->printf("%s", s );
@@ -81,18 +87,25 @@ void Target::drawInfo(bool erase){
 	// relative vertical
 	egl->setPrintPos( 5, 165 );
 	int alt = (int)(Units::Altitude( (float)pflaa.relVertical)+0.5);
+	// tick++;
+	// if( !(tick % 10) )
+	//	alt = alt*100;
+
 	if( pflaa.relVertical > 0 )
-		egl->printf("+%d    ", alt );
+		egl->printf("+%d     ", alt );
 	else
-		egl->printf("%d    ", alt );
+		egl->printf("%d     ", alt );
 	egl->setPrintPos( 5, 30 );
 
 	// climb rate
 	float climb = Units::Vario( (float)pflaa.climbRate );
+	//if( !(tick % 10) )
+	//	climb = climb*100;
+
 	if( climb > 0 )
-		sprintf(s,"+%.1f  ", climb );
+		sprintf(s,"+%.1f    ", climb );
 	else
-		sprintf(s," %.1f  ", climb );
+		sprintf(s," %.1f    ", climb );
 	egl->printf("%s", s);
 
 	// Units

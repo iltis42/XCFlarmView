@@ -184,11 +184,12 @@ void TargetManager::tick(){
 		// Pass 2, draw targets
 		for (auto it=targets.begin(); it!=targets.end(); it++ ){
 			if( !id_timer )
-			{	if( it->first == min_id ){
-				it->second.nearest(true);
-			}else{
-				it->second.nearest(false);
-			}
+			{
+				if( it->first == min_id ){
+					it->second.nearest(true);
+				}else{
+					it->second.nearest(false);
+				}
 			}
 			if( it->second.getAge() < 30 ){
 				if( it->second.isNearest() || it->second.haveAlarm() ){
