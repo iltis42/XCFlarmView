@@ -116,9 +116,9 @@ void Switch::tick() {
 
 	case B_PRESSED:
 		if( isClosed() ){
-			if( (millis() - p_time ) > 550 ){    // was this a long press?
+			if( (millis() - p_time ) > 750 ){    // was this a long press?
 				sendLongPress();
-				_state = B_IDLE;
+				_state = B_LONG_PRESSED;
 			}
 			if( !((millis() - p_time ) % 250) ){   // if not, filter bounces and go to released state
 				_state = B_IDLE;
@@ -131,6 +131,11 @@ void Switch::tick() {
 				sendPress();
 				// ESP_LOGI(FNAME,"->ONCE_RELEASED after %ld ms", millis() - p_time );
 			}
+			_state = B_IDLE;
+		}
+		break;
+	case B_LONG_PRESSED:
+		if( isOpen() ){   // button pressed
 			_state = B_IDLE;
 		}
 		break;
