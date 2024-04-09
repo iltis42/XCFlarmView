@@ -118,7 +118,7 @@ void Switch::tick() {
 		if( isClosed() ){
 			if( (millis() - p_time ) > 750 ){    // was this a long press?
 				sendLongPress();
-				_state = B_LONG_PRESSED;
+				_state = B_IDLE;
 			}
 			if( !((millis() - p_time ) % 250) ){   // if not, filter bounces and go to released state
 				_state = B_IDLE;
