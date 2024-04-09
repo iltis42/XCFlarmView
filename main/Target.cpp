@@ -24,10 +24,10 @@ char Target::cur_alt[32] = { 0 };
 char Target::cur_id[32]= { 0 };
 char Target::cur_var[32]= { 0 };
 
-float Target::old_dist = -10000;
-unsigned int Target::old_alt  = -10000;
+int Target::old_dist = -10000;
+unsigned int Target::old_alt  = 100000;
 unsigned int Target::old_id = 0;
-float Target::old_var  = -10000;
+int Target::old_var  = -10000.0;
 
 
 Target::Target() {
@@ -88,18 +88,18 @@ void Target::drawVar( uint8_t r, uint8_t g, uint8_t b ){
 
 void Target::drawInfo(bool erase){
 	char s[32]= { 0 };
-	// ESP_LOGI(FNAME,"ID %06X, drawInfo, erase=%d", pflaa.ID, erase );
+	ESP_LOGI(FNAME,"ID %06X, drawInfo, erase=%d", pflaa.ID, erase );
 	if( pflaa.ID == 0 )
 		return;
 
 	// distance info
-	if( (old_dist != dist) | erase ){
+	if( (old_dist != (int)(dist*100)) | erase ){
 		if( strlen( cur_dist ) )
 			drawDist( COLOR_BLACK );  // erase
 		if( !erase ){
 			sprintf(cur_dist,"%.2f", Units::Distance( dist ) );
 			drawDist(COLOR_WHITE);
-			old_dist = dist;
+			old_dist = (int)(dist*100);
 		}
 	}
 
@@ -137,7 +137,7 @@ void Target::drawInfo(bool erase){
 	}
 
 	// climb rate
-	if( (old_alt != pflaa.climbRate) | erase ){
+	if( (old_var != (int)(pflaa.climbRate*10)) | erase ){
 		if( strlen( cur_var ) )
 			drawVar( COLOR_BLACK );  // erase
 		if( !erase ){
@@ -147,7 +147,7 @@ void Target::drawInfo(bool erase){
 			else
 				sprintf(cur_var,"%.1f", climb );
 			drawVar( COLOR_WHITE );
-			old_alt = pflaa.climbRate;
+			old_var = (int)(pflaa.climbRate*10);
 		}
 	}
 
@@ -172,7 +172,9 @@ void Target::drawInfo(bool erase){
 		egl->printf("%s",s);
 	}
 	else{
-		egl->setPrintPos( DISPLAY_W-65, 50 );
+		sprintf(s,"%s ", Units::DistanceUnit() );
+		int w=egl->getStrWidth(s);
+		egl->setPrintPos( DISPLAY_W-5-w, 50 );
 		egl->printf("%s ", Units::DistanceUnit() );
 	}
 
@@ -187,7 +189,7 @@ void Target::drawInfo(bool erase){
 		egl->printf("Alt %s ", Units::AltitudeUnit() );
 	}
 	else{
-		egl->setPrintPos( 25, DISPLAY_H-37 );
+		egl->setPrintPos( 5, DISPLAY_H-37 );
 		egl->printf("%s ", Units::AltitudeUnit() );
 	}
 

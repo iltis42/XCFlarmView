@@ -58,10 +58,10 @@ private:
 	static char cur_id[32];
 	static char cur_var[32];
 
-	static float old_dist;
+	static int old_dist;
 	static unsigned int old_alt;
 	static unsigned int old_id;
-	static float old_var;
+	static int old_var;
 };
 
 #endif /* MAIN_TARGET_H_ */
