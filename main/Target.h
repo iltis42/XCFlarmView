@@ -37,6 +37,10 @@ public:
 private:
 	void checkAlarm();
 	void drawFlarmTarget( int x, int y, float bearing, int sideLength, bool erase=false, bool closest=false );
+	void drawDist( uint8_t r, uint8_t g, uint8_t b );
+	void drawVar( uint8_t r, uint8_t g, uint8_t b );
+	void drawAlt( uint8_t r, uint8_t g, uint8_t b );
+	void drawID( uint8_t r, uint8_t g, uint8_t b );
 	nmea_pflaa_s pflaa;
 	int age;
 	int _buzzedHoldDown;
@@ -48,6 +52,16 @@ private:
 	char * comp; // competition ID
 	void recalc();
 	bool is_nearest;
+
+	static char cur_dist[32];
+	static char cur_alt[32];
+	static char cur_id[32];
+	static char cur_var[32];
+
+	static float old_dist;
+	static unsigned int old_alt;
+	static unsigned int old_id;
+	static float old_var;
 };
 
 #endif /* MAIN_TARGET_H_ */
