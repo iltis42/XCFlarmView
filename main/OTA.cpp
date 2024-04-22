@@ -30,7 +30,7 @@ OTA::OTA(){
 	tick = 0;
 }
 
-const char* ssid = "ESP32-OTA";
+const char* ssid = CONFIG_AP_SSID;
 const char* wifi_password = "esp32-ota";
 
 void OTA::writeText( int line, const char *text ){

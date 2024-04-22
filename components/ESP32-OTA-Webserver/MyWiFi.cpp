@@ -185,7 +185,7 @@ void init_wifi_softap(void *arg)
 	
 	// configure the wifi connection and start the interface
 	wifi_config_t ap_config;
-	strcpy( (char *)(ap_config.ap.ssid), "ESP32 OTA" );
+	strcpy( (char *)(ap_config.ap.ssid), CONFIG_AP_SSID );
 	strcpy( (char*)ap_config.ap.password, wifi_password );
 	ap_config.ap.ssid_len = 0;
 	uint32_t channel = esp_random()%11;
