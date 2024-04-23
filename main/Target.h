@@ -12,7 +12,7 @@
 #define MAIN_TARGET_H_
 
 
-#define SCALE 30  // 1km
+#define SCALE 30  // 1km @ zoom = 1
 
 class Target {
 public:
@@ -62,6 +62,7 @@ private:
 	static unsigned int old_alt;
 	static unsigned int old_id;
 	static int old_var;
+	static int blink;
 };
 
 #endif /* MAIN_TARGET_H_ */

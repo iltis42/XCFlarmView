@@ -154,8 +154,15 @@ void SetupMenu::display( int mode ){
 }
 
 void SetupMenu::up(int count){
-	if( (selected != this) || !_menu_active )
+	if( selected != this ){
 		return;
+	}
+	if( !_menu_active ){
+		ESP_LOGI(FNAME,"zoom up %s", _title );
+		if( zoom < 5.0 )
+			zoom = zoom * 1.3;
+		return;
+	}
 	ESP_LOGI(FNAME,"down %d %d", highlight, _childs.size() );
 	if( focus )
 		return;
@@ -172,8 +179,14 @@ void SetupMenu::up(int count){
 }
 
 void SetupMenu::down(int count){
-	if( (selected != this) || !_menu_active )
+	if( selected != this)
 		return;
+	if( !_menu_active ){
+		if( zoom > 0.5 )
+			zoom = zoom * 0.7;
+		ESP_LOGI(FNAME,"zoom down %f", zoom );
+		return;
+	}
 	ESP_LOGI(FNAME,"SetupMenu::up %d %d", highlight, _childs.size() );
 	if( focus )
 		return;
@@ -284,21 +297,27 @@ void SetupMenu::options_menu_create_units( MenuEntry *top ){
 
 void SetupMenu::options_menu_create_settings( MenuEntry *top ){
 	SetupMenuValFloat * vol = new SetupMenuValFloat( PROGMEM"Buzzer Volume", "%", 0.0, 100, 10, vol_adj, false, &audio_volume );
-	vol->setHelp(PROGMEM"Buzzer volume maximum level", 110 );
+	vol->setHelp(PROGMEM"Buzzer volume maximum level", 160 );
 	top->addEntry( vol );
 
     SetupMenuSelect * mod = new SetupMenuSelect( PROGMEM"Display Mode", RST_NONE, 0, true, &display_mode );
     mod->addEntry( PROGMEM"Normal");
     mod->addEntry( PROGMEM"Simple");
     top->addEntry( mod );
-    mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
+    mod->setHelp( "Normal mode for multiple targets, Simple mode only one", 160 );
+
+    SetupMenuSelect * log = new SetupMenuSelect( PROGMEM"Distance Mode", RST_NONE, 0, true, &log_scale );
+    log->addEntry( PROGMEM"Linear");
+    log->addEntry( PROGMEM"Logarithmic");
+    top->addEntry( log );
+    log->setHelp(PROGMEM"Select distance either linear or logarithmic what zooms far distant targets on the screen", 160 );
 }
 
 void SetupMenu::setup_create_root(MenuEntry *top ){
 	ESP_LOGI(FNAME,"setup_create_root()");
 	SetupMenu * set = new SetupMenu( PROGMEM"Settings" );
 	top->addEntry( set );
-	set->setHelp( PROGMEM"Setup volume and mode", 125);
+	set->setHelp( PROGMEM"Setup volume and other modes", 160);
 	set->addCreator(options_menu_create_settings);
 
 	SetupMenu * un = new SetupMenu( PROGMEM"Units" );

@@ -42,6 +42,7 @@ SetupNG<int>  			serial1_tx_enable( "SER1_TX_ENA", 1 );
 SetupNG<int>  			software_update( "SOFTWARE_UPDATE", 0 );
 SetupNG<int>	        log_level( "LOG_LEVEL", 3 );
 SetupNG<int>            factory_reset( "FACTORY_RES" , 0 );
+SetupNG<int>	        log_scale( "LOG_SCALE", 0 );
 
 SetupNG<int>            alt_unit( "ALT_UNIT", ALT_UNIT_METER );
 SetupNG<int>            ias_unit( "IAS_UNIT", SPEED_UNIT_KMH );

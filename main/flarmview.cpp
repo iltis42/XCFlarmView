@@ -39,6 +39,7 @@ bool inch2dot4=false;
 Switch swUp;
 Switch swDown;
 Switch swMode;
+float zoom=1.0;
 
 extern "C" void app_main(void)
 {

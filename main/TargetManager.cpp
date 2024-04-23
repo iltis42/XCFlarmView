@@ -26,6 +26,7 @@ int TargetManager::_tick =  0;
 int TargetManager::holddown =  0;
 TaskHandle_t TargetManager::pid = 0;
 unsigned int TargetManager::min_id = 0;
+float TargetManager::old_radius=0.0;
 
 
 #define TASK_PERIOD 100
@@ -64,10 +65,10 @@ TargetManager::~TargetManager() {
 	// TODO Auto-generated destructor stub
 }
 
-void TargetManager::drawN( int x, int y, bool erase, float north ){
+void TargetManager::drawN( int x, int y, bool erase, float north, float dist ){
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setFontPosCenter();
-	egl->setPrintPos( x-SCALE*sin(D2R(north))-5, y-SCALE*cos(D2R(north))+6 );
+	egl->setPrintPos( x-dist*sin(D2R(north))-5, y-dist*cos(D2R(north))+6 );
 	egl->setFont(ucg_font_ncenR14_hr);
 	if(erase)
 		egl->setColor(COLOR_BLACK);
@@ -83,13 +84,21 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 	egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
 	egl->drawTetragon( x-1,y+10, x-1,y-6, x+1,y-6, x+1,y+10 ); // fuselage
 	egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
-	egl->setColor(COLOR_GREEN);
-	egl->drawCircle( x,y, 25 );
-	if( north != oldN ){
-		if( oldN != -1.0 )
-			drawN( x,y, true, oldN );
-		drawN( x,y, false, north );
+	float logs = 1;
+	if( log_scale.get() )
+		logs = log( 2+1 );
+	float new_radius = zoom*logs*SCALE;
+
+	if( old_radius ){
+		egl->setColor(COLOR_BLACK);
+		egl->drawCircle( x,y, old_radius );
 	}
+	egl->setColor(COLOR_GREEN);
+	egl->drawCircle( x,y, new_radius );
+	if( oldN != -1.0 )
+		drawN( x,y, true, oldN, old_radius );
+	drawN( x,y, false, north, new_radius );
+	old_radius = new_radius;
 }
 
 void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
