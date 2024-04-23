@@ -122,8 +122,8 @@ extern "C" void app_main(void)
     swMode.begin(GPIO_NUM_34, B_MODE );
 
 
-    for(int i=0; i<20; i++){  // 40
-    	if( swMode.isClosed() ){
+    for(int i=0; i<30; i++){  // 40
+    	if( swMode.isClosed() || swUp.isClosed() || swDown.isClosed() ){
     		egl->clearScreen();
     		ota = new OTA();
     		ota->doSoftwareUpdate();
