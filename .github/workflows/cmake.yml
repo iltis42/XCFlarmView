@@ -44,7 +44,7 @@ jobs:
       with:
         name: XCFlarmView-${{ env.FILE_VERSION }}
         path: artifacts/xcflarmview-${{ env.FILE_VERSION }}.bin
-              #$PWD/artifacts/xcflarmview-${{ env.FILE_VERSION }}.elf.gz
+              artifacts/xcflarmview-${{ env.FILE_VERSION }}.elf.gz
      
     # - name: Upload ELF
     #  uses: actions/upload-artifact@v4
