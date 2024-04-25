@@ -241,7 +241,7 @@ void Serial::huntBaudrate(){
 			trials = 0;
 			baudrate++;
 			if( baudrate > 6 ){
-				baudrate=2;  // 9600
+				baudrate=1;  // 4800
 			}
 			uart_set_baudrate(uart_num, baud[baudrate]);
 			ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
