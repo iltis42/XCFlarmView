@@ -104,6 +104,10 @@ extern "C" void app_main(void)
     egl->setPrintPos( 10, 115 );
     egl->printf("Flarmnet: %s", FLARMNET_VERSION );
 
+    if( serial1_tx_enable.get() ){ // we don't need TX pin, so disable
+      	serial1_tx_enable.set(0);
+    }
+
     egl->setFont(ucg_font_ncenR14_hr);
 
     if( inch2dot4 ){
