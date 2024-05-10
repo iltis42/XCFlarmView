@@ -293,8 +293,8 @@ void Serial::begin(){
 			}else{
 				ESP_LOGI(FNAME,"Serial pins twisted, TX disabled" );
 				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_36, GPIO_NUM_37, GPIO_NUM_33, GPIO_NUM_34));
-				gpio_set_direction(GPIO_NUM_37, GPIO_MODE_INPUT);     // high impedance
-				gpio_pullup_dis( GPIO_NUM_37 );
+				gpio_set_direction(GPIO_NUM_38, GPIO_MODE_INPUT);     // high impedance
+				gpio_pullup_dis( GPIO_NUM_38 );
 			}
 		}
 		else{
@@ -304,9 +304,9 @@ void Serial::begin(){
 				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_37, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));
 			}else{
 				ESP_LOGI(FNAME,"Serial pins normal, TX disable" );
-				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_37, GPIO_NUM_36, GPIO_NUM_33, GPIO_NUM_34));
-				gpio_set_direction(GPIO_NUM_38, GPIO_MODE_INPUT);     // high impedance
-				gpio_pullup_dis( GPIO_NUM_38 );
+				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_36, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));
+				gpio_set_direction(GPIO_NUM_37, GPIO_MODE_INPUT);     // high impedance
+				gpio_pullup_dis( GPIO_NUM_37 );
 			}
 		}
 	}
