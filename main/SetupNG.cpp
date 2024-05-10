@@ -37,7 +37,7 @@ SetupNG<int>  			serial1_pins_twisted( "SERIAL1_PINS", 0 );
 SetupNG<int>  			serial1_rxloop( "SERIAL1_RXLOOP", 0 );
 SetupNG<int>  			serial1_tx_inverted( "SERIAL1_TX_INV", RS232_INVERTED );
 SetupNG<int>  			serial1_rx_inverted( "SERIAL1_RX_INV", RS232_INVERTED );
-SetupNG<int>  			serial1_tx_enable( "SER1_TX_ENA", 1 );
+SetupNG<int>  			serial1_tx_enable( "SER1_TX_ENA", 0 );
 
 SetupNG<int>  			software_update( "SOFTWARE_UPDATE", 0 );
 SetupNG<int>	        log_level( "LOG_LEVEL", 3 );
