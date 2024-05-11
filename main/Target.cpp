@@ -106,8 +106,10 @@ void Target::drawInfo(bool erase){
 
 	// Flarm ID right down
 	if( (old_id != pflaa.ID) | erase ){
-		if( strlen( cur_id ) )
+		if( strlen( cur_id ) ){
 			drawID( COLOR_BLACK );  // erase
+			old_id = 0;
+		}
 		if( !erase ){
 			if( reg ){
 				if( comp )
