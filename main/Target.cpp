@@ -265,7 +265,7 @@ void Target::checkAlarm(){
 void Target::draw(){
 	checkAlarm();
 	int size = std::min( 30.0, std::min( 80.0, 10.0+10.0/dist )  );
-	if( old_x != -1000 && x != -1000 ){
+	if( old_x != -1000  ){  // delete target if it was drawn before
 		// ESP_LOGI(FNAME,"drawFlarmTarget() erase old x:%d old_x:%d", x, old_x );
 		egl->setColor( COLOR_BLACK );   // BLACK
 		drawFlarmTarget( old_x, old_y, old_track, old_size, true, old_closest );
