@@ -54,7 +54,7 @@ SetupNG<int> 			data_monitor("DATAMON", MON_OFF, true, SYNC_NONE, VOLATILE  );
 SetupNG<int> 			traffic_demo("TRADEM", 0 );
 SetupNG<int>  			display_orientation("DISPLAY_ORIENT" , DISPLAY_NORMAL );
 SetupNG<int>  			display_mode("DISPLAY_MODE" , DISPLAY_MULTI );
-
+SetupNG<int>  			display_non_moving_target("NON_MOVE" , NON_MOVE_HIDE );
 
 
 

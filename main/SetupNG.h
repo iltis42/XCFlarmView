@@ -55,6 +55,7 @@ typedef enum e_dst_unit { DST_UNIT_KM, DST_UNIT_FT, DST_UNIT_MILES } e_dst_unit_
 typedef enum e_speed_unit { SPEED_UNIT_KMH, SPEED_UNIT_MPH, SPEED_UNIT_KNOTS } e_speed_unit_t;
 typedef enum e_vario_unit { VARIO_UNIT_MS, VARIO_UNIT_FPM, VARIO_UNIT_KNOTS } e_vario_unit_t;
 typedef enum e_data_monitor { MON_OFF, MON_BLUETOOTH, MON_WIFI_8880, MON_WIFI_8881, MON_WIFI_8882, MON_S1, MON_S2, MON_CAN  }  e_data_monitor_t;
+typedef enum e_non_move { NON_MOVE_HIDE, NON_MOVE_DISPLAY } e_non_move_t;
 
 void change_bal();
 
@@ -335,5 +336,6 @@ extern SetupNG<int> 		data_monitor;
 extern SetupNG<int> 		traffic_demo;
 extern SetupNG<int>  		display_orientation;
 extern SetupNG<int>  		display_mode;
+extern SetupNG<int>  		display_non_moving_target;
 
 

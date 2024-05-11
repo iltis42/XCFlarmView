@@ -311,6 +311,12 @@ void SetupMenu::options_menu_create_settings( MenuEntry *top ){
     log->addEntry( PROGMEM"Logarithmic");
     top->addEntry( log );
     log->setHelp(PROGMEM"Select distance either linear or logarithmic what zooms far distant targets on the screen", 160 );
+
+    SetupMenuSelect * nmove = new SetupMenuSelect( PROGMEM"Not moving Targets", RST_NONE, 0, true, &display_non_moving_target );
+    nmove->addEntry( PROGMEM"Hide");
+    nmove->addEntry( PROGMEM"Display");
+    top->addEntry( nmove );
+    nmove->setHelp(PROGMEM"Select if targets on ground that do not move shall be displayed", 160 );
 }
 
 void SetupMenu::setup_create_root(MenuEntry *top ){
