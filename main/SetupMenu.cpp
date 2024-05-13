@@ -276,6 +276,12 @@ void SetupMenu::options_menu_create_settings( MenuEntry *top ){
 	mod->addEntry( PROGMEM"Simple");
 	top->addEntry( mod );
 	mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
+
+	SetupMenuSelect * nmove = new SetupMenuSelect( PROGMEM"Not moving Targets", RST_NONE, 0, true, &display_non_moving_target );
+	nmove->addEntry( PROGMEM"Hide");
+	nmove->addEntry( PROGMEM"Display");
+	top->addEntry( nmove );
+	nmove->setHelp(PROGMEM"Select if targets on ground that do not move shall be displayed", hpos );
 }
 
 

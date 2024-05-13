@@ -202,7 +202,9 @@ void Target::checkClose(){
 	if( dist < 2.0 && (_buzzedHoldDown == 0) ){
 		ESP_LOGI(FNAME,"BUZZ dist=%.2f", dist );
 		Buzzer::play2( BUZZ_DH, 200,audio_volume.get() , BUZZ_E, 200, audio_volume.get() );
-		_buzzedHoldDown = 300;
+		_buzzedHoldDown = 12000;
+	}else if( dist > 3.0 ){
+		_buzzedHoldDown = 0;
 	}
 }
 

@@ -48,15 +48,16 @@ TargetManager::TargetManager() {
 }
 
 void TargetManager::receiveTarget( nmea_pflaa_s &pflaa ){
-
 	// ESP_LOGI(FNAME,"ID %06X (dec) %d ", pflaa.ID, pflaa.ID );
+	if( (pflaa.groundSpeed < 10) && (display_non_moving_target.get() == NON_MOVE_HIDE) ){
+			return;
+	}
 	if( targets.find(pflaa.ID) == targets.end() ){
 		targets[ pflaa.ID ] = Target ( pflaa );
 	}
 	else
 		targets[ pflaa.ID ].update( pflaa );
 	targets[ pflaa.ID ].dumpInfo();
-
 }
 
 TargetManager::~TargetManager() {
