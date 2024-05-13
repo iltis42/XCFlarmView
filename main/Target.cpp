@@ -105,8 +105,10 @@ void Target::drawInfo(bool erase){
 
 	// Flarm ID right down
 	if( (old_id != pflaa.ID) | erase ){
-		if( strlen( cur_id ) )
+		if( strlen( cur_id ) ){
 			drawID( COLOR_BLACK );  // erase
+			old_id = 0;
+		}
 		if( !erase ){
 			if( reg ){
 				if( comp )
@@ -262,7 +264,7 @@ int blink = 0;
 void Target::draw(){
 	checkAlarm();
 	int size = std::min( 30.0, std::min( 80.0, 10.0+10.0/dist )  );
-	if( old_x != -1000 && x != -1000 ){
+	if( old_x != -1000 ){
 		// ESP_LOGI(FNAME,"drawFlarmTarget() erase old x:%d old_x:%d", x, old_x );
 		egl->setColor( COLOR_BLACK );   // BLACK
 		drawFlarmTarget( old_x, old_y, old_track, old_size, true, old_closest );
