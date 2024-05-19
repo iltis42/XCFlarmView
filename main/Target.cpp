@@ -68,7 +68,7 @@ void Target::drawID( uint8_t r, uint8_t g, uint8_t b ){
 	egl->setColor(r,g,b);
 	egl->setFont( ucg_font_fub20_hf );
 	int w=egl->getStrWidth(cur_id);
-	egl->setPrintPos( (DISPLAY_W-5)-w, DISPLAY_H-7 );
+	egl->setPrintPos( (DISPLAY_W-10)-w, DISPLAY_H-7 );
 	egl->printf("%s",cur_id);
 }
 
