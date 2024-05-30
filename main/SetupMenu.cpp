@@ -295,28 +295,45 @@ void SetupMenu::options_menu_create_units( MenuEntry *top ){
         top->addEntry( dst );
 }
 
-void SetupMenu::options_menu_create_settings( MenuEntry *top ){
+
+void SetupMenu::options_menu_create_buzz( MenuEntry *top ){
 	SetupMenuValFloat * vol = new SetupMenuValFloat( PROGMEM"Buzzer Volume", "%", 0.0, 100, 10, vol_adj, false, &audio_volume );
-	vol->setHelp(PROGMEM"Buzzer volume maximum level", 160 );
+	vol->setHelp(PROGMEM"Buzzer volume maximum level", hpos );
 	top->addEntry( vol );
+
+	SetupMenuSelect * mt = new SetupMenuSelect( PROGMEM"Traffic Buzzer", RST_NONE , 0, true, &notify_near );
+	mt->addEntry( PROGMEM"OFF");
+	mt->addEntry( PROGMEM"< 1km");
+	mt->addEntry( PROGMEM"< 2km");
+	mt->setHelp(PROGMEM"Buzz traffic that is coming closer than distance configured", hpos );
+	top->addEntry( mt );
+}
+
+
+void SetupMenu::options_menu_create_settings( MenuEntry *top ){
+
+	SetupMenu * bz = new SetupMenu( PROGMEM"Buzzer" );
+	top->addEntry( bz );
+	bz->setHelp( PROGMEM"Setup Buzzer volume and Mute options", hpos);
+	bz->addCreator(options_menu_create_buzz);
 
     SetupMenuSelect * mod = new SetupMenuSelect( PROGMEM"Display Mode", RST_NONE, 0, true, &display_mode );
     mod->addEntry( PROGMEM"Normal");
     mod->addEntry( PROGMEM"Simple");
     top->addEntry( mod );
-    mod->setHelp( "Normal mode for multiple targets, Simple mode only one", 160 );
+    mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
 
     SetupMenuSelect * log = new SetupMenuSelect( PROGMEM"Distance Mode", RST_NONE, 0, true, &log_scale );
     log->addEntry( PROGMEM"Linear");
     log->addEntry( PROGMEM"Logarithmic");
     top->addEntry( log );
-    log->setHelp(PROGMEM"Select distance either linear or logarithmic what zooms far distant targets on the screen", 160 );
+    log->setHelp(PROGMEM"Select distance either linear or logarithmic what zooms far distant targets on the screen", hpos );
 
-    SetupMenuSelect * nmove = new SetupMenuSelect( PROGMEM"Not moving Targets", RST_NONE, 0, true, &display_non_moving_target );
+    SetupMenuSelect * nmove = new SetupMenuSelect( PROGMEM"Not moving planes", RST_NONE, 0, true, &display_non_moving_target );
     nmove->addEntry( PROGMEM"Hide");
-    nmove->addEntry( PROGMEM"Display");
+    nmove->addEntry( PROGMEM"Show");
     top->addEntry( nmove );
-    nmove->setHelp(PROGMEM"Select if targets on ground that do not move shall be displayed", 160 );
+    nmove->setHelp(PROGMEM"Select if targets on ground that do not move shall be displayed", hpos );
 }
 
 void SetupMenu::setup_create_root(MenuEntry *top ){

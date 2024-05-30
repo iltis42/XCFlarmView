@@ -200,11 +200,18 @@ void Target::drawInfo(bool erase){
 
 void Target::checkClose(){
 	// ESP_LOGI(FNAME,"ID %06X, close Target Buzzer dist=%.2f Holddown= %d", pflaa.ID, dist, _buzzedHoldDown );
-	if( dist < 2.0 && (_buzzedHoldDown == 0) ){
+	float dist_buzz = 10.0;
+	if( notify_near.get() == BUZZ_OFF )
+		return;
+	else if( notify_near.get() == BUZZ_1KM )
+		dist_buzz = 1.0;
+	else if( notify_near.get() == BUZZ_2KM )
+		dist_buzz = 2.0;
+	else if( dist < dist_buzz && (_buzzedHoldDown == 0) ){
 		ESP_LOGI(FNAME,"BUZZ dist=%.2f", dist );
 		Buzzer::play2( BUZZ_DH, 200,audio_volume.get() , BUZZ_E, 200, audio_volume.get() );
 		_buzzedHoldDown = 12000;
-	}else if( dist > 3.0 ){
+	}else if( dist > (dist_buzz*2.0) ){
 		_buzzedHoldDown = 0;
 	}
 }
