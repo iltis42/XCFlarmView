@@ -64,8 +64,8 @@ int data_mon( SetupMenuSelect * p ){
 }
 
 int vol_adj( SetupMenuValFloat * p ){
-        // Audio::setVolume( (*(p->_value)) );
-        return 0;
+	// Audio::setVolume( (*(p->_value)) );
+	return 0;
 }
 
 
@@ -249,21 +249,21 @@ void SetupMenu::escape(){
 
 
 void SetupMenu::options_menu_create_units( MenuEntry *top ){
-        SetupMenuSelect * alu = new SetupMenuSelect( PROGMEM"Altitude", RST_NONE, 0, true, &alt_unit );
-        alu->addEntry( PROGMEM"Meter (m)");
-        alu->addEntry( PROGMEM"Feet (ft)");
-        alu->addEntry( PROGMEM"FL (FL)");
-        top->addEntry( alu );
-        SetupMenuSelect * vau = new SetupMenuSelect( PROGMEM"Vario", RST_NONE , 0, true, &vario_unit );
-        vau->addEntry( PROGMEM"Meters/sec (m/s)");
-        vau->addEntry( PROGMEM"Feet/min x 100 (fpm)");
-        vau->addEntry( PROGMEM"Knots (kt)");
-        top->addEntry( vau );
-        SetupMenuSelect * dst = new SetupMenuSelect( PROGMEM"Distance", RST_NONE , 0, true, &dst_unit );
-        dst->addEntry( PROGMEM"KiloMeter (km)");
-        dst->addEntry( PROGMEM"KiloFeet (kft)");
-        dst->addEntry( PROGMEM"NauticalMiles (nm)");
-        top->addEntry( dst );
+	SetupMenuSelect * alu = new SetupMenuSelect( PROGMEM"Altitude", RST_NONE, 0, true, &alt_unit );
+	alu->addEntry( PROGMEM"Meter (m)");
+	alu->addEntry( PROGMEM"Feet (ft)");
+	alu->addEntry( PROGMEM"FL (FL)");
+	top->addEntry( alu );
+	SetupMenuSelect * vau = new SetupMenuSelect( PROGMEM"Vario", RST_NONE , 0, true, &vario_unit );
+	vau->addEntry( PROGMEM"Meters/sec (m/s)");
+	vau->addEntry( PROGMEM"Feet/min x 100 (fpm)");
+	vau->addEntry( PROGMEM"Knots (kt)");
+	top->addEntry( vau );
+	SetupMenuSelect * dst = new SetupMenuSelect( PROGMEM"Distance", RST_NONE , 0, true, &dst_unit );
+	dst->addEntry( PROGMEM"KiloMeter (km)");
+	dst->addEntry( PROGMEM"KiloFeet (kft)");
+	dst->addEntry( PROGMEM"NauticalMiles (nm)");
+	top->addEntry( dst );
 }
 
 
@@ -288,17 +288,17 @@ void SetupMenu::options_menu_create_settings( MenuEntry *top ){
 	bz->setHelp( PROGMEM"Setup Buzzer volume and Mute options", hpos);
 	bz->addCreator(options_menu_create_buzz);
 
-    SetupMenuSelect * mod = new SetupMenuSelect( PROGMEM"Display Mode", RST_NONE, 0, true, &display_mode );
-    mod->addEntry( PROGMEM"Normal");
-    mod->addEntry( PROGMEM"Simple");
-    top->addEntry( mod );
-    mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
+	SetupMenuSelect * mod = new SetupMenuSelect( PROGMEM"Display Mode", RST_NONE, 0, true, &display_mode );
+	mod->addEntry( PROGMEM"Normal");
+	mod->addEntry( PROGMEM"Simple");
+	top->addEntry( mod );
+	mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
 
-    SetupMenuSelect * nmove = new SetupMenuSelect( PROGMEM"Not moving planes", RST_NONE, 0, true, &display_non_moving_target );
-    nmove->addEntry( PROGMEM"Hide");
-    nmove->addEntry( PROGMEM"Show");
-    top->addEntry( nmove );
-    nmove->setHelp(PROGMEM"Select if targets on ground that do not move shall be displayed", hpos );
+	SetupMenuSelect * nmove = new SetupMenuSelect( PROGMEM"Not moving planes", RST_NONE, 0, true, &display_non_moving_target );
+	nmove->addEntry( PROGMEM"Hide");
+	nmove->addEntry( PROGMEM"Show");
+	top->addEntry( nmove );
+	nmove->setHelp(PROGMEM"Select if targets on ground that do not move shall be displayed", hpos );
 }
 
 
