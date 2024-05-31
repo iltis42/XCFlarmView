@@ -97,7 +97,7 @@ extern "C" void app_main(void)
     egl->setFont(ucg_font_fub20_hn);
     egl->setColor(COLOR_WHITE);
     egl->setPrintPos( 50, 35 );
-    egl->print("XVFlarmView 2.0");
+    egl->print("XCFlarmView 2.0");
     if( serial1_tx_enable.get() ){ // we don't need TX pin, so disable
     	serial1_tx_enable.set(0);
     }
