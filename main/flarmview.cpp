@@ -96,7 +96,7 @@ extern "C" void app_main(void)
 
     egl->setColor(COLOR_WHITE);
     egl->setPrintPos( 10, 35 );
-    egl->print("XVFlarmView 2.0");
+    egl->print("XCFlarmView 2.0");
 
     egl->setPrintPos( 10, 80 );
     egl->printf("%s",ver.c_str() );
