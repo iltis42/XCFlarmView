@@ -135,6 +135,11 @@ void TargetManager::tick(){
 		if( id_timer )
 			id_timer --;
 	}
+	if( !(_tick%120) ){
+		egl->clearScreen();
+		old_TX = -1;
+		old_GPS = -1;
+	}
 	if( !(_tick%5) ){
 		if( old_TX != tx){
 			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
