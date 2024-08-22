@@ -27,6 +27,7 @@ public:
 	inline float getProximity() { return prox; };
 	void dumpInfo();
 	void drawInfo(bool erase=false);
+	void redrawInfo();
 	void draw();
 	void checkClose();
 	inline bool haveAlarm(){ return pflaa.alarmLevel != 0; };
