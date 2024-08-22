@@ -200,6 +200,7 @@ void TargetManager::tick(){
 			if( it->second.getAge() < 30 ){
 				if( it->second.isNearest() || it->second.haveAlarm() ){
 					it->second.draw();  // closest == true
+					it->second.drawInfo(true);
 					it->second.drawInfo();
 				}
 				else{
