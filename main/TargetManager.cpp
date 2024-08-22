@@ -135,7 +135,7 @@ void TargetManager::tick(){
 		if( id_timer )
 			id_timer --;
 	}
-	if( !(_tick%120) ){
+	if( !(_tick%1200) ){
 		egl->clearScreen();
 		old_TX = -1;
 		old_GPS = -1;
