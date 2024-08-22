@@ -94,8 +94,10 @@ void Target::drawInfo(bool erase){
 
 	// distance info
 	if( (old_dist != (int)(dist*100)) | erase ){
-		if( strlen( cur_dist ) )
+		if( strlen( cur_dist ) ){
 			drawDist( COLOR_BLACK );  // erase
+			old_dist = 0;
+		}
 		if( !erase ){
 			sprintf(cur_dist,"%.2f", Units::Distance( dist ) );
 			drawDist(COLOR_WHITE);
@@ -125,8 +127,10 @@ void Target::drawInfo(bool erase){
 
 	// relative vertical
 	if( (old_alt != pflaa.relVertical) | erase ){
-		if( strlen( cur_alt ) )
+		if( strlen( cur_alt ) ){
 			drawAlt( COLOR_BLACK );  // erase
+			old_alt = 1000000;
+		}
 		if( !erase ){
 			int alt = (int)(Units::Altitude( (pflaa.relVertical)+0.5));
 			if( pflaa.relVertical > 0 )
@@ -140,8 +144,10 @@ void Target::drawInfo(bool erase){
 
 	// climb rate
 	if( (old_var != (int)(pflaa.climbRate*10)) | erase ){
-		if( strlen( cur_var ) )
+		if( strlen( cur_var ) ){
 			drawVar( COLOR_BLACK );  // erase
+			 old_var = -10000.0;
+		}
 		if( !erase ){
 			float climb = Units::Vario( (float)pflaa.climbRate );
 			if( climb > 0 )
