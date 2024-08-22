@@ -35,6 +35,7 @@ private:
 	static int holddown;
 	static TaskHandle_t pid;
 	static unsigned int min_id;
+	static bool redrawNeeded;
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */
