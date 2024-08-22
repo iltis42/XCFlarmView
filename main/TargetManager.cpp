@@ -25,6 +25,7 @@ int TargetManager::_tick =  0;
 int TargetManager::holddown =  0;
 TaskHandle_t TargetManager::pid = 0;
 unsigned int TargetManager::min_id = 0;
+bool TargetManager::redrawNeeded = true;
 
 
 #define TASK_PERIOD 100
@@ -139,6 +140,7 @@ void TargetManager::tick(){
 		egl->clearScreen();
 		old_TX = -1;
 		old_GPS = -1;
+		redrawNeeded = true;
 	}
 	if( !(_tick%5) ){
 		if( old_TX != tx){
@@ -199,9 +201,11 @@ void TargetManager::tick(){
 			}
 			if( it->second.getAge() < 30 ){
 				if( it->second.isNearest() || it->second.haveAlarm() ){
-					it->second.draw();  // closest == true
-					it->second.drawInfo(true);
-					it->second.drawInfo();
+					it->second.draw();       // closest == true
+					if( redrawNeeded )
+						it->second.redrawInfo(); // forced redraw of all fields
+					else
+						it->second.drawInfo();
 				}
 				else{
 					it->second.draw();
