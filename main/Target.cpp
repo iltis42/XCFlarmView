@@ -86,6 +86,14 @@ void Target::drawVar( uint8_t r, uint8_t g, uint8_t b ){
 	egl->printf("%s", cur_var);
 }
 
+void Target::redrawInfo(){
+	old_dist = -10000;
+	old_alt  = 100000;
+	old_id = 0;
+	old_var  = -10000.0;
+	drawInfo();
+}
+
 void Target::drawInfo(bool erase){
 	char s[32]= { 0 };
 	ESP_LOGI(FNAME,"ID %06X, drawInfo, erase=%d", pflaa.ID, erase );
