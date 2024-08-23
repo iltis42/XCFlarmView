@@ -202,10 +202,13 @@ void TargetManager::tick(){
 			if( it->second.getAge() < 30 ){
 				if( it->second.isNearest() || it->second.haveAlarm() ){
 					it->second.draw();       // closest == true
-					if( redrawNeeded )
+					if( redrawNeeded ){
 						it->second.redrawInfo(); // forced redraw of all fields
-					else
+						redrawNeeded = false;
+					}
+					else{
 						it->second.drawInfo();
+					}
 				}
 				else{
 					it->second.draw();
