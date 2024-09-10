@@ -151,7 +151,7 @@ void Serial::serialHandler(void *pvParameters)
 	// Make a pause, that has avoided core dumps during enable the RX interrupt.
 	delay( 1000 );  // delay a bit serial task startup unit startup of system is through
 	ESP_LOGI(FNAME,"S1 serial handler startup");
-
+    unsigned int start_holddown = 1200;
 	while( true ) {
 		// Stack supervision
 		if( uxTaskGetStackHighWaterMark( pid ) < 256 )
@@ -181,9 +181,11 @@ void Serial::serialHandler(void *pvParameters)
 			buf[rxBytes] = 0;
 			process( buf, rxBytes );
 		}
-		if( !Flarm::connected() ){
+		if( !Flarm::connected() && !start_holddown ){
 			huntBaudrate();
 		}
+		if( start_holddown > 0 )
+			start_holddown--;
 		delay( 100 );
 	} // end while( true )
 }

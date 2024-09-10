@@ -26,7 +26,8 @@ int TargetManager::holddown =  0;
 TaskHandle_t TargetManager::pid = 0;
 unsigned int TargetManager::min_id = 0;
 bool TargetManager::redrawNeeded = true;
-
+int  TargetManager::old_error = 0;
+int  TargetManager::old_severity = 0;
 
 #define TASK_PERIOD 100
 
@@ -104,6 +105,29 @@ void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
 	egl->printf( alarm );
 }
 
+/*
+<Severity> Decimal integer value. Range: from 0 to 3.
+0 = no error, i.e. normal operation. Disregard other parameters.
+1 = information only, i.e. normal operation
+2 = functionality may be reduced
+3 = fatal problem, device will not work
+*/
+
+void TargetManager::printAlarmLevel( const char*alarm, int x, int y, int level ){
+	if( level == 0 ){
+		egl->setColor(COLOR_BLACK); // G=0 R=255 B=0  RED Color
+	}else if( level == 1 ){
+		egl->setColor(COLOR_GREEN);
+	}else if( level == 2 ){
+		egl->setColor(COLOR_YELLOW);
+	}else if( level == 3 ){
+		egl->setColor(COLOR_RED);
+	}
+	egl->setFont(ucg_font_ncenR14_hr);
+	egl->setPrintPos( x, y );
+	egl->printf( alarm );
+}
+
 void TargetManager::nextTarget(int timer){
 	// ESP_LOGI(FNAME,"nextTarget size:%d", targets.size() );
 	if( targets.size() ){
@@ -145,14 +169,21 @@ void TargetManager::tick(){
 	if( !(_tick%5) ){
 		if( old_TX != tx){
 			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
-			printAlarm( "NO TX", 10, 90, tx );
+			printAlarm( "NO TX", 10, 100, tx );
 			old_TX = tx;
 		}
 		int gps=Flarm::getGPSBit();
 		if( old_GPS != gps ){  // 0,1 or 2
 			ESP_LOGI(FNAME,"GPS changed, old: %d, new: %d", old_GPS, gps );
-			printAlarm( "NO GPS", 10, 110, gps );
+			printAlarm( "NO GPS", 10, 120, gps );
 			old_GPS = gps;
+		}
+		int severity =  Flarm::getErrorSeverity();
+		int error_code =  Flarm::getErrorCode();
+		if( old_error != error_code || old_severity != severity ){
+				printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
+				old_error = error_code;
+				old_severity = severity;
 		}
 		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
 

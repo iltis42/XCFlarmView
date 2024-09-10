@@ -9,8 +9,9 @@
 
 #define TASK_PERIOD 250  // ms
 
-#define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
+#define FLARM_TIMEOUT (120* (1000/TASK_PERIOD))
 #define PFLAU_TIMEOUT (10* (1000/TASK_PERIOD))
+#define ALARM_TIMEOUT (10* (1000/TASK_PERIOD))
 
 int Flarm::RX = 0;
 int Flarm::TX = 1;
@@ -38,6 +39,57 @@ extern xSemaphoreHandle spiMutex;
 
 int Flarm::sim_tick=0;
 
+static std::map<int, const char*> FlarmErrors = {
+{ 0x00, "                                             " },
+{ 0x11, "Firmware expired" },
+{ 0x12, "Firmware update error" },
+{ 0x21, "Power voltage low" },
+{ 0x22, "UI error" },
+{ 0x23, "Audio error" },
+{ 0x24, "ADC error" },
+{ 0x25, "SD card error" },
+{ 0x26, "USB error" },
+{ 0x27, "LED error" },
+{ 0x28, "EEPROM error" },
+{ 0x29, "General hardware error" },
+{ 0x2A, "Transp. Mode-C/S/ADS-B unserviceable" },
+{ 0x2B, "EEPROM error" },
+{ 0x2C, "GPIO error" },
+{ 0x31, "GPS communication" },
+{ 0x32, "Configuration of GPS module" },
+{ 0x33, "GPS antenna" },
+{ 0x41, "RF communication" },
+{ 0x42, "Same ID FLARM received, suppressed" },
+{ 0x43, "Wrong ICAO 24-bit address or radio ID" },
+{ 0x51, "Communication" },
+{ 0x61, "Flash memory" },
+{ 0x71, "Pressure sensor" },
+{ 0x81, "Obstacle database file type error" },
+{ 0x82, "Obstacle database expired" },
+{ 0x91, "Flight recorder" },
+{ 0x93, "Engine-noise recording not possible" },
+{ 0x94, "Range analyzer" },
+{ 0xA1, "Configuration error SD/USB" },
+{ 0xB1, "Obstacle database invalid" },
+{ 0xB2, "Invalid IGC feature license" },
+{ 0xB3, "Invalid AUD feature license" },
+{ 0xB4, "Invalid ENL feature license" },
+{ 0xB5, "Invalid RFB feature license" },
+{ 0xB6, "Invalid TIS feature license" },
+{ 0x100, "Generic error" },
+{ 0x101, "Flash File System error" },
+{ 0x110, "Failure upd. FW of external display" },
+{ 0x120, "Outside designated region" },
+{ 0xF1, "Other" },
+};
+
+const char * Flarm::getErrorString( int index ) {
+	if( FlarmErrors.count( index ) )
+		return FlarmErrors[ index ];
+	else
+		return "Unknown Error";
+}
+
 void Flarm::begin(){
 	xTaskCreatePinnedToCore(&taskFlarm, "taskFlarm", 4096, NULL, 14, &pid, 0);
 }
@@ -50,7 +102,6 @@ void Flarm::taskFlarm(void *pvParameters)
 		_tick++;
 	}
 }
-
 
 /*
 PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<AcftType>
@@ -188,9 +239,12 @@ int Flarm::oldBear = 0;
 int Flarm::alarmOld=0;
 int Flarm::_tick=0;
 int Flarm::timeout=0;
+int Flarm::alarm_timeout=0;
 int Flarm::ext_alt_timer=0;
 int Flarm::_numSat=0;
 int Flarm::bincom_port=0;
+int Flarm::pflae_severity=0;
+int Flarm::pflae_error=0;
 
 bool Flarm::flarm_sim = false;
 
@@ -239,6 +293,9 @@ void Flarm::flarmSim(){
 void Flarm::progress(){  //  per second
 	if( timeout ){
 		timeout--;
+	}
+	if( alarm_timeout ){
+		alarm_timeout--;
 	}
 	// ESP_LOGI(FNAME,"progress, timeout=%d", timeout );
 	if( flarm_sim ){
@@ -379,7 +436,7 @@ void Flarm::parseGPGGA( const char *gpgga ) {
 }
 
 // parsePFLAE $PFLAE,A,0,0*33
-
+// PFLAE,<QueryType>,<Severity>,<ErrorCode>[,<Message>]
 
 void Flarm::parsePFLAE( const char *pflae ) {
 	ESP_LOGI(FNAME,"parsePFLAE %s", pflae );
@@ -391,10 +448,17 @@ void Flarm::parsePFLAE( const char *pflae ) {
 		return;
 	}
 	timeout = FLARM_TIMEOUT;
-	const char* pf = "$PFLAE,A,0,0";
-	const unsigned short len = strlen(pf);
-	if( !strncmp( pflae, pf, len )  ){
-		ESP_LOGI(FNAME,"got PFLAE");
+	char queryType;
+	int error;
+	int ret=sscanf( pflae+3,"LAE,%c,%d,%x", &queryType, &pflae_severity, &error );
+	if( queryType == 'A' ){
+		if( error ){
+			pflae_error = error;
+		}
+		ESP_LOGI(FNAME,"PFLAE %c %d %02X %s", queryType, pflae_severity, pflae_error, getErrorString(pflae_error) );
+		if( ret >= 1 && pflae_severity == 0 && queryType == 'A' ){
+			ESP_LOGI(FNAME,"PFLAE alarm cleared");
+		}
 	}
 }
 

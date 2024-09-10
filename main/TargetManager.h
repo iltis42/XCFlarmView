@@ -26,10 +26,13 @@ private:
 	static float oldN;
 	static void drawN( int x, int y, bool erase, float north );
 	static void printAlarm( const char*alarm, int x, int y, int inactive );
+	static void printAlarmLevel( const char*alarm, int x, int y, int level );
 	static void nextTarget(int timer);
 	static void taskTargetMgr(void *pvParameters);
 	static int old_TX;
 	static int old_GPS;
+	static int old_error;
+	static int old_severity;
 	static int id_timer;
 	static int _tick;
 	static int holddown;
