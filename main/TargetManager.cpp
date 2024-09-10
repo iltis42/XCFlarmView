@@ -144,10 +144,10 @@ void TargetManager::nextTarget(int timer){
 	}
 }
 
-static int old_sw_len;
-static int old_hw_len;
-static int old_obst_len;
-
+static int old_sw_len = 0;
+static int old_hw_len = 0;
+static int old_obst_len = 0;
+static int old_prog = 0;
 
 void TargetManager::tick(){
 	float min_dist = 10000;
@@ -216,7 +216,14 @@ void TargetManager::tick(){
 			egl->printf( "Flarm Obst: %s", Flarm::getObstVersion() );
 			old_obst_len = len;
 		}
-
+		unsigned int prog = Flarm::getProgress();
+		if( prog != old_prog ){
+			egl->setColor(COLOR_WHITE);
+			egl->setFont(ucg_font_ncenR14_hr);
+			egl->setPrintPos( 10, 60 );
+			egl->printf( "%s: %d %%", Flarm::getOperationString(), prog );
+			old_prog = prog;
+		}
 		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
 
 		// Pass one: determine proximity

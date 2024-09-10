@@ -50,6 +50,7 @@ public:
 	static void parsePFLAA( const char *pflaa );
 	static void parsePFLAV( const char* pflav );
 	static void parsePFLAX( const char *pflax, int port );
+	static void parsePFLAQ( const char *pflaq );
 	static void parseGPRMC( const char *gprmc );
 	static void parseGPGGA( const char *gpgga );
 	static void parsePGRMZ( const char *pgrmz );
@@ -102,6 +103,8 @@ public:
 	static inline const char * getSwVersion() { return SwVersion; };
 	static inline const char * getHwVersion()  { return HwVersion; };
 	static inline const char * getObstVersion()  { return ObstVersion; };
+	static inline unsigned int getProgress()  { return Progress; };
+	static const char* getOperationString();
 
 private:
 	static int calcNMEACheckSum(const char *nmea);
@@ -137,9 +140,12 @@ private:
 	static int pflau_timeout;
 	static int  pflae_severity;
 	static int  pflae_error;
-	static char HwVersion[32];
-	static char SwVersion[32];
+	static char HwVersion[16];
+	static char SwVersion[16];
 	static char ObstVersion[32];
+	static char Operation[16];
+	static char Info[16];
+	static unsigned int Progress;
 };
 
 #endif

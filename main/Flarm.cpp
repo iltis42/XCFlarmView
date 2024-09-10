@@ -31,6 +31,34 @@ int Flarm::pflau_timeout = PFLAU_TIMEOUT;
 TaskHandle_t Flarm::pid = 0;
 AdaptUGC* Flarm::ucg;
 e_audio_alarm_type_t Flarm::alarm = AUDIO_ALARM_OFF;
+char Flarm::Operation[16] = "\0";
+char Flarm::Info[16] = "\0";
+char Flarm::HwVersion[16] = "\0";
+char Flarm::SwVersion[16] = "\0";
+char Flarm::ObstVersion[32] = "\0";
+unsigned int Flarm::Progress = 0;
+
+#define CENTERX 120
+#define CENTERY 120
+
+#define RTD(x) (x*RAD_TO_DEG)
+#define DTR(x) (x*DEG_TO_RAD)
+
+int Flarm::oldDist = 0;
+int Flarm::oldVertical = 0;
+int Flarm::oldBear = 0;
+int Flarm::alarmOld=0;
+int Flarm::_tick=0;
+int Flarm::timeout=0;
+int Flarm::alarm_timeout=0;
+int Flarm::ext_alt_timer=0;
+int Flarm::_numSat=0;
+int Flarm::bincom_port=0;
+int Flarm::pflae_severity=0;
+int Flarm::pflae_error=0;
+
+bool Flarm::flarm_sim = false;
+
 
 extern xSemaphoreHandle spiMutex;
 
@@ -227,29 +255,6 @@ void Flarm::parsePFLAA( const char *pflaa ){
 	TargetManager::receiveTarget( PFLAA );
 }
 
-#define CENTERX 120
-#define CENTERY 120
-
-#define RTD(x) (x*RAD_TO_DEG)
-#define DTR(x) (x*DEG_TO_RAD)
-
-int Flarm::oldDist = 0;
-int Flarm::oldVertical = 0;
-int Flarm::oldBear = 0;
-int Flarm::alarmOld=0;
-int Flarm::_tick=0;
-int Flarm::timeout=0;
-int Flarm::alarm_timeout=0;
-int Flarm::ext_alt_timer=0;
-int Flarm::_numSat=0;
-int Flarm::bincom_port=0;
-int Flarm::pflae_severity=0;
-int Flarm::pflae_error=0;
-char Flarm::HwVersion[32] = "\0";
-char Flarm::SwVersion[32] = "\0";
-char Flarm::ObstVersion[32] = "\0";
-
-bool Flarm::flarm_sim = false;
 
 
 // Calculate the checksum and output it as an int
@@ -602,6 +607,44 @@ void Flarm::parsePFLAV( const char *pflav ) {
 	timeout = FLARM_TIMEOUT;
 }
 
+static std::map<char*, char*> OperationTypes = {
+{ "IGC", "IGC files download" },
+{ "FW" , "Firmware update" },
+{ "OBST", "Obstacle database update" },
+{ "DUMP", "Diagnostic dump" },
+{ "RESTORE", "Restore file system" },
+{ "SCAN" , "Internal consistency check" }
+};
+
+const char* Flarm::getOperationString(){
+	if( OperationTypes.count( Operation ) )
+		return OperationTypes[Operation];
+	else
+		return "";
+}
+
+// PFLAQ,<Operation>,<Info>,<Progress>
+void Flarm::parsePFLAQ( const char *pflaq ) {
+	int cs;
+	int calc_cs=calcNMEACheckSum( pflaq );
+	cs = getNMEACheckSum( pflaq );
+	if( cs != calc_cs ){
+		ESP_LOGW(FNAME,"CHECKSUM ERROR: %s; calculcated CS: %d != delivered CS %d", pflaq, calc_cs, cs );
+		return;
+	}
+	int commas=0;
+	for( int i=0; i<strlen(pflaq); i++ ){
+		if( pflaq[i] == ',' )
+			commas++;
+	}
+	if( commas == 2 )
+		sscanf( pflaq, "$PFLAQ,%[^,],%d",Operation,&Progress );
+	else if( commas == 3 )
+		sscanf( pflaq, "$PFLAQ,%[^,],%[^,],%d",Operation,Info,&Progress );
+	ESP_LOGI(FNAME,"PFLAQ %s %s %d", Operation,Info,Progress );
+
+	timeout = FLARM_TIMEOUT;
+}
 
 int rbOld = -500; // outside normal range
 
