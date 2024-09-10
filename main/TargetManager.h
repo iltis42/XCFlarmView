@@ -39,6 +39,10 @@ private:
 	static TaskHandle_t pid;
 	static unsigned int min_id;
 	static bool redrawNeeded;
+	static int old_sw_len;
+	static int old_hw_len;
+	static int old_obst_len;
+	static int old_prog;
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */

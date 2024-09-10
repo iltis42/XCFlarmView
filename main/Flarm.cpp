@@ -68,47 +68,47 @@ extern xSemaphoreHandle spiMutex;
 int Flarm::sim_tick=0;
 
 static std::map<int, const char*> FlarmErrors = {
-{ 0x00, "                                             " },
-{ 0x11, "Firmware expired" },
-{ 0x12, "Firmware update error" },
-{ 0x21, "Power voltage low" },
-{ 0x22, "UI error" },
-{ 0x23, "Audio error" },
-{ 0x24, "ADC error" },
-{ 0x25, "SD card error" },
-{ 0x26, "USB error" },
-{ 0x27, "LED error" },
-{ 0x28, "EEPROM error" },
-{ 0x29, "General hardware error" },
-{ 0x2A, "Transp. Mode-C/S/ADS-B unserviceable" },
-{ 0x2B, "EEPROM error" },
-{ 0x2C, "GPIO error" },
-{ 0x31, "GPS communication" },
-{ 0x32, "Configuration of GPS module" },
-{ 0x33, "GPS antenna" },
-{ 0x41, "RF communication" },
-{ 0x42, "Same ID FLARM received, suppressed" },
-{ 0x43, "Wrong ICAO 24-bit address or radio ID" },
-{ 0x51, "Communication" },
-{ 0x61, "Flash memory" },
-{ 0x71, "Pressure sensor" },
-{ 0x81, "Obstacle database file type error" },
-{ 0x82, "Obstacle database expired" },
-{ 0x91, "Flight recorder" },
-{ 0x93, "Engine-noise recording not possible" },
-{ 0x94, "Range analyzer" },
-{ 0xA1, "Configuration error SD/USB" },
-{ 0xB1, "Obstacle database invalid" },
-{ 0xB2, "Invalid IGC feature license" },
-{ 0xB3, "Invalid AUD feature license" },
-{ 0xB4, "Invalid ENL feature license" },
-{ 0xB5, "Invalid RFB feature license" },
-{ 0xB6, "Invalid TIS feature license" },
-{ 0x100, "Generic error" },
-{ 0x101, "Flash File System error" },
-{ 0x110, "Failure upd. FW of external display" },
-{ 0x120, "Outside designated region" },
-{ 0xF1, "Other" },
+		{ 0x00, "                                             " },
+		{ 0x11, "Firmware expired" },
+		{ 0x12, "Firmware update error" },
+		{ 0x21, "Power voltage low" },
+		{ 0x22, "UI error" },
+		{ 0x23, "Audio error" },
+		{ 0x24, "ADC error" },
+		{ 0x25, "SD card error" },
+		{ 0x26, "USB error" },
+		{ 0x27, "LED error" },
+		{ 0x28, "EEPROM error" },
+		{ 0x29, "General hardware error" },
+		{ 0x2A, "Transp. Mode-C/S/ADS-B unserviceable" },
+		{ 0x2B, "EEPROM error" },
+		{ 0x2C, "GPIO error" },
+		{ 0x31, "GPS communication" },
+		{ 0x32, "Configuration of GPS module" },
+		{ 0x33, "GPS antenna" },
+		{ 0x41, "RF communication" },
+		{ 0x42, "Same ID FLARM received, suppressed" },
+		{ 0x43, "Wrong ICAO 24-bit address or radio ID" },
+		{ 0x51, "Communication" },
+		{ 0x61, "Flash memory" },
+		{ 0x71, "Pressure sensor" },
+		{ 0x81, "Obstacle database file type error" },
+		{ 0x82, "Obstacle database expired" },
+		{ 0x91, "Flight recorder" },
+		{ 0x93, "Engine-noise recording not possible" },
+		{ 0x94, "Range analyzer" },
+		{ 0xA1, "Configuration error SD/USB" },
+		{ 0xB1, "Obstacle database invalid" },
+		{ 0xB2, "Invalid IGC feature license" },
+		{ 0xB3, "Invalid AUD feature license" },
+		{ 0xB4, "Invalid ENL feature license" },
+		{ 0xB5, "Invalid RFB feature license" },
+		{ 0xB6, "Invalid TIS feature license" },
+		{ 0x100, "Generic error" },
+		{ 0x101, "Flash File System error" },
+		{ 0x110, "Failure upd. FW of external display" },
+		{ 0x120, "Outside designated region" },
+		{ 0xF1, "Other" },
 };
 
 const char * Flarm::getErrorString( int index ) {
@@ -241,8 +241,8 @@ void Flarm::parsePFLAA( const char *pflaa ){
 	if( !token.empty() )
 		PFLAA.turnRate = std::stoi(token);
 	std::getline(ss, token, ',');
-		if( !token.empty() )
-	PFLAA.groundSpeed = std::stoi(token);
+	if( !token.empty() )
+		PFLAA.groundSpeed = std::stoi(token);
 	std::getline(ss, token, ',');
 	if( !token.empty() )
 		PFLAA.climbRate = std::stof(token);
@@ -472,7 +472,6 @@ void Flarm::parsePFLAE( const char *pflae ) {
 	}
 }
 
-
 /* PFLAU,<RX>,<TX>,<GPS>,<Power>,<AlarmLevel>,<RelativeBearing>,<AlarmType>,<RelativeVertical>,<RelativeDistance>,<ID>
 		$PFLAU,3,1,2,1,2,-30,2,-32,755*FLARM is working properly and currently receives 3 other aircraft.
 		The most dangerous of these aircraft is at 11 o’clock, position 32m below and 755m away. It is a level 2 alarm
@@ -569,8 +568,6 @@ void Flarm::drawDownloadInfo() {
 	xSemaphoreGive(spiMutex);
 }
 
-
-
 // $PGRMZ,880,F,2*3A  $PGRMZ,864,F,2*30
 void Flarm::parsePGRMZ( const char *pgrmz ) {
 	int cs;
@@ -585,7 +582,6 @@ void Flarm::parsePGRMZ( const char *pgrmz ) {
 	timeout = FLARM_TIMEOUT;
 	ext_alt_timer = 10;  // Fall back to internal Barometer after 10 seconds
 }
-
 
 // PFLAV,<QueryType>,<HwVersion>,<SwVersion>,<ObstVersion>
 // e.g. $PFLAV,A,2.00,5.00,alps20110221_*
@@ -607,13 +603,13 @@ void Flarm::parsePFLAV( const char *pflav ) {
 	timeout = FLARM_TIMEOUT;
 }
 
-static std::map<char*, char*> OperationTypes = {
-{ "IGC", "IGC files download" },
-{ "FW" , "Firmware update" },
-{ "OBST", "Obstacle database update" },
-{ "DUMP", "Diagnostic dump" },
-{ "RESTORE", "Restore file system" },
-{ "SCAN" , "Internal consistency check" }
+static std::map<const char*, const char*> OperationTypes = {
+		{ "IGC", "IGC files download" },
+		{ "FW" , "Firmware update" },
+		{ "OBST", "Obstacle database update" },
+		{ "DUMP", "Diagnostic dump" },
+		{ "RESTORE", "Restore file system" },
+		{ "SCAN" , "Internal consistency check" }
 };
 
 const char* Flarm::getOperationString(){

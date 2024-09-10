@@ -28,6 +28,10 @@ unsigned int TargetManager::min_id = 0;
 bool TargetManager::redrawNeeded = true;
 int  TargetManager::old_error = 0;
 int  TargetManager::old_severity = 0;
+int TargetManager::old_sw_len = 0;
+int TargetManager::old_hw_len = 0;
+int TargetManager::old_obst_len = 0;
+int TargetManager::old_prog = 0;
 
 #define TASK_PERIOD 100
 
@@ -144,10 +148,7 @@ void TargetManager::nextTarget(int timer){
 	}
 }
 
-static int old_sw_len = 0;
-static int old_hw_len = 0;
-static int old_obst_len = 0;
-static int old_prog = 0;
+
 
 void TargetManager::tick(){
 	float min_dist = 10000;
