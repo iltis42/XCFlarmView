@@ -144,6 +144,10 @@ void TargetManager::nextTarget(int timer){
 	}
 }
 
+static int old_sw_len;
+static int old_hw_len;
+static int old_obst_len;
+
 
 void TargetManager::tick(){
 	float min_dist = 10000;
@@ -185,6 +189,34 @@ void TargetManager::tick(){
 				old_error = error_code;
 				old_severity = severity;
 		}
+		int len=strlen( Flarm::getSwVersion() );
+		if( len != old_sw_len )
+		{
+			egl->setColor(COLOR_WHITE);
+			egl->setFont(ucg_font_ncenR14_hr);
+			egl->setPrintPos( 10, 20 );
+			egl->printf( "Flarm SW: %s", Flarm::getSwVersion() );
+			old_sw_len = len;
+		}
+		len=strlen( Flarm::getHwVersion() );
+		if( len != old_hw_len )
+		{
+			egl->setColor(COLOR_WHITE);
+			egl->setFont(ucg_font_ncenR14_hr);
+			egl->setPrintPos( 10, 40 );
+			egl->printf( "Flarm HW: %s", Flarm::getHwVersion() );
+			old_hw_len = len;
+		}
+		len=strlen( Flarm::getObstVersion() );
+		if( len != old_obst_len )
+		{
+			egl->setColor(COLOR_WHITE);
+			egl->setFont(ucg_font_ncenR14_hr);
+			egl->setPrintPos( 10, 60 );
+			egl->printf( "Flarm Obst: %s", Flarm::getObstVersion() );
+			old_obst_len = len;
+		}
+
 		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
 
 		// Pass one: determine proximity

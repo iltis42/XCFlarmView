@@ -245,6 +245,9 @@ int Flarm::_numSat=0;
 int Flarm::bincom_port=0;
 int Flarm::pflae_severity=0;
 int Flarm::pflae_error=0;
+char Flarm::HwVersion[32] = "\0";
+char Flarm::SwVersion[32] = "\0";
+char Flarm::ObstVersion[32] = "\0";
 
 bool Flarm::flarm_sim = false;
 
@@ -315,11 +318,7 @@ void Flarm::progress(){  //  per second
 
 void Flarm::parseNMEA( const char *str, int len ){
 	// ESP_LOGI(FNAME,"parseNMEA: %s, len: %d", str,  strlen(str) );
-
-	if( !strncmp( str+1, "PFLAE,", 5 )) {  // On Task declaration or re-connect
-		parsePFLAE( str );
-	}
-	else if( !strncmp( str+1, "PFLAU,", 5 )) {
+	if( !strncmp( str+1, "PFLAU,", 5 )) {
 		parsePFLAU( str );
 	}
 	else if( !strncmp( str+1, "PFLAA,", 5 )) {
@@ -333,6 +332,12 @@ void Flarm::parseNMEA( const char *str, int len ){
 	}
 	else if( !strncmp( str+3, "RMZ,", 3 )) {
 		parsePGRMZ( str );
+	}
+	else if( !strncmp( str+1, "PFLAV,", 5 )) {
+		parsePFLAV( str );
+	}
+	else if( !strncmp( str+1, "PFLAE,", 5 )) {  // On Task declaration or re-connect
+		parsePFLAE( str );
 	}
 }
 
@@ -574,6 +579,27 @@ void Flarm::parsePGRMZ( const char *pgrmz ) {
 	sscanf( pgrmz, "$PGRMZ,%d,F,2",&alt1013_ft );
 	timeout = FLARM_TIMEOUT;
 	ext_alt_timer = 10;  // Fall back to internal Barometer after 10 seconds
+}
+
+
+// PFLAV,<QueryType>,<HwVersion>,<SwVersion>,<ObstVersion>
+// e.g. $PFLAV,A,2.00,5.00,alps20110221_*
+void Flarm::parsePFLAV( const char *pflav ) {
+	int cs;
+	int calc_cs=calcNMEACheckSum( pflav );
+	cs = getNMEACheckSum( pflav );
+	if( cs != calc_cs ){
+		ESP_LOGW(FNAME,"CHECKSUM ERROR: %s; calculcated CS: %d != delivered CS %d", pflav, calc_cs, cs );
+		return;
+	}
+	char query;
+	sscanf( pflav, "$PFLAV,%c,%[^,],%[^,],%[^,]",&query,HwVersion,SwVersion,ObstVersion );
+	if( ObstVersion[0] == '*' ) // there is no obstacle database
+		ObstVersion[0] = '\0';
+	if( query == 'A' ){
+		ESP_LOGI(FNAME,"PFLAV %c %s %s %s", query, HwVersion,SwVersion,ObstVersion );
+	}
+	timeout = FLARM_TIMEOUT;
 }
 
 
