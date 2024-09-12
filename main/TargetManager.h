@@ -29,6 +29,7 @@ private:
 	static void printAlarmLevel( const char*alarm, int x, int y, int level );
 	static void nextTarget(int timer);
 	static void taskTargetMgr(void *pvParameters);
+	static void printVersions( int x, int y, const char *prefix, const char *ver );
 	static int old_TX;
 	static int old_GPS;
 	static int old_error;
@@ -43,6 +44,7 @@ private:
 	static int old_hw_len;
 	static int old_obst_len;
 	static int old_prog;
+	static int info_timer;
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */

@@ -32,8 +32,10 @@ int TargetManager::old_sw_len = 0;
 int TargetManager::old_hw_len = 0;
 int TargetManager::old_obst_len = 0;
 int TargetManager::old_prog = 0;
+int TargetManager::info_timer = 0;
 
 #define TASK_PERIOD 100
+#define INFO_TIME 100  // 10 Sec display e.g. of SW info
 
 void TargetManager::begin(){
 	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 13, &pid, 0);
@@ -148,13 +150,21 @@ void TargetManager::nextTarget(int timer){
 	}
 }
 
-
+void TargetManager::printVersions( int x, int y, const char *prefix, const char *ver ){
+	info_timer = INFO_TIME;
+	egl->setColor(COLOR_WHITE);
+	egl->setFont(ucg_font_ncenR14_hr);
+	egl->setPrintPos( x, y );
+	egl->printf( "%s %s", prefix, ver );
+}
 
 void TargetManager::tick(){
 	float min_dist = 10000;
 	_tick++;
 	if( holddown )
 		holddown--;
+	if( info_timer )
+		info_timer--;
 	int tx=Flarm::getTXBit();  // 0 or 1
 	if( !holddown && Switch::isClosed() ){
 		// ESP_LOGI(FNAME,"SW closed");
@@ -165,11 +175,15 @@ void TargetManager::tick(){
 		if( id_timer )
 			id_timer --;
 	}
-	if( !(_tick%1200) ){
+	if( (!(_tick%1200) && !info_timer )|| info_timer == 1 ){
 		egl->clearScreen();
 		old_TX = -1;
 		old_GPS = -1;
 		redrawNeeded = true;
+		Flarm::clearVersions();
+		old_sw_len = 0;
+		old_hw_len = 0;
+		old_obst_len = 0;
 	}
 	if( !(_tick%5) ){
 		if( old_TX != tx){
@@ -191,37 +205,29 @@ void TargetManager::tick(){
 				old_severity = severity;
 		}
 		int len=strlen( Flarm::getSwVersion() );
-		if( len != old_sw_len )
+		if( len && (len != old_sw_len) )
 		{
-			egl->setColor(COLOR_WHITE);
-			egl->setFont(ucg_font_ncenR14_hr);
-			egl->setPrintPos( 10, 20 );
-			egl->printf( "Flarm SW: %s", Flarm::getSwVersion() );
+			printVersions( 10, 20, "Flarm SW: ", Flarm::getSwVersion() );
 			old_sw_len = len;
 		}
 		len=strlen( Flarm::getHwVersion() );
-		if( len != old_hw_len )
+		if( len && (len != old_hw_len) )
 		{
-			egl->setColor(COLOR_WHITE);
-			egl->setFont(ucg_font_ncenR14_hr);
-			egl->setPrintPos( 10, 40 );
-			egl->printf( "Flarm HW: %s", Flarm::getHwVersion() );
+			printVersions( 10, 40, "Flarm HW: ", Flarm::getHwVersion() );
 			old_hw_len = len;
 		}
 		len=strlen( Flarm::getObstVersion() );
-		if( len != old_obst_len )
+		if( len && (len != old_obst_len) )
 		{
-			egl->setColor(COLOR_WHITE);
-			egl->setFont(ucg_font_ncenR14_hr);
-			egl->setPrintPos( 10, 60 );
-			egl->printf( "Flarm Obst: %s", Flarm::getObstVersion() );
+			printVersions( 10, 60, "Flarm Obst: ", Flarm::getObstVersion() );
 			old_obst_len = len;
 		}
 		unsigned int prog = Flarm::getProgress();
 		if( prog != old_prog ){
+			info_timer = INFO_TIME;
 			egl->setColor(COLOR_WHITE);
 			egl->setFont(ucg_font_ncenR14_hr);
-			egl->setPrintPos( 10, 60 );
+			egl->setPrintPos( 10, 20 );
 			egl->printf( "%s: %d %%", Flarm::getOperationString(), prog );
 			old_prog = prog;
 		}

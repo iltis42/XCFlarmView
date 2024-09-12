@@ -92,6 +92,7 @@ public:
 		return false;
 	}
 	static void begin();
+	static void clearVersions();
 	static void taskFlarm(void *pvParameters);
 	static void startSim() { flarm_sim = true; };
 	static inline bool getSim() { return flarm_sim; };

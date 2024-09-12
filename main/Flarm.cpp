@@ -131,6 +131,12 @@ void Flarm::taskFlarm(void *pvParameters)
 	}
 }
 
+void Flarm::clearVersions(){
+	HwVersion[0] = '\0';
+	SwVersion[0] = '\0';
+	ObstVersion[0] = '\0';
+}
+
 /*
 PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,<IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<AcftType>
 e.g.
@@ -586,6 +592,7 @@ void Flarm::parsePGRMZ( const char *pgrmz ) {
 // PFLAV,<QueryType>,<HwVersion>,<SwVersion>,<ObstVersion>
 // e.g. $PFLAV,A,2.00,5.00,alps20110221_*
 void Flarm::parsePFLAV( const char *pflav ) {
+	ESP_LOGI(FNAME,"parse %s", pflav );
 	int cs;
 	int calc_cs=calcNMEACheckSum( pflav );
 	cs = getNMEACheckSum( pflav );
