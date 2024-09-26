@@ -22,6 +22,7 @@
 #include "Serial.h"
 #include "Flarm.h"
 #include "driver/uart.h"
+#include "DataMonitor.h"
 
 /* Note that the standard NMEA 0183 baud rate is only 4.8 kBaud.
 Nevertheless, a lot of NMEA-compatible devices can properly work with
@@ -168,6 +169,7 @@ void Serial::serialHandler(void *pvParameters)
 				// ESP_LOG_BUFFER_HEXDUMP(FNAME,buf,len, ESP_LOG_INFO);
 				int wr = uart_write_bytes(uart_num, buf, len );
 				ESP_LOGD(FNAME,"S1: TX written: %d", wr);
+				DM.monitorString( MON_S1, DIR_TX, buf, len );
 			}
 		}
 		// RX part
@@ -180,6 +182,7 @@ void Serial::serialHandler(void *pvParameters)
 			// ESP_LOG_BUFFER_HEXDUMP(FNAME,buf, rxBytes, ESP_LOG_INFO);
 			buf[rxBytes] = 0;
 			process( buf, rxBytes );
+			DM.monitorString( MON_S1, DIR_RX, buf, rxBytes );
 		}
 		if( !Flarm::connected() && !start_holddown ){
 			huntBaudrate();

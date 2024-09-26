@@ -27,11 +27,12 @@
 #include "TargetManager.h"
 #include "Switch.h"
 #include "SetupMenu.h"
+#include "DataMonitor.h"
 
 AdaptUGC *egl = 0;
 OTA *ota = 0;
 bool inch2dot4=false;
-
+DataMonitor DM;
 
 class SwitchObs: public SwitchObserver
 {
@@ -84,11 +85,13 @@ extern "C" void app_main(void)
     //  serial1_speed.set( 1 );  // test for autoBaud
 
     egl = new AdaptUGC();
+    DM.begin( egl );
     egl->begin();
     // egl->setRedBlueTwist( true );
     egl->clearScreen();
     Buzzer::init(2700);
     Buzzer::play2( BUZZ_C, 500,audio_volume.get(), BUZZ_C, 1000, 0, 1 );
+    DM.begin( egl );
 
     Version V;
     std::string ver( "SW Ver.: " );
