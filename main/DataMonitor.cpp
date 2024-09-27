@@ -72,7 +72,7 @@ void DataMonitor::monitorString( int ch, e_dir_t dir, const char *str, int len )
 }
 
 void DataMonitor::printString( int ch, e_dir_t dir, const char *str, bool binary, int len ){
-	ESP_LOGI(FNAME,"DM ch:%d dir:%d len:%d data:%s", ch, dir, len, str );
+	// ESP_LOGI(FNAME,"DM ch:%d dir:%d len:%d data:%s", ch, dir, len, str );
 	const int scroll_lines = 15;
 	char dirsym = 0;
 	if( dir == DIR_RX ){
@@ -115,14 +115,14 @@ void DataMonitor::printString( int ch, e_dir_t dir, const char *str, bool binary
 				}
 				txt[hpos] = 0; // zero terminate string
 				ucg->print( txt );
-				ESP_LOGI(FNAME,"DM binary ch:%d dir:%d string:%s", ch, dir, txt );
+				// ESP_LOGI(FNAME,"DM binary ch:%d dir:%d string:%s", ch, dir, txt );
 			}
 			else{
 				hpos += sprintf( txt, "%c ", dirsym );
 				hpos += sprintf( txt+hpos, "%s", hunk );
 				txt[hpos] = 0;
 				ucg->print( txt );
-				ESP_LOGI(FNAME,"DM ascii ch:%d dir:%d data:%s", ch, dir, txt );
+				// ESP_LOGI(FNAME,"DM ascii ch:%d dir:%d data:%s", ch, dir, txt );
 			}
 			pos+=hunklen;
 			// ESP_LOGI(FNAME,"DM 3 pos: %d", pos );

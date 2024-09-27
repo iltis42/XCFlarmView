@@ -73,6 +73,8 @@ TargetManager::~TargetManager() {
 }
 
 void TargetManager::drawN( int x, int y, bool erase, float north ){
+	if( SetupMenu::isActive() )
+		return;
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setFontPosCenter();
 	egl->setPrintPos( x-SCALE*sin(D2R(north))-5, y-SCALE*cos(D2R(north))+6 );
@@ -86,6 +88,8 @@ void TargetManager::drawN( int x, int y, bool erase, float north ){
 }
 
 void TargetManager::drawAirplane( int x, int y, float north ){
+	if( SetupMenu::isActive() )
+		return;
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setColor( COLOR_WHITE );
 	egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
@@ -186,6 +190,8 @@ void TargetManager::tick(){
 		old_obst_len = 0;
 	}
 	if( !(_tick%5) ){
+		if( SetupMenu::isActive() )
+			return;
 		if( old_TX != tx){
 			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
 			printAlarm( "NO TX", 10, 100, tx );
@@ -235,6 +241,8 @@ void TargetManager::tick(){
 
 		// Pass one: determine proximity
 		for (auto it=targets.begin(); it!=targets.end(); ){
+			if( SetupMenu::isActive() )
+				return;
 			it->second.ageTarget();
 			it->second.nearest(false);
 			if( it->second.getAge() > 35 ){
@@ -268,6 +276,8 @@ void TargetManager::tick(){
 		}
 		// Pass 2, draw targets
 		for (auto it=targets.begin(); it!=targets.end(); it++ ){
+			if( SetupMenu::isActive() )
+				return;
 			if( !id_timer )
 			{
 				if( it->first == min_id ){
