@@ -319,8 +319,8 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 	demo->addEntry( "Start");
 	top->addEntry( demo );
 
-    SetupMenuSelect * datamon = new SetupMenuSelect( "Monitor", RST_NONE, data_mon, true, &data_monitor );
-    datamon->setHelp( "Short press to start/pause, long press to terminate");
+    SetupMenuSelect * datamon = new SetupMenuSelect( "Serial Monitor", RST_NONE, data_mon, true, &data_monitor );
+    datamon->setHelp( "Short press to start/pause, long press to terminate", hpos );
     datamon->addEntry( "Disable");
     datamon->addEntry( "RS232 S1");
     top->addEntry( datamon );

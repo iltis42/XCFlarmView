@@ -34,7 +34,7 @@ int DataMonitor::maxChar( const char *str, int pos, int len, bool binary ){
 			s[0] = str[i+pos];
 		}
 		N += ucg->getStrWidth( s );
-		if( N<280 && (i+pos)<len ){
+		if( N<290 && (i+pos)<len ){
 			i++;
 		}else{
 			break;
@@ -61,7 +61,7 @@ void DataMonitor::header( int ch, bool binary ){
 void DataMonitor::monitorString( int ch, e_dir_t dir, const char *str, int len ){
 	if( xSemaphoreTake(mutex,portMAX_DELAY ) ){
 		if( !mon_started || paused || (ch != channel) ){
-			ESP_LOGI(FNAME,"not active, return started:%d paused:%d  (%d-%d)", mon_started, paused, ch, channel );
+			// ESP_LOGI(FNAME,"not active, return started:%d paused:%d  (%d-%d)", mon_started, paused, ch, channel );
 			xSemaphoreGive(mutex);
 			return;
 		}
@@ -156,7 +156,7 @@ void DataMonitor::longPress(){
 		return;
 	}
 	mon_started = false;
-	delay( 1000 );
+	delay( 500 );
 }
 
 void DataMonitor::start(SetupMenuSelect * p){
@@ -182,21 +182,23 @@ void DataMonitor::start(SetupMenuSelect * p){
 	int timer=0;
 	while( mon_started ){
 		delay( 10 );
+		// ESP_LOGI(FNAME,"started %d", timer);
 		if( Switch::isClosed() ){ // only process press here
 			timer++;
 			if( paused )
 				paused = false;
 			else
 				paused = true;
-			delay(100);
+			delay(200);
 		}else{
 			timer=0;
 		}
-		if(timer>10){
+		if(timer>5){
 			stop();
+			break;
 		}
 	}
-	stop();
+	// stop();
 	ESP_LOGI(FNAME,"finished");
 }
 
@@ -205,7 +207,7 @@ void DataMonitor::stop(){
 	channel = MON_OFF;
 	mon_started = false;
 	paused = false;
-	delay(1000);
+	delay(100);
 	// ucg->scrollLines( 0 );
 	setup->setSelect( MON_OFF );
 }
