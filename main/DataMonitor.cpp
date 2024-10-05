@@ -140,7 +140,7 @@ void DataMonitor::scroll(int scroll){
 
 void DataMonitor::press(){
 	ESP_LOGI(FNAME,"press paused: %d", paused );
-	if( !Switch::isClosed() ){ // only process press here
+	if( !swMode.isClosed() ){ // only process press here
 	if( paused )
 		paused = false;
 	else
@@ -183,7 +183,7 @@ void DataMonitor::start(SetupMenuSelect * p){
 	while( mon_started ){
 		delay( 10 );
 		// ESP_LOGI(FNAME,"started %d", timer);
-		if( Switch::isClosed() ){ // only process press here
+		if( swMode.isClosed() ){ // only process press here
 			timer++;
 			if( paused )
 				paused = false;

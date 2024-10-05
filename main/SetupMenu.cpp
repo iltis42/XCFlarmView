@@ -268,7 +268,7 @@ void SetupMenu::press(){
 		return;
 	}
 	if( _menu_active ){
-	   longPress();
+		longPress();
 	}
 	// ESP_LOGI(FNAME,"End press()");
 }
@@ -296,20 +296,6 @@ void SetupMenu::options_menu_create_units( MenuEntry *top ){
 	top->addEntry( dst );
 }
 
-
-void SetupMenu::options_menu_create_buzz( MenuEntry *top ){
-	SetupMenuValFloat * vol = new SetupMenuValFloat( "Buzzer Volume", "%", 0.0, 100, 10, vol_adj, false, &audio_volume );
-	vol->setHelp("Buzzer volume maximum level", hpos );
-	top->addEntry( vol );
-
-	SetupMenuSelect * mt = new SetupMenuSelect( "Traffic Buzzer", RST_NONE , 0, true, &notify_near );
-	mt->addEntry( "OFF");
-	mt->addEntry( "< 1km");
-	mt->addEntry( "< 2km");
-	mt->setHelp("Buzz traffic that is coming closer than distance configured", hpos );
-	top->addEntry( mt );
-}
-  
 void SetupMenu::options_menu_create_buzz( MenuEntry *top ){
 	SetupMenuValFloat * vol = new SetupMenuValFloat( "Buzzer Volume", "%", 0.0, 100, 10, vol_adj, false, &audio_volume );
 	vol->setHelp("Buzzer volume maximum level", hpos );
@@ -324,29 +310,28 @@ void SetupMenu::options_menu_create_buzz( MenuEntry *top ){
 }
 
 void SetupMenu::options_menu_create_settings( MenuEntry *top ){
-
 	SetupMenu * bz = new SetupMenu( "Buzzer" );
 	top->addEntry( bz );
 	bz->setHelp( "Setup Buzzer volume and Mute options", hpos);
 	bz->addCreator(options_menu_create_buzz);
 
-  SetupMenuSelect * mod = new SetupMenuSelect( "Display Mode", RST_NONE, 0, true, &display_mode );
-  mod->addEntry( "Normal");
-  mod->addEntry( "Simple");
-  top->addEntry( mod );
-  mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
+	SetupMenuSelect * mod = new SetupMenuSelect( "Display Mode", RST_NONE, 0, true, &display_mode );
+	mod->addEntry( "Normal");
+	mod->addEntry( "Simple");
+	top->addEntry( mod );
+	mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
 
-  SetupMenuSelect * log = new SetupMenuSelect( "Distance Mode", RST_NONE, 0, true, &log_scale );
-  log->addEntry( "Linear");
-  log->addEntry( "Logarithmic");
-  top->addEntry( log );
-  log->setHelp("Select distance either linear or logarithmic what zooms far distant targets on the screen", hpos );
+	SetupMenuSelect * log = new SetupMenuSelect( "Distance Mode", RST_NONE, 0, true, &log_scale );
+	log->addEntry( "Linear");
+	log->addEntry( "Logarithmic");
+	top->addEntry( log );
+	log->setHelp("Select distance either linear or logarithmic what zooms far distant targets on the screen", hpos );
 
-  SetupMenuSelect * nmove = new SetupMenuSelect( "Not moving planes", RST_NONE, 0, true, &display_non_moving_target );
-  nmove->addEntry( "Hide");
-  nmove->addEntry( "Show");
-  top->addEntry( nmove );
-  nmove->setHelp("Select if targets on ground that do not move shall be displayed", hpos );
+	SetupMenuSelect * nmove = new SetupMenuSelect( "Not moving planes", RST_NONE, 0, true, &display_non_moving_target );
+	nmove->addEntry( "Hide");
+	nmove->addEntry( "Show");
+	top->addEntry( nmove );
+	nmove->setHelp("Select if targets on ground that do not move shall be displayed", hpos );
 }
 
 void SetupMenu::setup_create_root(MenuEntry *top ){
@@ -361,16 +346,11 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 	un->setHelp( "Setup imperial units for alt(itude), dis(tance), var(iometer)", hpos);
 	un->addCreator(options_menu_create_units);
 
-	SetupMenuSelect * demo = new SetupMenuSelect( "Traffic Demo", RST_IMMEDIATE, 0, true, &traffic_demo );
-	demo->addEntry( "Cancel");
-	demo->addEntry( "Start");
-	top->addEntry( demo );
-
-  SetupMenuSelect * datamon = new SetupMenuSelect( "Serial Monitor", RST_NONE, data_mon, true, &data_monitor );
-  datamon->setHelp( "Short press to start/pause, long press to terminate", hpos );
-  datamon->addEntry( "Disable");
-  datamon->addEntry( "RS232 S1");
-  top->addEntry( datamon );
+	SetupMenuSelect * datamon = new SetupMenuSelect( "Serial Monitor", RST_NONE, data_mon, true, &data_monitor );
+	datamon->setHelp( "Short press to start/pause, long press to terminate", hpos );
+	datamon->addEntry( "Disable");
+	datamon->addEntry( "RS232 S1");
+	top->addEntry( datamon );
 	un->setHelp( "Setup imperial units for alt(itude), dis(tance), var(iometer)", hpos);
 	un->addCreator(options_menu_create_units);
 

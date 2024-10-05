@@ -31,7 +31,6 @@
 
 AdaptUGC *egl = 0;
 OTA *ota = 0;
-bool inch2dot4=true
 DataMonitor DM;
 
 static SetupMenu *menu=0;
