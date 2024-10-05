@@ -321,6 +321,7 @@ extern SetupNG<int>  		serial1_tx_enable;
 extern SetupNG<int>  		software_update;
 extern SetupNG<int>		    log_level;
 extern SetupNG<int>         factory_reset;
+extern SetupNG<int>         log_scale;
 
 extern uint8_t g_col_background;
 extern uint8_t g_col_highlight;

@@ -91,7 +91,7 @@ void SetupMenuValFloat::display( int mode ){
 	}
 	else if (mode == 1){   // save mode, do show only "Saved"true
 		y+=24;
-		egl->setPrintPos( 1, 140 );
+		egl->setPrintPos( 1, DISPLAY_H-30 );
 		egl->print(PROGMEM"Saved");
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
@@ -143,7 +143,7 @@ void SetupMenuValFloat::up( int count ){
 	_value = _nvs->get();
 	_value += step( _step );
 	if( _value > _max ) {
-		_value = _min;
+		_value = _max;
 	}
 	_nvs->set(_value );
 	displayVal();
@@ -152,7 +152,7 @@ void SetupMenuValFloat::up( int count ){
 }
 
 void SetupMenuValFloat::press(){
-	up(1); // implicit trigger also on long press actions when in Setup menu.
+	longPress(); // implicit trigger also on long press actions when in Setup menu.
 }
 
 void SetupMenuValFloat::longPress(){

@@ -28,6 +28,7 @@ int Target::old_dist = -10000;
 unsigned int Target::old_alt  = 100000;
 unsigned int Target::old_id = 0;
 int Target::old_var  = -10000.0;
+int Target::blink  = 0;
 
 
 Target::Target() {
@@ -68,7 +69,7 @@ void Target::drawID( uint8_t r, uint8_t g, uint8_t b ){
 	egl->setColor(r,g,b);
 	egl->setFont( ucg_font_fub20_hf );
 	int w=egl->getStrWidth(cur_id);
-	egl->setPrintPos( (DISPLAY_W-10)-w, DISPLAY_H-7 );
+	egl->setPrintPos( (DISPLAY_W-5)-w, DISPLAY_H-7 );
 	egl->printf("%s",cur_id);
 }
 
@@ -229,17 +230,17 @@ void Target::checkClose(){
 	}
 }
 
-
 // Transform to heading from ground track
 void Target::recalc(){
-	age = 0;  // reset age
 	rel_target_heading = Vector::angleDiffDeg( (float)pflaa.track, Flarm::getGndCourse() );
 	rel_target_dir = Vector::angleDiffDeg( R2D(atan2( pflaa.relEast, pflaa.relNorth )), Flarm::getGndCourse() );
 	dist = sqrt( pflaa.relNorth*pflaa.relNorth + pflaa.relEast*pflaa.relEast )/1000.0; // distance in km float
 	float relV=float(pflaa.relVertical/1000.0);
-	prox=sqrt( relV*relV + dist*dist );
-	float logs = log( 2+prox );
-	float pix = fmax( logs*SCALE, 30.0 );
+	prox=sqrt( relV*relV + dist*dist );  // proximity 3D
+	float logs = dist;
+	if( log_scale.get() )
+		logs = log( 2+dist );
+	float pix = fmax( zoom*logs*SCALE, 20.0 );
 	// ESP_LOGI(FNAME,"prox: %f, log:%f, pix:%f", prox, logs, pix );
 	x=(DISPLAY_W/2)+pix*sin(D2R(rel_target_dir));
 	y=(DISPLAY_H/2)-pix*cos(D2R(rel_target_dir));
@@ -282,8 +283,6 @@ void Target::checkAlarm(){
 	}
 }
 
-int blink = 0;
-
 void Target::draw(){
 	checkAlarm();
 	int size = std::min( 30.0, std::min( 80.0, 10.0+10.0/dist )  );
@@ -316,11 +315,11 @@ void Target::draw(){
 	}
 }
 
-
 void Target::update( nmea_pflaa_s a_pflaa ){
 	pflaa = a_pflaa;
 	// ESP_LOGI(FNAME,"Target (ID %06X) update()", pflaa.ID );
 	recalc();
+	age=0;
 }
 
 void Target::ageTarget(){
@@ -328,6 +327,7 @@ void Target::ageTarget(){
 		age++;
 	if( _buzzedHoldDown )
 		_buzzedHoldDown--;
+	recalc();
 }
 
 void Target::dumpInfo(){

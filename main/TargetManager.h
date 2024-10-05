@@ -24,7 +24,7 @@ private:
 	static std::map< unsigned int, Target> targets;
 	static std::map< unsigned int, Target>::iterator id_iter;
 	static float oldN;
-	static void drawN( int x, int y, bool erase, float north );
+	static void drawN( int x, int y, bool erase, float north, float azoom );
 	static void printAlarm( const char*alarm, int x, int y, int inactive );
 	static void printAlarmLevel( const char*alarm, int x, int y, int level );
 	static void nextTarget(int timer);
@@ -45,6 +45,7 @@ private:
 	static int old_obst_len;
 	static int old_prog;
 	static int info_timer;
+	static float old_radius;
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */

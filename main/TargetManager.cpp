@@ -13,6 +13,7 @@
 #include "vector.h"
 #include "Switch.h"
 #include "SetupMenu.h"
+#include "flarmview.h"
 
 std::map< unsigned int, Target> TargetManager::targets;
 std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.begin();
@@ -33,6 +34,7 @@ int TargetManager::old_hw_len = 0;
 int TargetManager::old_obst_len = 0;
 int TargetManager::old_prog = 0;
 int TargetManager::info_timer = 0;
+float TargetManager::old_radius=0.0;
 
 #define TASK_PERIOD 100
 #define INFO_TIME 100  // 10 Sec display e.g. of SW info
@@ -72,12 +74,12 @@ TargetManager::~TargetManager() {
 	// TODO Auto-generated destructor stub
 }
 
-void TargetManager::drawN( int x, int y, bool erase, float north ){
-	if( SetupMenu::isActive() )
+void TargetManager::drawN( int x, int y, bool erase, float north, float dist ){
+  if( SetupMenu::isActive() )
 		return;
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setFontPosCenter();
-	egl->setPrintPos( x-SCALE*sin(D2R(north))-5, y-SCALE*cos(D2R(north))+6 );
+	egl->setPrintPos( x-dist*sin(D2R(north))-5, y-dist*cos(D2R(north))+6 );
 	egl->setFont(ucg_font_ncenR14_hr);
 	if(erase)
 		egl->setColor(COLOR_BLACK);
@@ -95,13 +97,21 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 	egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
 	egl->drawTetragon( x-1,y+10, x-1,y-6, x+1,y-6, x+1,y+10 ); // fuselage
 	egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
-	egl->setColor(COLOR_GREEN);
-	egl->drawCircle( x,y, 25 );
-	if( north != oldN ){
-		if( oldN != -1.0 )
-			drawN( x,y, true, oldN );
-		drawN( x,y, false, north );
+	float logs = 1;
+	if( log_scale.get() )
+		logs = log( 2+1 );
+	float new_radius = zoom*logs*SCALE;
+
+	if( old_radius ){
+		egl->setColor(COLOR_BLACK);
+		egl->drawCircle( x,y, old_radius );
 	}
+	egl->setColor(COLOR_GREEN);
+	egl->drawCircle( x,y, new_radius );
+	if( oldN != -1.0 )
+		drawN( x,y, true, oldN, old_radius );
+	drawN( x,y, false, north, new_radius );
+	old_radius = new_radius;
 }
 
 void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
@@ -170,7 +180,7 @@ void TargetManager::tick(){
 	if( info_timer )
 		info_timer--;
 	int tx=Flarm::getTXBit();  // 0 or 1
-	if( !holddown && Switch::isClosed() ){
+	if( !holddown && swMode.isClosed() ){
 		// ESP_LOGI(FNAME,"SW closed");
 		nextTarget( id_timer );
 		id_timer = 10 * (1000/TASK_PERIOD);
