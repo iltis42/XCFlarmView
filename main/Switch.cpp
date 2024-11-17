@@ -104,43 +104,40 @@ bool Switch::isOpen() {
 
 
 void Switch::tick() {
-	_tick++;
-	// ESP_LOGI(FNAME,"tick %d", _tick );
-	switch( _state ) {
+	unsigned long currentMillis = millis();
+	switch (_state) {
 	case B_IDLE:
-		if( isClosed() ){   // button pressed
+		if (isClosed()) {  // Button pressed
 			_state = B_PRESSED;
-			p_time = millis();
+			p_time = currentMillis;
 		}
 		break;
 
 	case B_PRESSED:
-		if( isClosed() ){
-			if( (millis() - p_time ) > 750 ){    // was this a long press?
-				sendLongPress();
-				_state = B_IDLE;
+		if (isClosed()) {
+			// Wenn der Button länger als 750 ms gedrückt wird, ist es ein Langdruck
+			if (currentMillis - p_time > 750) {
+				_state = B_LONG_PRESSED;
+
 			}
-			if( !((millis() - p_time ) % 250) ){   // if not, filter bounces and go to released state
-				_state = B_IDLE;
+		} else {
+			// Button wurde losgelassen
+			if (currentMillis - p_time >= 50) {  // Entprellen (50 ms)
+				// Wenn der Druck kürzer als 750 ms war, ist es ein kurzer Druck
 				sendPress();
-				// ESP_LOGI(FNAME,"100 mS repeat");
-			}
-		}else{
-			if( (millis() - p_time ) > 50 ){   // if not, filter bounces and go to released state
 				_state = B_IDLE;
-				sendPress();
-				// ESP_LOGI(FNAME,"->ONCE_RELEASED after %ld ms", millis() - p_time );
 			}
-			_state = B_IDLE;
 		}
 		break;
+
 	case B_LONG_PRESSED:
-		if( isOpen() ){   // button pressed
+		if (isOpen()) {  // Button wurde losgelassen
 			_state = B_IDLE;
+			sendLongPress();
+			// sendPress();
 		}
 		break;
 	}
-
 }
 
 void Switch::sendPress(){

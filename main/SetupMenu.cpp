@@ -28,7 +28,7 @@
 
 SetupMenuSelect * audio_range_sm = 0;
 SetupMenuSelect * mpu = 0;
-static bool enable_restart = false;
+bool enable_restart = false;
 
 // Menu for flap setup
 
@@ -115,7 +115,9 @@ void SetupMenu::catchFocus( bool activate ){
 }
 
 void SetupMenu::display( int mode ){
-	ESP_LOGI(FNAME,"SetupMenu display (%s) s:%p t:%p", _title, selected, this );
+	ESP_LOGI(FNAME,"SetupMenu display (%s) s:%p t:%p focus:%d", _title, selected, this, focus );
+	if( focus )
+		return;
 	if( (selected != this) ){
 		ESP_LOGI(FNAME,"Not me: return");
 		return;
@@ -164,7 +166,7 @@ void SetupMenu::up(int count){
 			zoom = zoom * 1.3;
 		return;
 	}
-	ESP_LOGI(FNAME,"down %d %d", highlight, _childs.size() );
+	ESP_LOGI(FNAME,"down %d %d %d", highlight, _childs.size(), focus );
 	if( focus )
 		return;
 	egl->setColor(COLOR_BLACK);
@@ -188,7 +190,7 @@ void SetupMenu::down(int count){
 		ESP_LOGI(FNAME,"zoom down %f", zoom );
 		return;
 	}
-	ESP_LOGI(FNAME,"SetupMenu::up %d %d", highlight, _childs.size() );
+	ESP_LOGI(FNAME,"SetupMenu::up %d %d %d", highlight, _childs.size(), focus );
 	if( focus )
 		return;
 	egl->setColor(COLOR_BLACK);
@@ -228,6 +230,9 @@ void SetupMenu::showMenu(){
 		}
 		selected->dirty = true;
 		selected->display();
+	}else
+	{
+		selected->pressed = true;
 	}
 	if( (_parent == 0) && (highlight == -1) ) // entering setup menu root
 	{
@@ -248,28 +253,31 @@ void SetupMenu::showMenu(){
 
 void SetupMenu::longPress(){
 	ESP_LOGI(FNAME,"LongPress() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
+	if( focus )
+		return;
 	if( selected != this ){
 		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
-	_menu_active = true;
-	showMenu();
-	if( pressed )
-		pressed = false;
-	else
-		pressed = true;
 	ESP_LOGI(FNAME,"End Longpress()");
 }
 
 void SetupMenu::press(){
-	ESP_LOGI(FNAME,"press() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
+	ESP_LOGI(FNAME,"SetupMenu::press(): %s s:%p t:%p pressed:%d menu_active:%d focus:%d", _title, selected, this, pressed, _menu_active, focus );
+	if( focus )
+		return;
 	if( selected != this ){
-		// ESP_LOGI(FNAME,"Not me: %s return()", _title  );
+		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
-	if( _menu_active ){
-		longPress();
+
+	if( !_menu_active ){
+		_menu_active = true;
+	}else{
+		_menu_active = true;
 	}
+	showMenu();
+	delay(100);
 	// ESP_LOGI(FNAME,"End press()");
 }
 
@@ -351,8 +359,6 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 	datamon->addEntry( "Disable");
 	datamon->addEntry( "RS232 S1");
 	top->addEntry( datamon );
-	un->setHelp( "Setup imperial units for alt(itude), dis(tance), var(iometer)", hpos);
-	un->addCreator(options_menu_create_units);
 
 	SetupMenuSelect * demo = new SetupMenuSelect( "Traffic Demo", RST_IMMEDIATE, 0, true, &traffic_demo );
 	demo->addEntry( "Cancel");

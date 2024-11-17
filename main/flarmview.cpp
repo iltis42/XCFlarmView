@@ -33,7 +33,7 @@ AdaptUGC *egl = 0;
 OTA *ota = 0;
 DataMonitor DM;
 
-static SetupMenu *menu=0;
+SetupMenu *menu=0;
 bool inch2dot4=false;
 Switch swUp;
 Switch swDown;
