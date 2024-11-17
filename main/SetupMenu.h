@@ -39,7 +39,6 @@ public:
 	static bool _menu_active;
 	static int hpos;
 
-
 	static void setup_create_root( MenuEntry *top );
 	static void options_menu_create_units( MenuEntry *top );
 	static void options_menu_create_buzz( MenuEntry *top );

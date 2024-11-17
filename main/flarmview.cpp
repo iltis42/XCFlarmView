@@ -27,14 +27,13 @@
 #include "TargetManager.h"
 #include "Switch.h"
 #include "SetupMenu.h"
+#include "DataMonitor.h"
 
 AdaptUGC *egl = 0;
 OTA *ota = 0;
+DataMonitor DM;
 
-// global color variables for adaptable display variant
-
-
-static SetupMenu *menu=0;
+SetupMenu *menu=0;
 bool inch2dot4=false;
 Switch swUp;
 Switch swDown;
@@ -75,12 +74,14 @@ extern "C" void app_main(void)
     //  serial1_speed.set( 1 );  // test for autoBaud
 
     egl = new AdaptUGC();
+    DM.begin( egl );
     egl->begin();
     egl->setColor(0, COLOR_WHITE );
     egl->setColor(1, COLOR_BLACK );
     egl->clearScreen();
-    Buzzer::init();
-   	Buzzer::play( BUZZ_F, 500, 100 );
+    Buzzer::init(2700);
+    Buzzer::play2( BUZZ_C, 500,audio_volume.get(), BUZZ_C, 1000, 0, 1 );
+    DM.begin( egl );
 
     Version V;
     std::string ver( "SW Ver.: " );
@@ -97,6 +98,9 @@ extern "C" void app_main(void)
     egl->setColor(COLOR_WHITE);
     egl->setPrintPos( 10, 35 );
     egl->print("XCFlarmView 2.0");
+    if( serial1_tx_enable.get() ){ // we don't need TX pin, so disable
+    	serial1_tx_enable.set(0);
+    }
 
     egl->setPrintPos( 10, 80 );
     egl->printf("%s",ver.c_str() );

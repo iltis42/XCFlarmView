@@ -23,11 +23,12 @@
 #include <string>
 #include "SetupNG.h"
 #include "Colors.h"
+#include "DataMonitor.h"
 #include "flarmview.h"
 
 SetupMenuSelect * audio_range_sm = 0;
 SetupMenuSelect * mpu = 0;
-static bool enable_restart = false;
+bool enable_restart = false;
 
 // Menu for flap setup
 
@@ -58,14 +59,14 @@ int do_display_test(SetupMenuSelect * p){
 int data_mon( SetupMenuSelect * p ){
 	ESP_LOGI(FNAME,"data_mon( %d ) ", data_monitor.get() );
 	if( data_monitor.get() != MON_OFF ){
-		// DM.start(p);
+		DM.start(p);
 	}
 	return 0;
 }
 
 int vol_adj( SetupMenuValFloat * p ){
-        // Audio::setVolume( (*(p->_value)) );
-        return 0;
+	// Audio::setVolume( (*(p->_value)) );
+	return 0;
 }
 
 
@@ -100,7 +101,7 @@ void SetupMenu::begin(){
 void SetupMenu::setup( )
 {
 	ESP_LOGI(FNAME,"SetupMenu setup()");
-	SetupMenu * root = new SetupMenu( PROGMEM"Setup" );
+	SetupMenu * root = new SetupMenu( "Setup" );
 	root->addCreator( setup_create_root );
 	root->create_subtree();
 	selected = root;
@@ -114,7 +115,9 @@ void SetupMenu::catchFocus( bool activate ){
 }
 
 void SetupMenu::display( int mode ){
-	ESP_LOGI(FNAME,"SetupMenu display (%s) s:%p t:%p", _title, selected, this );
+	ESP_LOGI(FNAME,"SetupMenu display (%s) s:%p t:%p focus:%d", _title, selected, this, focus );
+	if( focus )
+		return;
 	if( (selected != this) ){
 		ESP_LOGI(FNAME,"Not me: return");
 		return;
@@ -163,7 +166,7 @@ void SetupMenu::up(int count){
 			zoom = zoom * 1.3;
 		return;
 	}
-	ESP_LOGI(FNAME,"down %d %d", highlight, _childs.size() );
+	ESP_LOGI(FNAME,"down %d %d %d", highlight, _childs.size(), focus );
 	if( focus )
 		return;
 	egl->setColor(COLOR_BLACK);
@@ -187,7 +190,7 @@ void SetupMenu::down(int count){
 		ESP_LOGI(FNAME,"zoom down %f", zoom );
 		return;
 	}
-	ESP_LOGI(FNAME,"SetupMenu::up %d %d", highlight, _childs.size() );
+	ESP_LOGI(FNAME,"SetupMenu::up %d %d %d", highlight, _childs.size(), focus );
 	if( focus )
 		return;
 	egl->setColor(COLOR_BLACK);
@@ -227,6 +230,9 @@ void SetupMenu::showMenu(){
 		}
 		selected->dirty = true;
 		selected->display();
+	}else
+	{
+		selected->pressed = true;
 	}
 	if( (_parent == 0) && (highlight == -1) ) // entering setup menu root
 	{
@@ -247,28 +253,31 @@ void SetupMenu::showMenu(){
 
 void SetupMenu::longPress(){
 	ESP_LOGI(FNAME,"LongPress() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
+	if( focus )
+		return;
 	if( selected != this ){
 		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
-	_menu_active = true;
-	showMenu();
-	if( pressed )
-		pressed = false;
-	else
-		pressed = true;
 	ESP_LOGI(FNAME,"End Longpress()");
 }
 
 void SetupMenu::press(){
-	ESP_LOGI(FNAME,"press() %s s:%p t:%p pressed:%d", _title, selected, this, pressed );
+	ESP_LOGI(FNAME,"SetupMenu::press(): %s s:%p t:%p pressed:%d menu_active:%d focus:%d", _title, selected, this, pressed, _menu_active, focus );
+	if( focus )
+		return;
 	if( selected != this ){
-		// ESP_LOGI(FNAME,"Not me: %s return()", _title  );
+		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
-	if( _menu_active ){
-	   longPress();
+
+	if( !_menu_active ){
+		_menu_active = true;
+	}else{
+		_menu_active = true;
 	}
+	showMenu();
+	delay(100);
 	// ESP_LOGI(FNAME,"End press()");
 }
 
@@ -278,79 +287,82 @@ void SetupMenu::escape(){
 
 
 void SetupMenu::options_menu_create_units( MenuEntry *top ){
-        SetupMenuSelect * alu = new SetupMenuSelect( PROGMEM"Altitude", RST_NONE, 0, true, &alt_unit );
-        alu->addEntry( PROGMEM"Meter (m)");
-        alu->addEntry( PROGMEM"Feet (ft)");
-        alu->addEntry( PROGMEM"FL (FL)");
-        top->addEntry( alu );
-        SetupMenuSelect * vau = new SetupMenuSelect( PROGMEM"Vario", RST_NONE , 0, true, &vario_unit );
-        vau->addEntry( PROGMEM"Meters/sec (m/s)");
-        vau->addEntry( PROGMEM"Feet/min x 100 (fpm)");
-        vau->addEntry( PROGMEM"Knots (kt)");
-        top->addEntry( vau );
-        SetupMenuSelect * dst = new SetupMenuSelect( PROGMEM"Distance", RST_NONE , 0, true, &dst_unit );
-        dst->addEntry( PROGMEM"KiloMeter (km)");
-        dst->addEntry( PROGMEM"KiloFeet (kft)");
-        dst->addEntry( PROGMEM"NauticalMiles (nm)");
-        top->addEntry( dst );
+	SetupMenuSelect * alu = new SetupMenuSelect( "Altitude", RST_NONE, 0, true, &alt_unit );
+	alu->addEntry( "Meter (m)");
+	alu->addEntry( "Feet (ft)");
+	alu->addEntry( "FL (FL)");
+	top->addEntry( alu );
+	SetupMenuSelect * vau = new SetupMenuSelect( "Vario", RST_NONE , 0, true, &vario_unit );
+	vau->addEntry( "Meters/sec (m/s)");
+	vau->addEntry( "Feet/min x 100 (fpm)");
+	vau->addEntry( "Knots (kt)");
+	top->addEntry( vau );
+	SetupMenuSelect * dst = new SetupMenuSelect( "Distance", RST_NONE , 0, true, &dst_unit );
+	dst->addEntry( "KiloMeter (km)");
+	dst->addEntry( "KiloFeet (kft)");
+	dst->addEntry( "NauticalMiles (nm)");
+	top->addEntry( dst );
 }
 
-
 void SetupMenu::options_menu_create_buzz( MenuEntry *top ){
-	SetupMenuValFloat * vol = new SetupMenuValFloat( PROGMEM"Buzzer Volume", "%", 0.0, 100, 10, vol_adj, false, &audio_volume );
-	vol->setHelp(PROGMEM"Buzzer volume maximum level", hpos );
+	SetupMenuValFloat * vol = new SetupMenuValFloat( "Buzzer Volume", "%", 0.0, 100, 10, vol_adj, false, &audio_volume );
+	vol->setHelp("Buzzer volume maximum level", hpos );
 	top->addEntry( vol );
 
-	SetupMenuSelect * mt = new SetupMenuSelect( PROGMEM"Traffic Buzzer", RST_NONE , 0, true, &notify_near );
-	mt->addEntry( PROGMEM"OFF");
-	mt->addEntry( PROGMEM"< 1km");
-	mt->addEntry( PROGMEM"< 2km");
-	mt->setHelp(PROGMEM"Buzz traffic that is coming closer than distance configured", hpos );
+	SetupMenuSelect * mt = new SetupMenuSelect( "Traffic Buzzer", RST_NONE , 0, true, &notify_near );
+	mt->addEntry( "OFF");
+	mt->addEntry( "< 1km");
+	mt->addEntry( "< 2km");
+	mt->setHelp( "Buzz traffic that is coming closer than distance configured", hpos );
 	top->addEntry( mt );
 }
 
-
 void SetupMenu::options_menu_create_settings( MenuEntry *top ){
-
-	SetupMenu * bz = new SetupMenu( PROGMEM"Buzzer" );
+	SetupMenu * bz = new SetupMenu( "Buzzer" );
 	top->addEntry( bz );
-	bz->setHelp( PROGMEM"Setup Buzzer volume and Mute options", hpos);
+	bz->setHelp( "Setup Buzzer volume and Mute options", hpos);
 	bz->addCreator(options_menu_create_buzz);
 
-    SetupMenuSelect * mod = new SetupMenuSelect( PROGMEM"Display Mode", RST_NONE, 0, true, &display_mode );
-    mod->addEntry( PROGMEM"Normal");
-    mod->addEntry( PROGMEM"Simple");
-    top->addEntry( mod );
-    mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
+	SetupMenuSelect * mod = new SetupMenuSelect( "Display Mode", RST_NONE, 0, true, &display_mode );
+	mod->addEntry( "Normal");
+	mod->addEntry( "Simple");
+	top->addEntry( mod );
+	mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
 
-    SetupMenuSelect * log = new SetupMenuSelect( PROGMEM"Distance Mode", RST_NONE, 0, true, &log_scale );
-    log->addEntry( PROGMEM"Linear");
-    log->addEntry( PROGMEM"Logarithmic");
-    top->addEntry( log );
-    log->setHelp(PROGMEM"Select distance either linear or logarithmic what zooms far distant targets on the screen", hpos );
+	SetupMenuSelect * log = new SetupMenuSelect( "Distance Mode", RST_NONE, 0, true, &log_scale );
+	log->addEntry( "Linear");
+	log->addEntry( "Logarithmic");
+	top->addEntry( log );
+	log->setHelp("Select distance either linear or logarithmic what zooms far distant targets on the screen", hpos );
 
-    SetupMenuSelect * nmove = new SetupMenuSelect( PROGMEM"Not moving planes", RST_NONE, 0, true, &display_non_moving_target );
-    nmove->addEntry( PROGMEM"Hide");
-    nmove->addEntry( PROGMEM"Show");
-    top->addEntry( nmove );
-    nmove->setHelp(PROGMEM"Select if targets on ground that do not move shall be displayed", hpos );
+	SetupMenuSelect * nmove = new SetupMenuSelect( "Not moving planes", RST_NONE, 0, true, &display_non_moving_target );
+	nmove->addEntry( "Hide");
+	nmove->addEntry( "Show");
+	top->addEntry( nmove );
+	nmove->setHelp("Select if targets on ground that do not move shall be displayed", hpos );
 }
 
 void SetupMenu::setup_create_root(MenuEntry *top ){
 	ESP_LOGI(FNAME,"setup_create_root()");
-	SetupMenu * set = new SetupMenu( PROGMEM"Settings" );
+	SetupMenu * set = new SetupMenu( "Settings" );
 	top->addEntry( set );
-	set->setHelp( PROGMEM"Setup volume and other modes", 160);
+	set->setHelp( "Setup volume and other modes", 160);
 	set->addCreator(options_menu_create_settings);
 
-	SetupMenu * un = new SetupMenu( PROGMEM"Units" );
+	SetupMenu * un = new SetupMenu( "Units" );
 	top->addEntry( un );
-	un->setHelp( PROGMEM"Setup imperial units for alt(itude), dis(tance), var(iometer)", hpos);
+	un->setHelp( "Setup imperial units for alt(itude), dis(tance), var(iometer)", hpos);
 	un->addCreator(options_menu_create_units);
 
-	SetupMenuSelect * demo = new SetupMenuSelect( PROGMEM"Traffic Demo", RST_IMMEDIATE, 0, true, &traffic_demo );
-	demo->addEntry( PROGMEM"Cancel");
-	demo->addEntry( PROGMEM"Start");
+	SetupMenuSelect * datamon = new SetupMenuSelect( "Serial Monitor", RST_NONE, data_mon, true, &data_monitor );
+	datamon->setHelp( "Short press to start/pause, long press to terminate", hpos );
+	datamon->addEntry( "Disable");
+	datamon->addEntry( "RS232 S1");
+	top->addEntry( datamon );
+
+	SetupMenuSelect * demo = new SetupMenuSelect( "Traffic Demo", RST_IMMEDIATE, 0, true, &traffic_demo );
+	demo->addEntry( "Cancel");
+	demo->addEntry( "Start");
 	top->addEntry( demo );
 
 	// Orientation   _display_orientation
@@ -362,8 +374,6 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 		diso->addEntry( "TOPDOWN");
 		top->setHelp( "Press <Up>/<Down> button to modify, <ID> button to confirm", hpos);
 	}
-
-
 }
 
 

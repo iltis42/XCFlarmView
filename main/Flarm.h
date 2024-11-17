@@ -7,6 +7,7 @@
 #include "RingBufCPP.h"  // SString, tbd: extra header
 #include "Units.h"
 #include "freertos/FreeRTOS.h"
+#include <map>
 
 typedef enum e_audio_alarm_type { AUDIO_ALARM_OFF, AUDIO_ALARM_NEAR, AUDIO_ALARM_FLARM_1, AUDIO_ALARM_FLARM_2, AUDIO_ALARM_FLARM_3  } e_audio_alarm_type_t;
 
@@ -47,7 +48,9 @@ public:
 	static void parsePFLAE( const char *pflae );
 	static void parsePFLAU( const char *pflau, bool sim=false );
 	static void parsePFLAA( const char *pflaa );
+	static void parsePFLAV( const char* pflav );
 	static void parsePFLAX( const char *pflax, int port );
+	static void parsePFLAQ( const char *pflaq );
 	static void parseGPRMC( const char *gprmc );
 	static void parseGPGGA( const char *gpgga );
 	static void parsePGRMZ( const char *pgrmz );
@@ -89,11 +92,20 @@ public:
 		return false;
 	}
 	static void begin();
+	static void clearVersions();
 	static void taskFlarm(void *pvParameters);
 	static void startSim() { flarm_sim = true; };
 	static inline bool getSim() { return flarm_sim; };
 	static inline int getTXBit() { return TX; };
 	static inline int getGPSBit() { return GPS; };
+	static inline int getErrorSeverity() { return pflae_severity; };
+	static inline int getErrorCode() { return pflae_error; };
+	static const char * getErrorString( int index );
+	static inline const char * getSwVersion() { return SwVersion; };
+	static inline const char * getHwVersion()  { return HwVersion; };
+	static inline const char * getObstVersion()  { return ObstVersion; };
+	static inline unsigned int getProgress()  { return Progress; };
+	static const char* getOperationString();
 
 private:
 	static int calcNMEACheckSum(const char *nmea);
@@ -102,6 +114,7 @@ private:
 	static void drawClearVerticalTriangle( int x, int y, int rb, int dist, int size, int factor );
 	static void drawTriangle( int x, int y, int rb, int dist, int size=15, int factor=2, bool erase=false );
 	static void flarmSim();
+
 
 	static AdaptUGC* ucg;
 	static int RX,TX,GPS,Power;
@@ -118,6 +131,7 @@ private:
 	static int alarmOld;
 	static int _tick;
 	static int timeout;
+	static int alarm_timeout;
 	static int ext_alt_timer;
 	static int _numSat;
 	static int sim_tick;
@@ -125,6 +139,14 @@ private:
 	static TaskHandle_t pid;
 	static bool flarm_sim;
 	static int pflau_timeout;
+	static int  pflae_severity;
+	static int  pflae_error;
+	static char HwVersion[16];
+	static char SwVersion[16];
+	static char ObstVersion[32];
+	static char Operation[16];
+	static char Info[16];
+	static unsigned int Progress;
 };
 
 #endif

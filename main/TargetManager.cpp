@@ -26,10 +26,18 @@ int TargetManager::_tick =  0;
 int TargetManager::holddown =  0;
 TaskHandle_t TargetManager::pid = 0;
 unsigned int TargetManager::min_id = 0;
+bool TargetManager::redrawNeeded = true;
+int  TargetManager::old_error = 0;
+int  TargetManager::old_severity = 0;
+int TargetManager::old_sw_len = 0;
+int TargetManager::old_hw_len = 0;
+int TargetManager::old_obst_len = 0;
+int TargetManager::old_prog = 0;
+int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
 
-
 #define TASK_PERIOD 100
+#define INFO_TIME 100  // 10 Sec display e.g. of SW info
 
 void TargetManager::begin(){
 	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 13, &pid, 0);
@@ -52,7 +60,7 @@ TargetManager::TargetManager() {
 void TargetManager::receiveTarget( nmea_pflaa_s &pflaa ){
 	// ESP_LOGI(FNAME,"ID %06X (dec) %d ", pflaa.ID, pflaa.ID );
 	if( (pflaa.groundSpeed < 10) && (display_non_moving_target.get() == NON_MOVE_HIDE) ){
-		return;
+			return;
 	}
 	if( targets.find(pflaa.ID) == targets.end() ){
 		targets[ pflaa.ID ] = Target ( pflaa );
@@ -67,6 +75,8 @@ TargetManager::~TargetManager() {
 }
 
 void TargetManager::drawN( int x, int y, bool erase, float north, float dist ){
+  if( SetupMenu::isActive() )
+		return;
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setFontPosCenter();
 	egl->setPrintPos( x-dist*sin(D2R(north))-5, y-dist*cos(D2R(north))+6 );
@@ -80,6 +90,8 @@ void TargetManager::drawN( int x, int y, bool erase, float north, float dist ){
 }
 
 void TargetManager::drawAirplane( int x, int y, float north ){
+	if( SetupMenu::isActive() )
+		return;
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setColor( COLOR_WHITE );
 	egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
@@ -113,6 +125,29 @@ void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
 	egl->printf( alarm );
 }
 
+/*
+<Severity> Decimal integer value. Range: from 0 to 3.
+0 = no error, i.e. normal operation. Disregard other parameters.
+1 = information only, i.e. normal operation
+2 = functionality may be reduced
+3 = fatal problem, device will not work
+*/
+
+void TargetManager::printAlarmLevel( const char*alarm, int x, int y, int level ){
+	if( level == 0 ){
+		egl->setColor(COLOR_BLACK); // G=0 R=255 B=0  RED Color
+	}else if( level == 1 ){
+		egl->setColor(COLOR_GREEN);
+	}else if( level == 2 ){
+		egl->setColor(COLOR_YELLOW);
+	}else if( level == 3 ){
+		egl->setColor(COLOR_RED);
+	}
+	egl->setFont(ucg_font_ncenR14_hr);
+	egl->setPrintPos( x, y );
+	egl->printf( alarm );
+}
+
 void TargetManager::nextTarget(int timer){
 	// ESP_LOGI(FNAME,"nextTarget size:%d", targets.size() );
 	if( targets.size() ){
@@ -129,12 +164,21 @@ void TargetManager::nextTarget(int timer){
 	}
 }
 
+void TargetManager::printVersions( int x, int y, const char *prefix, const char *ver ){
+	info_timer = INFO_TIME;
+	egl->setColor(COLOR_WHITE);
+	egl->setFont(ucg_font_ncenR14_hr);
+	egl->setPrintPos( x, y );
+	egl->printf( "%s %s", prefix, ver );
+}
 
 void TargetManager::tick(){
 	float min_dist = 10000;
 	_tick++;
 	if( holddown )
 		holddown--;
+	if( info_timer )
+		info_timer--;
 	int tx=Flarm::getTXBit();  // 0 or 1
 	if( !holddown && swMode.isClosed() ){
 		// ESP_LOGI(FNAME,"SW closed");
@@ -145,22 +189,70 @@ void TargetManager::tick(){
 		if( id_timer )
 			id_timer --;
 	}
+	if( (!(_tick%1200) && !info_timer )|| info_timer == 1 ){
+		egl->clearScreen();
+		old_TX = -1;
+		old_GPS = -1;
+		redrawNeeded = true;
+		Flarm::clearVersions();
+		old_sw_len = 0;
+		old_hw_len = 0;
+		old_obst_len = 0;
+	}
 	if( !(_tick%5) ){
+		if( SetupMenu::isActive() )
+			return;
 		if( old_TX != tx){
 			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
-			printAlarm( "NO TX", 10, 90, tx );
+			printAlarm( "NO TX", 10, 100, tx );
 			old_TX = tx;
 		}
 		int gps=Flarm::getGPSBit();
 		if( old_GPS != gps ){  // 0,1 or 2
 			ESP_LOGI(FNAME,"GPS changed, old: %d, new: %d", old_GPS, gps );
-			printAlarm( "NO GPS", 10, 110, gps );
+			printAlarm( "NO GPS", 10, 120, gps );
 			old_GPS = gps;
+		}
+		int severity =  Flarm::getErrorSeverity();
+		int error_code =  Flarm::getErrorCode();
+		if( old_error != error_code || old_severity != severity ){
+				printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
+				old_error = error_code;
+				old_severity = severity;
+		}
+		int len=strlen( Flarm::getSwVersion() );
+		if( len && (len != old_sw_len) )
+		{
+			printVersions( 10, 20, "Flarm SW: ", Flarm::getSwVersion() );
+			old_sw_len = len;
+		}
+		len=strlen( Flarm::getHwVersion() );
+		if( len && (len != old_hw_len) )
+		{
+			printVersions( 10, 40, "Flarm HW: ", Flarm::getHwVersion() );
+			old_hw_len = len;
+		}
+		len=strlen( Flarm::getObstVersion() );
+		if( len && (len != old_obst_len) )
+		{
+			printVersions( 10, 60, "Flarm Obst: ", Flarm::getObstVersion() );
+			old_obst_len = len;
+		}
+		unsigned int prog = Flarm::getProgress();
+		if( prog != old_prog ){
+			info_timer = INFO_TIME;
+			egl->setColor(COLOR_WHITE);
+			egl->setFont(ucg_font_ncenR14_hr);
+			egl->setPrintPos( 10, 20 );
+			egl->printf( "%s: %d %%", Flarm::getOperationString(), prog );
+			old_prog = prog;
 		}
 		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
 
 		// Pass one: determine proximity
 		for (auto it=targets.begin(); it!=targets.end(); ){
+			if( SetupMenu::isActive() )
+				return;
 			it->second.ageTarget();
 			it->second.nearest(false);
 			if( it->second.getAge() > 35 ){
@@ -194,17 +286,26 @@ void TargetManager::tick(){
 		}
 		// Pass 2, draw targets
 		for (auto it=targets.begin(); it!=targets.end(); it++ ){
+			if( SetupMenu::isActive() )
+				return;
 			if( !id_timer )
-			{	if( it->first == min_id ){
-				it->second.nearest(true);
-			}else{
-				it->second.nearest(false);
-			}
+			{
+				if( it->first == min_id ){
+					it->second.nearest(true);
+				}else{
+					it->second.nearest(false);
+				}
 			}
 			if( it->second.getAge() < 30 ){
 				if( it->second.isNearest() || it->second.haveAlarm() ){
-					it->second.draw();  // closest == true
-					it->second.drawInfo();
+					it->second.draw();       // closest == true
+					if( redrawNeeded ){
+						it->second.redrawInfo(); // forced redraw of all fields
+						redrawNeeded = false;
+					}
+					else{
+						it->second.drawInfo();
+					}
 				}
 				else{
 					it->second.draw();

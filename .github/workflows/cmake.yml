@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: set-env
       run:  VER=`date +"%y.%m%d-%H%M"`;
             BRANCH=`git branch --show-current`;
@@ -34,19 +34,14 @@ jobs:
             python $PWD/tools/fln2head.py >$PWD/main/flarmnetdata.h;   
             docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.4 idf.py build;
             mkdir -p artifacts;
-            cp $PWD/build/xcflarmview.bin $PWD/artifacts/xcflarmview-${{ env.FILE_VERSION }}.bin;
-            cp $PWD/build/xcflarmview.elf $PWD/artifacts/xcflarmview-${{ env.FILE_VERSION }}.elf;
-            gzip $PWD/artifacts/xcflarmview-${{ env.FILE_VERSION }}.elf;
+            cp $PWD/build/xcflarmview.bin artifacts/xcflarmview-${{ env.FILE_VERSION }}.bin;
+            cp $PWD/build/xcflarmview.elf artifacts/xcflarmview-${{ env.FILE_VERSION }}.elf;
+            gzip artifacts/xcflarmview-${{ env.FILE_VERSION }}.elf;
             ls artifacts/*;
 
-    - name: Upload binary
-      uses: actions/upload-artifact@v3
+    - name: Upload all Artifacts
+      uses: actions/upload-artifact@v4
       with:
         name: XCFlarmView-${{ env.FILE_VERSION }}
-        path: artifacts/xcflarmview-${{ env.FILE_VERSION }}.bin
-     
-    - name: Upload ELF
-      uses: actions/upload-artifact@v3
-      with:
-        name: XCFlarmView-${{ env.FILE_VERSION }}
-        path: artifacts/xcflarmview-${{ env.FILE_VERSION }}.elf.gz
+        path: artifacts/*
+        

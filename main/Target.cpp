@@ -87,6 +87,14 @@ void Target::drawVar( uint8_t r, uint8_t g, uint8_t b ){
 	egl->printf("%s", cur_var);
 }
 
+void Target::redrawInfo(){
+	old_dist = -10000;
+	old_alt  = 100000;
+	old_id = 0;
+	old_var  = -10000.0;
+	drawInfo();
+}
+
 void Target::drawInfo(bool erase){
 	char s[32]= { 0 };
 	ESP_LOGI(FNAME,"ID %06X, drawInfo, erase=%d", pflaa.ID, erase );
@@ -95,8 +103,10 @@ void Target::drawInfo(bool erase){
 
 	// distance info
 	if( (old_dist != (int)(dist*100)) | erase ){
-		if( strlen( cur_dist ) )
+		if( strlen( cur_dist ) ){
 			drawDist( COLOR_BLACK );  // erase
+			old_dist = 0;
+		}
 		if( !erase ){
 			sprintf(cur_dist,"%.2f", Units::Distance( dist ) );
 			drawDist(COLOR_WHITE);
@@ -126,8 +136,10 @@ void Target::drawInfo(bool erase){
 
 	// relative vertical
 	if( (old_alt != pflaa.relVertical) | erase ){
-		if( strlen( cur_alt ) )
+		if( strlen( cur_alt ) ){
 			drawAlt( COLOR_BLACK );  // erase
+			old_alt = 1000000;
+		}
 		if( !erase ){
 			int alt = (int)(Units::Altitude( (pflaa.relVertical)+0.5));
 			if( pflaa.relVertical > 0 )
@@ -141,8 +153,10 @@ void Target::drawInfo(bool erase){
 
 	// climb rate
 	if( (old_var != (int)(pflaa.climbRate*10)) | erase ){
-		if( strlen( cur_var ) )
+		if( strlen( cur_var ) ){
 			drawVar( COLOR_BLACK );  // erase
+			 old_var = -10000.0;
+		}
 		if( !erase ){
 			float climb = Units::Vario( (float)pflaa.climbRate );
 			if( climb > 0 )
@@ -272,7 +286,7 @@ void Target::checkAlarm(){
 void Target::draw(){
 	checkAlarm();
 	int size = std::min( 30.0, std::min( 80.0, 10.0+10.0/dist )  );
-	if( old_x != -1000  ){  // delete target if it was drawn before
+	if( old_x != -1000 ){
 		// ESP_LOGI(FNAME,"drawFlarmTarget() erase old x:%d old_x:%d", x, old_x );
 		egl->setColor( COLOR_BLACK );   // BLACK
 		drawFlarmTarget( old_x, old_y, old_track, old_size, true, old_closest );
