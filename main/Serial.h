@@ -61,7 +61,7 @@ private:
 	static EventGroupHandle_t rxTxNotifier;
 	// Stop routing of TX/RX data. That is used in case of Flarm binary download.
 	static bool bincom_mode;
-	static char framebuffer[128];
+	static char framebuffer[512];
 	static int  pos;
 	static int  len;
 	static TaskHandle_t pid;

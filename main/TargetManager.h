@@ -20,6 +20,7 @@ public:
 	static void tick();
 	static void drawAirplane( int x, int y, float north=0.0 );
 	static void begin();
+	inline static void redrawInfo() { redrawNeeded = true; };
 private:
 	static std::map< unsigned int, Target> targets;
 	static std::map< unsigned int, Target>::iterator id_iter;

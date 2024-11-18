@@ -189,6 +189,7 @@ void TargetManager::tick(){
 		if( id_timer )
 			id_timer --;
 	}
+	/*
 	if( (!(_tick%1200) && !info_timer )|| info_timer == 1 ){
 		egl->clearScreen();
 		old_TX = -1;
@@ -199,6 +200,7 @@ void TargetManager::tick(){
 		old_hw_len = 0;
 		old_obst_len = 0;
 	}
+	*/
 	if( !(_tick%5) ){
 		if( SetupMenu::isActive() )
 			return;
@@ -255,12 +257,12 @@ void TargetManager::tick(){
 				return;
 			it->second.ageTarget();
 			it->second.nearest(false);
-			if( it->second.getAge() > 35 ){
+			if( it->second.getAge() > 30 ){
 				ESP_LOGI(FNAME,"ID %06X, ERASE from ageout", it->first );
-				it->second.draw();
 				if( id_iter->first == it->first ){
 					id_iter++;
 				}
+				it->second.draw(true);
 				targets.erase( it++ );
 			}else{
 				if( it->second.haveAlarm() )

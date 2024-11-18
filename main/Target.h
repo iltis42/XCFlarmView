@@ -28,7 +28,7 @@ public:
 	void dumpInfo();
 	void drawInfo(bool erase=false);
 	void redrawInfo();
-	void draw();
+	void draw(bool erase=false);
 	void checkClose();
 	inline bool haveAlarm(){ return pflaa.alarmLevel != 0; };
 	inline bool sameAlt( uint tolerance=150 ) { return( abs( pflaa.relVertical )< tolerance ); };

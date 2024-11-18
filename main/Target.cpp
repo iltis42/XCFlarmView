@@ -14,7 +14,7 @@
 #include <cmath>
 #include <algorithm>
 #include <flarmview.h>
-
+#include "TargetManager.h"
 
 extern AdaptUGC *egl;
 
@@ -69,6 +69,16 @@ void Target::drawID( uint8_t r, uint8_t g, uint8_t b ){
 	egl->setColor(r,g,b);
 	egl->setFont( ucg_font_fub20_hf );
 	int w=egl->getStrWidth(cur_id);
+	if( w>150 ){
+		egl->setFont( ucg_font_fub17_hf );
+		w=egl->getStrWidth(cur_id);
+		if( w>150 ){
+			egl->setFont( ucg_font_fub14_hf );
+		}
+		if( w>150 ){
+			ESP_LOGW(FNAME,"ID >%s< longer than 150 pixel (%d)", cur_id, w );
+		}
+	}
 	egl->setPrintPos( (DISPLAY_W-5)-w, DISPLAY_H-7 );
 	egl->printf("%s",cur_id);
 }
@@ -260,6 +270,9 @@ void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, boo
 	int x2 = axt + sideLength/2 * cos(radians - 2 * M_PI / 3);  // base right
 	int y2 = ayt + sideLength/2 * sin(radians - 2 * M_PI / 3);
 	egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
+	if( y0 > 290 || y1 > 290 || y2 > 290 ){  // need to refresh ID
+		TargetManager::redrawInfo();
+	}
 	if( closest ){
 		egl->drawCircle( ax,ay, int( sideLength*0.75 ) );
 	}
@@ -283,16 +296,19 @@ void Target::checkAlarm(){
 	}
 }
 
-void Target::draw(){
+void Target::draw(bool erase){
 	checkAlarm();
 	int size = std::min( 30.0, std::min( 80.0, 10.0+10.0/dist )  );
+	//if( old_x == -1000 ){
+		// ESP_LOGW(FNAME,"old x = -1000, NOERASE !");
+	//}
 	if( old_x != -1000 ){
 		// ESP_LOGI(FNAME,"drawFlarmTarget() erase old x:%d old_x:%d", x, old_x );
 		egl->setColor( COLOR_BLACK );   // BLACK
 		drawFlarmTarget( old_x, old_y, old_track, old_size, true, old_closest );
 		old_x = -1000;
 	}
-	if( age < 30 && ( (display_mode.get() == DISPLAY_MULTI) || ((display_mode.get() == DISPLAY_SIMPLE) && isNearest() )) ){
+	if( !erase && (age < 30) && ( (display_mode.get() == DISPLAY_MULTI) || ((display_mode.get() == DISPLAY_SIMPLE) && isNearest() )) ){
 		int brightness=int(255.0 - 255.0 * std::min(1.0, (age/30.0)) ); // fade out with growing age
 		if( (dist < 1.0) && sameAlt() ){
 			if( haveAlarm() ){

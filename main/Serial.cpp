@@ -62,7 +62,7 @@ RingBufCPP<SString, QUEUE_SIZE> s1_rx_q;
 
 static xSemaphoreHandle qMutex=NULL;
 
-char Serial::framebuffer[128];
+char Serial::framebuffer[512];
 int  Serial::pos = 0;
 int  Serial::len = 0;
 TaskHandle_t Serial::pid = 0;
@@ -189,7 +189,7 @@ void Serial::serialHandler(void *pvParameters)
 		}
 		if( start_holddown > 0 )
 			start_holddown--;
-		delay( 100 );
+		delay( 5 );
 	} // end while( true )
 }
 
