@@ -259,18 +259,6 @@ void SetupMenu::longPress(){
 		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
-	ESP_LOGI(FNAME,"End Longpress()");
-}
-
-void SetupMenu::press(){
-	ESP_LOGI(FNAME,"SetupMenu::press(): %s s:%p t:%p pressed:%d menu_active:%d focus:%d", _title, selected, this, pressed, _menu_active, focus );
-	if( focus )
-		return;
-	if( selected != this ){
-		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
-		return;
-	}
-
 	if( !_menu_active ){
 		_menu_active = true;
 	}else{
@@ -278,6 +266,17 @@ void SetupMenu::press(){
 	}
 	showMenu();
 	delay(100);
+	ESP_LOGI(FNAME,"End Longpress()");
+}
+
+void SetupMenu::press(){
+	// ESP_LOGI(FNAME,"SetupMenu::press(): %s s:%p t:%p pressed:%d menu_active:%d focus:%d", _title, selected, this, pressed, _menu_active, focus );
+	if( focus )
+		return;
+	if( selected != this ){
+		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
+		return;
+	}
 	// ESP_LOGI(FNAME,"End press()");
 }
 
