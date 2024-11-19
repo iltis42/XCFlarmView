@@ -45,7 +45,6 @@ private:
 	static int old_hw_len;
 	static int old_obst_len;
 	static int old_prog;
-	static int info_timer;
 	static float old_radius;
 };
 

@@ -91,7 +91,7 @@ void SetupMenuValFloat::display( int mode ){
 	}
 	else if (mode == 1){   // save mode, do show only "Saved"true
 		y+=24;
-		egl->setPrintPos( 1, DISPLAY_H-30 );
+		egl->setPrintPos( 1, DISPLAY_H-7 );
 		egl->print(PROGMEM"Saved");
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}

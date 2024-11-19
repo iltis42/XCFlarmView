@@ -93,7 +93,7 @@ template<typename T> class SetupNG: public SetupCommon
 			e_unit_type_t unit = UNIT_NONE
 	)
 	{
-		// ESP_LOGI(FNAME,"SetupNG(%s)", akey );
+		ESP_LOGI(FNAME,"SetupNG(%s)", akey );
 		if( strlen( akey ) > 15 )
 			ESP_LOGE(FNAME,"SetupNG(%s) key > 15 char !", akey );
 		instances->push_back( this );  // add into vector
@@ -164,7 +164,7 @@ template<typename T> class SetupNG: public SetupCommon
 
 	bool set( T aval, bool dosync=true, bool doAct=true ) {
 		if( _value == aval ){
-			// ESP_LOGI(FNAME,"Value already in config: %s", _key );
+			ESP_LOGI(FNAME,"Value already in config: %s", _key );
 			return( true );
 		}
 		_value = aval;
@@ -180,7 +180,7 @@ template<typename T> class SetupNG: public SetupCommon
 			return true;
 		}
 		flags._dirty = true;
-		// ESP_LOGI(FNAME,"set() %s", _key );
+		ESP_LOGI(FNAME,"set() %s", _key );
 		return true;
 	}
 
@@ -201,7 +201,7 @@ template<typename T> class SetupNG: public SetupCommon
 	}
 
 	bool commit() {
-		// ESP_LOGI(FNAME,"NVS commit(): %s ", _key );
+		ESP_LOGI(FNAME,"NVS commit(): %s ", _key );
 		if( flags._volatile != PERSISTENT ){
 				return true;
 		}
@@ -217,7 +217,7 @@ template<typename T> class SetupNG: public SetupCommon
 		// ESP_LOGI(FNAME,"NVS write(): ");
 		char val[30];
 		value_str(val);
-		ESP_LOGI(FNAME,"NVS set blob(key:%s, val: %s, len:%d )", _key, val, sizeof( _value ) );
+		ESP_LOGI(FNAME,"write() NVS set blob(key:%s, val: %s, len:%d )", _key, val, sizeof( _value ) );
 		bool ret = NVS.setBlob( _key, (void *)(&_value), sizeof( _value ) );
 		if( !ret )
 			return false;

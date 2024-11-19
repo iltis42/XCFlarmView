@@ -152,7 +152,7 @@ void Serial::serialHandler(void *pvParameters)
 	// Make a pause, that has avoided core dumps during enable the RX interrupt.
 	delay( 1000 );  // delay a bit serial task startup unit startup of system is through
 	ESP_LOGI(FNAME,"S1 serial handler startup");
-    unsigned int start_holddown = 1200;
+    unsigned int start_holddown = 24000;  // 14000 * 5 mS = 120 sec
 	while( true ) {
 		// Stack supervision
 		if( uxTaskGetStackHighWaterMark( pid ) < 256 )
@@ -186,6 +186,9 @@ void Serial::serialHandler(void *pvParameters)
 		}
 		if( !Flarm::connected() && !start_holddown ){
 			huntBaudrate();
+		}
+		if( Flarm::connected() && (serial1_speed.get() != baudrate) ){
+			saveBaudrate();
 		}
 		if( start_holddown > 0 )
 			start_holddown--;
@@ -239,10 +242,22 @@ bool Serial::selfTest(){
 	return false;
 }
 
+void Serial::saveBaudrate(){
+	ESP_LOGI(FNAME,"Save auto detected serial baudrate: %d", baud[baudrate] );
+	serial1_speed.set( baudrate );
+	serial1_speed.commit(); // save to NVS
+	int b = serial1_speed.get();
+	ESP_LOGI(FNAME,"serial1_speed.get(): %d", b );
+	if( b != baudrate ){
+		ESP_LOGW(FNAME,"WARNING auto detected serial baudrate saved: %d != detected: %d", baud[b], baud[baudrate] );
+	}
+}
+
+
 void Serial::huntBaudrate(){
 	if( !Flarm::connected() ){
 		trials++;
-		if( trials>20 ) { // An active Flarm sends every second at least
+		if( trials>200 ) { // An active Flarm sends every second at least
 			trials = 0;
 			baudrate++;
 			if( baudrate > 6 ){
@@ -252,21 +267,18 @@ void Serial::huntBaudrate(){
 			ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
 		}
 	}
-	else{
-		if( serial1_speed.get() != baudrate ){
-			ESP_LOGI(FNAME,"Serial baudrate auto detected: %d", baudrate );
-			serial1_speed.set( baudrate );
-		}
-	}
 }
 
 void Serial::begin(){
 	ESP_LOGI(FNAME,"Serial::begin()" );
 	// Initialize static configuration
 	qMutex = xSemaphoreCreateMutex();
-	baudrate = baud[serial1_speed.get()];
+	baudrate = serial1_speed.get();
+	ESP_LOGI(FNAME,"serial1_speed.get(): %d", baudrate );
+	int br = baud[baudrate];
+
 	uart_config_t uart_config = {
-	    .baud_rate = baudrate,
+	    .baud_rate = br,
 	    .data_bits = UART_DATA_8_BITS,
 	    .parity = UART_PARITY_DISABLE,
 	    .stop_bits = UART_STOP_BITS_1,
@@ -276,7 +288,8 @@ void Serial::begin(){
 	};
 
 	ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
-	ESP_LOGI(FNAME,"Serial param config, baudrate=%d", baudrate );
+	ESP_LOGI(FNAME,"Serial param config, baudrate (baud)=%d", br );
+	uart_set_baudrate(uart_num, br);
 
 	int umask = UART_SIGNAL_INV_DISABLE;
 	if( serial1_tx_inverted.get() )

@@ -33,14 +33,13 @@ int TargetManager::old_sw_len = 0;
 int TargetManager::old_hw_len = 0;
 int TargetManager::old_obst_len = 0;
 int TargetManager::old_prog = 0;
-int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
 
 #define TASK_PERIOD 100
-#define INFO_TIME 100  // 10 Sec display e.g. of SW info
+#define AGEOUT (30*(1000/TASK_PERIOD))  // 30 seconds
 
 void TargetManager::begin(){
-	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 13, &pid, 0);
+	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 10, &pid, 0);
 }
 
 void TargetManager::taskTargetMgr(void *pvParameters){
@@ -165,7 +164,6 @@ void TargetManager::nextTarget(int timer){
 }
 
 void TargetManager::printVersions( int x, int y, const char *prefix, const char *ver ){
-	info_timer = INFO_TIME;
 	egl->setColor(COLOR_WHITE);
 	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos( x, y );
@@ -177,9 +175,6 @@ void TargetManager::tick(){
 	_tick++;
 	if( holddown )
 		holddown--;
-	if( info_timer )
-		info_timer--;
-	int tx=Flarm::getTXBit();  // 0 or 1
 	if( !holddown && swMode.isClosed() ){
 		// ESP_LOGI(FNAME,"SW closed");
 		nextTarget( id_timer );
@@ -189,31 +184,32 @@ void TargetManager::tick(){
 		if( id_timer )
 			id_timer --;
 	}
-	/*
-	if( (!(_tick%1200) && !info_timer )|| info_timer == 1 ){
-		egl->clearScreen();
-		old_TX = -1;
-		old_GPS = -1;
-		redrawNeeded = true;
-		Flarm::clearVersions();
-		old_sw_len = 0;
-		old_hw_len = 0;
-		old_obst_len = 0;
-	}
-	*/
+	if( !(_tick%10) )
+		ESP_LOGI(FNAME,"Num targets: %d", targets.size() );
+
 	if( !(_tick%5) ){
 		if( SetupMenu::isActive() )
 			return;
+		int tx=Flarm::getTXBit();  // 0 or 1
+		int gps=Flarm::getGPSBit();
 		if( old_TX != tx){
 			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
 			printAlarm( "NO TX", 10, 100, tx );
 			old_TX = tx;
+			if( tx && gps ){
+				Flarm::clearVersions();
+				egl->clearScreen();
+			}
 		}
-		int gps=Flarm::getGPSBit();
+
 		if( old_GPS != gps ){  // 0,1 or 2
 			ESP_LOGI(FNAME,"GPS changed, old: %d, new: %d", old_GPS, gps );
 			printAlarm( "NO GPS", 10, 120, gps );
 			old_GPS = gps;
+			if( tx && gps ){
+				Flarm::clearVersions();
+				egl->clearScreen();
+			}
 		}
 		int severity =  Flarm::getErrorSeverity();
 		int error_code =  Flarm::getErrorCode();
@@ -242,84 +238,78 @@ void TargetManager::tick(){
 		}
 		unsigned int prog = Flarm::getProgress();
 		if( prog != old_prog ){
-			info_timer = INFO_TIME;
 			egl->setColor(COLOR_WHITE);
 			egl->setFont(ucg_font_ncenR14_hr);
 			egl->setPrintPos( 10, 20 );
 			egl->printf( "%s: %d %%", Flarm::getOperationString(), prog );
 			old_prog = prog;
 		}
-		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
 
-		// Pass one: determine proximity
-		for (auto it=targets.begin(); it!=targets.end(); ){
-			if( SetupMenu::isActive() )
-				return;
-			it->second.ageTarget();
-			it->second.nearest(false);
-			if( it->second.getAge() > 30 ){
-				ESP_LOGI(FNAME,"ID %06X, ERASE from ageout", it->first );
-				if( id_iter->first == it->first ){
-					id_iter++;
-				}
-				it->second.draw(true);
-				targets.erase( it++ );
-			}else{
-				if( it->second.haveAlarm() )
-					id_timer=0;
-				if( !id_timer ){
-					if( (it->second.getProximity() < min_dist)  ){
-						min_dist = it->second.getDist();
-						min_id = it->first;
-						it->second.nearest(true);
-					}else{
-						it->second.nearest(false);
-					}
-				}else{
-					if( id_iter != targets.end() && it->first == id_iter->first ){
-						it->second.nearest(true);
-					}else{
-						it->second.nearest(false);
-					}
-				}
-				++it;
-			}
-			//		ESP_LOGI(FNAME,"ID %06X, AGE: %d ", it->first, it->second.getAge() );
-		}
-		// Pass 2, draw targets
-		for (auto it=targets.begin(); it!=targets.end(); it++ ){
-			if( SetupMenu::isActive() )
-				return;
-			if( !id_timer )
-			{
-				if( it->first == min_id ){
+	}
+
+	drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
+
+	// Pass one: determine proximity
+	for (auto it=targets.begin(); it!=targets.end(); it++ ){
+		if( SetupMenu::isActive() )
+			return;
+		it->second.ageTarget();
+		it->second.nearest(false);
+		if( it->second.getAge() < AGEOUT ){
+			if( it->second.haveAlarm() )
+				id_timer=0;
+			if( !id_timer ){
+				if( (it->second.getProximity() < min_dist)  ){
+					min_dist = it->second.getDist();
+					min_id = it->first;
 					it->second.nearest(true);
 				}else{
-					it->second.nearest(false);
+					it->second.nearest(false);  // maybe not needed, above already done
 				}
-			}
-			if( it->second.getAge() < 30 ){
-				if( it->second.isNearest() || it->second.haveAlarm() ){
-					it->second.draw();       // closest == true
-					if( redrawNeeded ){
-						it->second.redrawInfo(); // forced redraw of all fields
-						redrawNeeded = false;
-					}
-					else{
-						it->second.drawInfo();
-					}
-				}
-				else{
-					it->second.draw();
-				}
-				// it->second.dumpInfo();
-				it->second.checkClose();
 			}else{
-				if( it->second.isNearest() ){   // why only nearest here ?
-					it->second.drawInfo(true); // erase == true
-					it->second.draw();     // age/erase
+				if( id_iter != targets.end() && it->first == id_iter->first ){
+					it->second.nearest(true);
+				}else{
+					it->second.nearest(false);  // dito
 				}
 			}
 		}
 	}
+	// Pass 2, draw targets
+	for (auto it=targets.begin(); it!=targets.end(); ){
+		if( SetupMenu::isActive() )
+			return;
+		if( !id_timer )
+		{
+			if( it->first == min_id ){
+				it->second.nearest(true);
+			}else{
+				it->second.nearest(false);
+			}
+		}
+		if( it->second.getAge() < AGEOUT ){
+			if( it->second.isNearest() || it->second.haveAlarm() ){
+				// closest == true
+				if( redrawNeeded ){
+					it->second.redrawInfo(); // forced redraw of all fields
+					redrawNeeded = false;
+				}
+				it->second.drawInfo();
+			}
+			it->second.draw();
+			it->second.checkClose();
+			it++;
+		}
+		else{
+			if( id_iter->first == it->first ){  // move on id_iter in case
+				id_iter++;
+			}
+			if( it->second.isNearest() ){   // only nearest has info to erase
+				it->second.drawInfo(true);
+			}
+			it->second.draw(true);     // age/erase
+			targets.erase( it++ );
+		}
+	}
+
 }

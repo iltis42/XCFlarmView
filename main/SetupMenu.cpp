@@ -259,10 +259,10 @@ void SetupMenu::longPress(){
 		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
-	if( !_menu_active ){
+	if( !_menu_active ){     // use long press to start setup in 2.4 inch
 		_menu_active = true;
 	}else{
-		_menu_active = true;
+		_menu_active = false;
 	}
 	showMenu();
 	delay(100);
@@ -277,6 +277,10 @@ void SetupMenu::press(){
 		ESP_LOGI(FNAME,"Not me: %s return()", _title  );
 		return;
 	}
+	if( _menu_active ){ // react also to short press inside setup menu
+		showMenu();
+	}
+
 	// ESP_LOGI(FNAME,"End press()");
 }
 

@@ -32,7 +32,7 @@ int Target::blink  = 0;
 
 
 Target::Target() {
-	ESP_LOGI(FNAME,"Target DAFAULT constructor");
+	// ESP_LOGI(FNAME,"Target DAFAULT constructor");
 }
 
 Target::Target( nmea_pflaa_s a_pflaa ) {
@@ -102,12 +102,11 @@ void Target::redrawInfo(){
 	old_alt  = 100000;
 	old_id = 0;
 	old_var  = -10000.0;
-	drawInfo();
 }
 
 void Target::drawInfo(bool erase){
 	char s[32]= { 0 };
-	ESP_LOGI(FNAME,"ID %06X, drawInfo, erase=%d", pflaa.ID, erase );
+	// ESP_LOGI(FNAME,"ID %06X, drawInfo, erase=%d", pflaa.ID, erase );
 	if( pflaa.ID == 0 )
 		return;
 
@@ -258,31 +257,33 @@ void Target::recalc(){
 }
 
 void Target::drawFlarmTarget( int ax, int ay, float bearing, int sideLength, bool erase, bool closest ){
-	// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%.1f, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
-	float radians = D2R(bearing-90.0);
-	float axt=ax-sideLength/4*sin(D2R(bearing));  // offset the Triangle to center of gravity (and circle)
-	float ayt=ay+sideLength/4*cos(D2R(bearing));
-	// Calculate the triangle's vertices
-	int x0 = axt + sideLength * cos(radians);   // arrow head
-	int y0 = ayt + sideLength * sin(radians);
-	int x1 = axt + sideLength/2 * cos(radians + 2 * M_PI / 3);  // base left
-	int y1 = ayt + sideLength/2 * sin(radians + 2 * M_PI / 3);
-	int x2 = axt + sideLength/2 * cos(radians - 2 * M_PI / 3);  // base right
-	int y2 = ayt + sideLength/2 * sin(radians - 2 * M_PI / 3);
-	egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
-	if( y0 > 290 || y1 > 290 || y2 > 290 ){  // need to refresh ID
-		TargetManager::redrawInfo();
-	}
-	if( closest ){
-		egl->drawCircle( ax,ay, int( sideLength*0.75 ) );
-	}
-	if( !erase ){
+	if( ax > 0 && ax <= DISPLAY_W && ay > 0 && ay <= DISPLAY_H ){
 		// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%.1f, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
-		old_x = ax;
-		old_y = ay;
-		old_size = sideLength;
-		old_track = bearing;
-		old_closest = closest;
+		float radians = D2R(bearing-90.0);
+		float axt=ax-sideLength/4*sin(D2R(bearing));  // offset the Triangle to center of gravity (and circle)
+		float ayt=ay+sideLength/4*cos(D2R(bearing));
+		// Calculate the triangle's vertices
+		int x0 = axt + sideLength * cos(radians);   // arrow head
+		int y0 = ayt + sideLength * sin(radians);
+		int x1 = axt + sideLength/2 * cos(radians + 2 * M_PI / 3);  // base left
+		int y1 = ayt + sideLength/2 * sin(radians + 2 * M_PI / 3);
+		int x2 = axt + sideLength/2 * cos(radians - 2 * M_PI / 3);  // base right
+		int y2 = ayt + sideLength/2 * sin(radians - 2 * M_PI / 3);
+		egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
+		if( y0 > 290 || y1 > 290 || y2 > 290 ){  // need to refresh ID
+			TargetManager::redrawInfo();
+		}
+		if( closest ){
+			egl->drawCircle( ax,ay, int( sideLength*0.75 ) );
+		}
+		if( !erase ){
+			// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%.1f, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
+			old_x = ax;
+			old_y = ay;
+			old_size = sideLength;
+			old_track = bearing;
+			old_closest = closest;
+		}
 	}
 }
 
@@ -299,17 +300,14 @@ void Target::checkAlarm(){
 void Target::draw(bool erase){
 	checkAlarm();
 	int size = std::min( 30.0, std::min( 80.0, 10.0+10.0/dist )  );
-	//if( old_x == -1000 ){
-		// ESP_LOGW(FNAME,"old x = -1000, NOERASE !");
-	//}
-	if( old_x != -1000 ){
+	if( erase || old_x != -1000 ){
 		// ESP_LOGI(FNAME,"drawFlarmTarget() erase old x:%d old_x:%d", x, old_x );
 		egl->setColor( COLOR_BLACK );   // BLACK
 		drawFlarmTarget( old_x, old_y, old_track, old_size, true, old_closest );
 		old_x = -1000;
 	}
-	if( !erase && (age < 30) && ( (display_mode.get() == DISPLAY_MULTI) || ((display_mode.get() == DISPLAY_SIMPLE) && isNearest() )) ){
-		int brightness=int(255.0 - 255.0 * std::min(1.0, (age/30.0)) ); // fade out with growing age
+	if( !erase && ( (display_mode.get() == DISPLAY_MULTI) || ((display_mode.get() == DISPLAY_SIMPLE) && isNearest() )) ){
+		int brightness=int(255.0 - 255.0 * std::min(1.0, (age/(double)AGEOUT)) ); // fade out with growing age
 		if( (dist < 1.0) && sameAlt() ){
 			if( haveAlarm() ){
 				if( !(blink%2) )
@@ -324,10 +322,8 @@ void Target::draw(bool erase){
 		else{
 			egl->setColor( 0, brightness, 0 ); // green
 		}
-		if( x > 0 && x < DISPLAY_W && y > 0 && y < DISPLAY_H ){
-			// ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );
-			drawFlarmTarget( x, y, rel_target_heading, size, false, is_nearest );
-		}
+		// ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );
+		drawFlarmTarget( x, y, rel_target_heading, size, false, is_nearest );
 	}
 }
 

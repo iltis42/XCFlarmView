@@ -54,6 +54,7 @@ public:
 	static void process( const char *packet, int len );
 	static void parse_NMEA( char c );
 	static void huntBaudrate();
+	static void saveBaudrate();
 
 private:
 	static enum state_t state;
