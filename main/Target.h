@@ -13,8 +13,8 @@
 
 
 #define SCALE 30  // 1km @ zoom = 1
-#define TASK_PERIOD 100
-#define AGEOUT (30*(1000/TASK_PERIOD))  // 30 seconds
+#define TASKPERIOD 100
+#define AGEOUT (30*((1000/5)/TASKPERIOD))  // 30 seconds
 
 class Target {
 public:

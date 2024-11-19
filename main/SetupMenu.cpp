@@ -244,7 +244,7 @@ void SetupMenu::showMenu(){
 			esp_restart();
 		}else{
 			ESP_LOGI(FNAME,"Now enable Restart");
-			delay(1000);
+			delay(100);
 			enable_restart = true;
 		}
 	}

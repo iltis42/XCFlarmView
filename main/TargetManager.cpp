@@ -35,8 +35,7 @@ int TargetManager::old_obst_len = 0;
 int TargetManager::old_prog = 0;
 float TargetManager::old_radius=0.0;
 
-#define TASK_PERIOD 100
-#define AGEOUT (30*(1000/TASK_PERIOD))  // 30 seconds
+
 
 void TargetManager::begin(){
 	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 10, &pid, 0);
@@ -47,7 +46,7 @@ void TargetManager::taskTargetMgr(void *pvParameters){
 		if( !SetupMenu::isActive() ){
 			tick();
 		}
-		delay(TASK_PERIOD);
+		delay(TASKPERIOD);
 	}
 }
 
@@ -178,7 +177,7 @@ void TargetManager::tick(){
 	if( !holddown && swMode.isClosed() ){
 		// ESP_LOGI(FNAME,"SW closed");
 		nextTarget( id_timer );
-		id_timer = 10 * (1000/TASK_PERIOD);
+		id_timer = 10 * (1000/TASKPERIOD);  // 10 seconds
 		holddown=5;
 	}else{
 		if( id_timer )
@@ -187,7 +186,7 @@ void TargetManager::tick(){
 	if( !(_tick%10) )
 		ESP_LOGI(FNAME,"Num targets: %d", targets.size() );
 
-	if( !(_tick%5) ){
+	if( !(_tick%5) ){ // all 5 ticks
 		if( SetupMenu::isActive() )
 			return;
 		int tx=Flarm::getTXBit();  // 0 or 1
@@ -244,72 +243,71 @@ void TargetManager::tick(){
 			egl->printf( "%s: %d %%", Flarm::getOperationString(), prog );
 			old_prog = prog;
 		}
+		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
 
-	}
-
-	drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
-
-	// Pass one: determine proximity
-	for (auto it=targets.begin(); it!=targets.end(); it++ ){
-		if( SetupMenu::isActive() )
-			return;
-		it->second.ageTarget();
-		it->second.nearest(false);
-		if( it->second.getAge() < AGEOUT ){
-			if( it->second.haveAlarm() )
-				id_timer=0;
-			if( !id_timer ){
-				if( (it->second.getProximity() < min_dist)  ){
-					min_dist = it->second.getDist();
-					min_id = it->first;
+		// Pass one: determine proximity
+		for (auto it=targets.begin(); it!=targets.end(); it++ ){
+			if( SetupMenu::isActive() )
+				return;
+			it->second.ageTarget();
+			it->second.nearest(false);
+			if( it->second.getAge() < AGEOUT ){
+				if( it->second.haveAlarm() )
+					id_timer=0;
+				if( !id_timer ){
+					if( (it->second.getProximity() < min_dist)  ){
+						min_dist = it->second.getDist();
+						min_id = it->first;
+						it->second.nearest(true);
+					}else{
+						it->second.nearest(false);  // maybe not needed, above already done
+					}
+				}else{
+					if( id_iter != targets.end() && it->first == id_iter->first ){
+						it->second.nearest(true);
+					}else{
+						it->second.nearest(false);  // dito
+					}
+				}
+			}
+		}
+		// Pass 2, draw targets
+		for (auto it=targets.begin(); it!=targets.end(); ){
+			if( SetupMenu::isActive() )
+				return;
+			if( !id_timer )
+			{
+				if( it->first == min_id ){
 					it->second.nearest(true);
 				}else{
-					it->second.nearest(false);  // maybe not needed, above already done
+					it->second.nearest(false);
 				}
-			}else{
-				if( id_iter != targets.end() && it->first == id_iter->first ){
-					it->second.nearest(true);
-				}else{
-					it->second.nearest(false);  // dito
+			}
+			if( it->second.getAge() < AGEOUT ){
+				if( it->second.isNearest() || it->second.haveAlarm() ){
+					// closest == true
+					if( redrawNeeded ){
+						it->second.redrawInfo(); // forced redraw of all fields
+						redrawNeeded = false;
+					}
+					it->second.drawInfo();
 				}
+				it->second.draw();
+				if( !(_tick%5) ){
+					it->second.checkClose();
+				}
+				it++;
+			}
+			else{
+				if( id_iter->first == it->first ){  // move on id_iter in case
+					id_iter++;
+				}
+				if( it->second.isNearest() ){   // only nearest has info to erase
+					it->second.drawInfo(true);
+				}
+				it->second.draw(true);     // age/erase
+				targets.erase( it++ );
 			}
 		}
 	}
-	// Pass 2, draw targets
-	for (auto it=targets.begin(); it!=targets.end(); ){
-		if( SetupMenu::isActive() )
-			return;
-		if( !id_timer )
-		{
-			if( it->first == min_id ){
-				it->second.nearest(true);
-			}else{
-				it->second.nearest(false);
-			}
-		}
-		if( it->second.getAge() < AGEOUT ){
-			if( it->second.isNearest() || it->second.haveAlarm() ){
-				// closest == true
-				if( redrawNeeded ){
-					it->second.redrawInfo(); // forced redraw of all fields
-					redrawNeeded = false;
-				}
-				it->second.drawInfo();
-			}
-			it->second.draw();
-			it->second.checkClose();
-			it++;
-		}
-		else{
-			if( id_iter->first == it->first ){  // move on id_iter in case
-				id_iter++;
-			}
-			if( it->second.isNearest() ){   // only nearest has info to erase
-				it->second.drawInfo(true);
-			}
-			it->second.draw(true);     // age/erase
-			targets.erase( it++ );
-		}
-	}
-
 }
