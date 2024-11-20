@@ -13,8 +13,9 @@
 
 
 #define SCALE 30  // 1km @ zoom = 1
-#define TASKPERIOD 100
-#define AGEOUT (30*((1000/5)/TASKPERIOD))  // 30 seconds
+#define TASKPERIOD 50  // ms
+#define DISPLAYTICK  5  // all 5 ticks = 250 mS
+#define AGEOUT (15*((1000/((DISPLAYTICK*TASKPERIOD)+70.0))))  // 15 seconds
 
 class Target {
 public:
@@ -30,31 +31,38 @@ public:
 	void dumpInfo();
 	void drawInfo(bool erase=false);
 	void redrawInfo();
-	void draw(bool erase=false);
+	void draw(bool erase);
 	void checkClose();
-	inline bool haveAlarm(){ return pflaa.alarmLevel != 0; };
+	inline bool haveAlarm(){ return alarm; };
 	inline bool sameAlt( uint tolerance=150 ) { return( abs( pflaa.relVertical )< tolerance ); };
 	inline void nearest( bool n ) { is_nearest=n; };
 	inline bool isNearest() { return is_nearest; };
 
 private:
 	void checkAlarm();
-	void drawFlarmTarget( int x, int y, float bearing, int sideLength, bool erase=false, bool closest=false );
+	void drawFlarmTarget( int x, int y, int bearing, int sideLength, bool erase=false, bool closest=false, ucg_color_t color={ COLOR_GREEN } );
 	void drawDist( uint8_t r, uint8_t g, uint8_t b );
 	void drawVar( uint8_t r, uint8_t g, uint8_t b );
 	void drawAlt( uint8_t r, uint8_t g, uint8_t b );
 	void drawID( uint8_t r, uint8_t g, uint8_t b );
+	inline void setAlarm(){
+		alarm = true;
+		alarm_timer = 8;
+	};
 	nmea_pflaa_s pflaa;
 	int age;
 	int _buzzedHoldDown;
-	float rel_target_heading;
+	int rel_target_heading;
 	float rel_target_dir;
-	float dist, prox, old_track;
-	int x,y,old_x, old_y, old_size, old_closest;
+	int old_track;
+	float dist, prox;
+	int x,y,old_ax, old_ay, old_x0, old_y0, old_x1, old_y1, old_x2, old_y2, old_closest, old_sidelen;
 	char * reg;  // registration from flarmnet DB
 	char * comp; // competition ID
 	void recalc();
 	bool is_nearest;
+	bool alarm;
+	int alarm_timer;
 
 	static char cur_dist[32];
 	static char cur_alt[32];

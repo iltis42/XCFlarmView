@@ -27,15 +27,17 @@ int TargetManager::holddown =  0;
 TaskHandle_t TargetManager::pid = 0;
 unsigned int TargetManager::min_id = 0;
 bool TargetManager::redrawNeeded = true;
+bool TargetManager::erase_info = false;
 int  TargetManager::old_error = 0;
 int  TargetManager::old_severity = 0;
-int TargetManager::old_sw_len = 0;
-int TargetManager::old_hw_len = 0;
-int TargetManager::old_obst_len = 0;
-int TargetManager::old_prog = 0;
+int TargetManager::old_sw_len = -1;
+int TargetManager::old_hw_len = -1;
+int TargetManager::old_obst_len = -1;
+int TargetManager::old_prog = -1;
+int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
 
-
+#define INFO_TIME (10*(1000/TASKPERIOD)/DISPLAYTICK)  // all 10 sec
 
 void TargetManager::begin(){
 	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 10, &pid, 0);
@@ -100,14 +102,14 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 		logs = log( 2+1 );
 	float new_radius = zoom*logs*SCALE;
 
-	if( old_radius ){
+	if( oldN != -1.0 )
+		drawN( x,y, true, oldN, old_radius );
+	if( (old_radius != 0.0) && (old_radius != new_radius) ){
 		egl->setColor(COLOR_BLACK);
 		egl->drawCircle( x,y, old_radius );
 	}
 	egl->setColor(COLOR_GREEN);
 	egl->drawCircle( x,y, new_radius );
-	if( oldN != -1.0 )
-		drawN( x,y, true, oldN, old_radius );
 	drawN( x,y, false, north, new_radius );
 	old_radius = new_radius;
 }
@@ -162,11 +164,26 @@ void TargetManager::nextTarget(int timer){
 	}
 }
 
-void TargetManager::printVersions( int x, int y, const char *prefix, const char *ver ){
-	egl->setColor(COLOR_WHITE);
+void TargetManager::printVersions( int x, int y, const char *prefix, const char *ver, int erase ){
+	if( erase )
+		egl->setColor(COLOR_BLACK);
+	else{
+		egl->setColor(COLOR_WHITE);
+		info_timer = INFO_TIME;
+	}
 	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos( x, y );
 	egl->printf( "%s %s", prefix, ver );
+}
+
+void TargetManager::clearScreen(){
+	egl->clearScreen();
+	old_GPS = -1;
+	old_sw_len = -1;
+	old_hw_len = -1;
+	old_obst_len = -1;
+	old_prog = -1;
+	redrawNeeded = true;
 }
 
 void TargetManager::tick(){
@@ -174,6 +191,7 @@ void TargetManager::tick(){
 	_tick++;
 	if( holddown )
 		holddown--;
+
 	if( !holddown && swMode.isClosed() ){
 		// ESP_LOGI(FNAME,"SW closed");
 		nextTarget( id_timer );
@@ -189,26 +207,23 @@ void TargetManager::tick(){
 	if( !(_tick%5) ){ // all 5 ticks
 		if( SetupMenu::isActive() )
 			return;
+		if( info_timer )
+			info_timer--;
+
 		int tx=Flarm::getTXBit();  // 0 or 1
 		int gps=Flarm::getGPSBit();
-		if( old_TX != tx){
+		if( old_TX != tx ){
 			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
+			if( !tx )
+				clearScreen();
 			printAlarm( "NO TX", 10, 100, tx );
 			old_TX = tx;
-			if( tx && gps ){
-				Flarm::clearVersions();
-				egl->clearScreen();
-			}
 		}
 
 		if( old_GPS != gps ){  // 0,1 or 2
 			ESP_LOGI(FNAME,"GPS changed, old: %d, new: %d", old_GPS, gps );
 			printAlarm( "NO GPS", 10, 120, gps );
 			old_GPS = gps;
-			if( tx && gps ){
-				Flarm::clearVersions();
-				egl->clearScreen();
-			}
 		}
 		int severity =  Flarm::getErrorSeverity();
 		int error_code =  Flarm::getErrorCode();
@@ -217,39 +232,54 @@ void TargetManager::tick(){
 				old_error = error_code;
 				old_severity = severity;
 		}
-		int len=strlen( Flarm::getSwVersion() );
-		if( len && (len != old_sw_len) )
+		int swlen=strlen( Flarm::getSwVersion() );
+		if( swlen && (swlen != old_sw_len) )
 		{
-			printVersions( 10, 20, "Flarm SW: ", Flarm::getSwVersion() );
-			old_sw_len = len;
+			printVersions( 10, 20, "Flarm SW: ", Flarm::getSwVersion(), erase_info );
+			old_sw_len = swlen;
 		}
-		len=strlen( Flarm::getHwVersion() );
+		int len=strlen( Flarm::getHwVersion() );
 		if( len && (len != old_hw_len) )
 		{
-			printVersions( 10, 40, "Flarm HW: ", Flarm::getHwVersion() );
+			printVersions( 10, 40, "Flarm HW: ", Flarm::getHwVersion(), erase_info );
 			old_hw_len = len;
 		}
 		len=strlen( Flarm::getObstVersion() );
 		if( len && (len != old_obst_len) )
 		{
-			printVersions( 10, 60, "Flarm Obst: ", Flarm::getObstVersion() );
+			printVersions( 10, 60, "Flarm Obst: ", Flarm::getObstVersion(), erase_info );
 			old_obst_len = len;
 		}
+		// ESP_LOGI(FNAME,"swlen=%d; info_timer=%d", swlen, info_timer);
+		if( info_timer == 1 ){
+			ESP_LOGI(FNAME,"NOW CLEAR info");
+			erase_info = true;
+			old_sw_len = -1;  // retrigger drawing
+			old_hw_len = -1;
+			old_obst_len = -1;
+		}
+		if( erase_info ){
+			if( swlen == old_sw_len )
+				erase_info = false; // reset erase info flag
+		}
+
 		unsigned int prog = Flarm::getProgress();
-		if( prog != old_prog ){
+		if( prog && (prog != old_prog) ){
+			info_timer = INFO_TIME;
 			egl->setColor(COLOR_WHITE);
 			egl->setFont(ucg_font_ncenR14_hr);
 			egl->setPrintPos( 10, 20 );
-			egl->printf( "%s: %d %%", Flarm::getOperationString(), prog );
+			egl->printf( "%s: %d %%  ", Flarm::getOperationString(), prog );
 			old_prog = prog;
 		}
+
 		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
 
 		// Pass one: determine proximity
 		for (auto it=targets.begin(); it!=targets.end(); it++ ){
+			it->second.ageTarget();
 			if( SetupMenu::isActive() )
 				return;
-			it->second.ageTarget();
 			it->second.nearest(false);
 			if( it->second.getAge() < AGEOUT ){
 				if( it->second.haveAlarm() )
@@ -258,15 +288,10 @@ void TargetManager::tick(){
 					if( (it->second.getProximity() < min_dist)  ){
 						min_dist = it->second.getDist();
 						min_id = it->first;
-						it->second.nearest(true);
-					}else{
-						it->second.nearest(false);  // maybe not needed, above already done
 					}
 				}else{
 					if( id_iter != targets.end() && it->first == id_iter->first ){
 						it->second.nearest(true);
-					}else{
-						it->second.nearest(false);  // dito
 					}
 				}
 			}
@@ -292,10 +317,8 @@ void TargetManager::tick(){
 					}
 					it->second.drawInfo();
 				}
-				it->second.draw();
-				if( !(_tick%5) ){
-					it->second.checkClose();
-				}
+				it->second.draw(false);
+				it->second.checkClose();
 				it++;
 			}
 			else{
@@ -309,5 +332,6 @@ void TargetManager::tick(){
 				targets.erase( it++ );
 			}
 		}
+
 	}
 }

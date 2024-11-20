@@ -149,7 +149,7 @@ extern "C" void app_main(void)
     menu->begin();
     Switch::startTask();
 
-    if( traffic_demo.get() ){
+    if( 1 /* traffic_demo.get() */ ){
     	ESP_LOGI(FNAME,"Traffic Demo");
     	traffic_demo.set(0);
     	traffic_demo.commit();
