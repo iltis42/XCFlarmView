@@ -14,7 +14,7 @@
 #define SPI_SCLK       GPIO_NUM_6      // SPI Clock pin
 #define SPI_MOSI       GPIO_NUM_7      // SPI SDO Master Out Slave In pin
 #define RESET_Display  GPIO_NUM_8      // Reset pin for Display
-#define SPI_MISO       GPIO_NUM_10     // dummy, not applicable to ER-TFT1.47
+#define SPI_MISO       GPIO_NUM_9     // dummy, not applicable to ER-TFT1.47
 
 static eglib_t myeglib;
 
@@ -44,19 +44,19 @@ uint8_t PROGMEM eglib_font_free_sansbold_66[] = { EGLIB_FONT_FREE_SANSBOLD_66 };
 
 
 static ili9341_config_t ili9341_config = {
-		.width = 320,
-		.height = 320,
+		.width = DISPLAY_W,
+		.height = DISPLAY_H,
 		.color = ILI9341_COLOR_18_BIT,
-		.page_address = ILI9341_PAGE_ADDRESS_BOTTOM_TO_TOP,
+		.page_address = ILI9341_PAGE_ADDRESS_TOP_TO_BOTTOM,
 		.colum_address = ILI9341_COLUMN_ADDRESS_LEFT_TO_RIGHT,
-		.page_column_order = ILI9341_PAGE_COLUMN_ORDER_REVERSE,
+		.page_column_order = ILI9341_PAGE_COLUMN_ORDER_NORMAL,
 		.vertical_refresh = ILI9341_VERTICAL_REFRESH_TOP_TO_BOTTOM,
-		.horizontal_refresh = ILI9341_HORIZONTAL_REFRESH_RIGHT_TO_LEFT,
+		.horizontal_refresh = ILI9341_HORIZONTAL_REFRESH_LEFT_TO_RIGHT,
 };
 
 static PROGMEM esp32_hal_config_t esp32_ili9341_config = {
 		.spi_num = 	HSPI,
-		.freq = 	10000000,  // max 40 MHz  13111111*3
+		.freq = 	13111111*3,
 		.dataMode = SPI_MODE0,
 		.bitOrder = MSBFIRST,
 		.gpio_scl = SPI_SCLK,
@@ -144,15 +144,15 @@ void AdaptUGC::setFont(uint8_t *f, bool filled ){    // adapter
 void  AdaptUGC::begin() {
 	eglib = &myeglib;
 
-	if( EGL_DISPLAY_TOPDOWN ){  // default is DISPLAY_NORMAL
-		ili9341_config.page_address =  ILI9341_PAGE_ADDRESS_TOP_TO_BOTTOM;
+	if( display_orientation.get() == DISPLAY_TOPDOWN ){
+		ili9341_config.page_address =  ILI9341_PAGE_ADDRESS_BOTTOM_TO_TOP;
 		ili9341_config.colum_address = ILI9341_COLUMN_ADDRESS_RIGHT_TO_LEFT;
 	}
-
+	setRedBlueTwist(true);
+	invertDisplay(true);
 	ESP_LOGI(FNAME, "eglib_Send() &eglib:%x  hal-driv:%x config:%x\n", (unsigned int)eglib, (unsigned int)&esp32_ili9341, (unsigned int)&esp32_ili9341_config );
 	eglib_Init( &myeglib, &esp32_ili9341, &esp32_ili9341_config, &ili9341, &ili9341_config );
-	setClipRange( 0,0, 320, 172 );
-
+	setClipRange( 0,0, 240, 320 );
 };
 
 void AdaptUGC::advanceCursor( size_t delta ){

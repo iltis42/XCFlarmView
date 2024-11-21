@@ -23,6 +23,7 @@
 #include "qrcodegen.h"
 #include "AdaptUGC.h"
 #include "Colors.h"
+#include "flarmview.h"
 
 extern AdaptUGC *egl;
 
@@ -50,9 +51,10 @@ void OTA::doSoftwareUpdate( ){
 	int line=1;
 	char text[80];
 	writeText(line++, "Software Update" );
-	sprintf(text,    "WIFI SSID: %s", ssid);
+	writeText(line++, "WIFI" );
+	sprintf(text,    "  SSID: %s", ssid);
 	writeText(line++, text );
-	sprintf(text,"WIFI Password : %s", wifi_password );
+	sprintf(text,"  Password : %s", wifi_password );
 	writeText(line++,text);
 	writeText(line++, "URL: http://192.168.4.1");
 
@@ -154,7 +156,7 @@ void OTA::doSoftwareUpdate( ){
 			vTaskDelay(3000/portTICK_PERIOD_MS);
 			break;
 		}
-		if( Switch::isClosed() ) {
+		if( swMode.isClosed() ) {
 			ESP_LOGI(FNAME,"pressed");
 			writeText(line,"Abort, Now Restart");
 			vTaskDelay(3000/portTICK_PERIOD_MS);

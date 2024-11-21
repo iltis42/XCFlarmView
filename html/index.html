@@ -347,7 +347,7 @@
         if (e.target.files[0]) {
             document.getElementById('updateFileName').innerHTML = "Uploading: <b>" + e.target.files[0].name + "</b>";
             document.getElementById('updateFileName').style.display ="block";
-            if (e.target.files[0].name.match(/xcflarmview-master-\d{2}.\d{4}-\d{4}.bin/)) {
+            if(e.target.files[0].name.match(/xcflarmview-2.4-inch-\d{2}.\d{4}-\d{4}.bin/)) {
             	document.getElementById("uploadButton").disabled = false;
             }
             document.getElementById("progress").style.visibility = "visible";

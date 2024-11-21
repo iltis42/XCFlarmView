@@ -180,7 +180,7 @@
 
 static void set_interface_pixel_format(eglib_t *eglib) {
 	ili9341_config_t *display_config;
-	uint8_t interface_pixel_format = 0;
+	uint8_t interface_pixel_format;
 
 	display_config = eglib_GetDisplayConfig(eglib);
 
@@ -254,8 +254,7 @@ static void set_memory_data_access_control(eglib_t *eglib) {
 
 static void set_column_address(eglib_t *eglib, uint16_t x_start, uint16_t x_end) {
 	uint8_t buff[4];
-	// ESP_LOGI("ili", "set_column_address %d %d", x_start, x_end );
-	set_memory_data_access_control(eglib);
+
 	eglib_SendCommandByte(eglib, ILI9341_COLUMN_ADDRESS_SET);
 	buff[0] = (x_start&0xFF00)>>8;
 	buff[1] = x_start&0xFF;
@@ -266,7 +265,7 @@ static void set_column_address(eglib_t *eglib, uint16_t x_start, uint16_t x_end)
 
 static void set_row_address(eglib_t *eglib, uint16_t y_start, uint16_t y_end) {
 	uint8_t buff[4];
-	// ESP_LOGI("ili", "set_row_address %d %d", y_start, y_end );
+
 	eglib_SendCommandByte(eglib, ILI9341_ROW_ADDRESS_SET);
 	buff[0] = (y_start&0xFF00)>>8;
 	buff[1] = y_start&0xFF;
@@ -289,24 +288,6 @@ static uint8_t get_bits_per_pixel(eglib_t *eglib) {
 			break;
 		case ILI9341_COLOR_18_BIT:
 			return 24;
-			break;
-		default:
-			while(true);
-	}
-}
-
-static uint8_t get_bytes_per_pixel(eglib_t *eglib) {
-	ili9341_config_t *display_config;
-	display_config = eglib_GetDisplayConfig(eglib);
-	switch(display_config->color) {
-		case ILI9341_COLOR_12_BIT:
-			return 2;
-			break;
-		case ILI9341_COLOR_16_BIT:
-			return 2;
-			break;
-		case ILI9341_COLOR_18_BIT:
-			return 3;
 			break;
 		default:
 			while(true);
@@ -370,111 +351,6 @@ static void send_pixel(eglib_t *eglib, color_t color) {
 // Display
 //
 
-/*
-
-Sample Code for 172x320 Display
-void lcd_Initial(void)
-{
-  	CS=1;
-	delayms(5);
-	RES=0;
-	delayms(10);
-	RES=1;
-	delayms(120);
-
-
-	Write_Cmd(0x11);
-//	delay_ms(120);
-
-//	Write_Cmd(0x36);
-//	if(USE_HORIZONTAL==0)Write_Cmd_Data(0x00);
-//	else if(USE_HORIZONTAL==1)Write_Cmd_Data(0xC0);
-//	else if(USE_HORIZONTAL==2)Write_Cmd_Data(0x70);
-//	else Write_Cmd_Data(0xA0);
- *
- *
- 	Write_Cmd(0x3A);
- 	Write_Cmd_Data(0x05);
-
-	Write_Cmd(0xB2);       // Poch setting, this is defaults, can omit
-	Write_Cmd_Data(0x0C);
-	Write_Cmd_Data(0x0C);
-	Write_Cmd_Data(0x00);
-	Write_Cmd_Data(0x33);
-	Write_Cmd_Data(0x33);
-
-	Write_Cmd(0xB7);        // Gate Control
-	Write_Cmd_Data(0x35);
-
-	Write_Cmd(0xBB);        //  VCOM 0..1H
-	Write_Cmd_Data(0x35);
-
-	Write_Cmd(0xC0);       // LMC Control, 2C is default
-	Write_Cmd_Data(0x2C);
-
-	Write_Cmd(0xC2);      // defaults VRH control enable
-	Write_Cmd_Data(0x01);
-
-	Write_Cmd(0xC3);      // VRH, default    0x0B
-	Write_Cmd_Data(0x13);
-
-	Write_Cmd(0xC4);      // VDVS, default
-	Write_Cmd_Data(0x20);
-
-	Write_Cmd(0xC6);      //
-	Write_Cmd_Data(0x0F);
-
-	Write_Cmd(0xD0);    // POWER CONTROL
-	Write_Cmd_Data(0xA4);
-	Write_Cmd_Data(0xA1);
-
-	Write_Cmd(0xD6);    // ????
-	Write_Cmd_Data(0xA1);
-
-	Write_Cmd(0xE0);
-	Write_Cmd_Data(0xF0);
-	Write_Cmd_Data(0x00);
-	Write_Cmd_Data(0x04);
-	Write_Cmd_Data(0x04);
-	Write_Cmd_Data(0x04);
-	Write_Cmd_Data(0x05);
-	Write_Cmd_Data(0x29);
-	Write_Cmd_Data(0x33);
-	Write_Cmd_Data(0x3E);
-	Write_Cmd_Data(0x38);
-	Write_Cmd_Data(0x12);
-	Write_Cmd_Data(0x12);
-	Write_Cmd_Data(0x28);
-	Write_Cmd_Data(0x30);
-
-	Write_Cmd(0xE1);
-	Write_Cmd_Data(0xF0);
-	Write_Cmd_Data(0x07);
-	Write_Cmd_Data(0x0A);
-	Write_Cmd_Data(0x0D);
-	Write_Cmd_Data(0x0B);
-	Write_Cmd_Data(0x07);
-	Write_Cmd_Data(0x28);
-	Write_Cmd_Data(0x33);
-	Write_Cmd_Data(0x3E);
-	Write_Cmd_Data(0x36);
-	Write_Cmd_Data(0x14);
-	Write_Cmd_Data(0x14);
-	Write_Cmd_Data(0x29);
-	Write_Cmd_Data(0x32);
-
-	Write_Cmd(0x21);  // invert display
-
-	Write_Cmd(0x11);  // sleep out
-	delayms(120);
-	Write_Cmd(0x29);  // Display on
-	delayms(10);
-
-
-
-}
-*/
-
 static void init(eglib_t *eglib) {
 	// Hardware reset
 	eglib_SetReset(eglib, 0);
@@ -495,29 +371,26 @@ static void init(eglib_t *eglib) {
 	eglib_SendCommandByte(eglib, ILI9341_SLEEP_OUT);
 	eglib_DelayMs(eglib, ILI9341_SLEEP_OUT_DELAY_MS);
 
+	// Set color mode
+	set_interface_pixel_format(eglib);
+
 	// Memory Data Access Control
 	set_memory_data_access_control(eglib);
 
 	// we need invers, datasheet says oposite
-	eglib_SendCommandByte(eglib, ILI9341_DISPLAY_INVERSION_ON); // 0809 was OFF
+	eglib_SendCommandByte(eglib, ILI9341_DISPLAY_INVERSION_OFF);
 	// after sw reset, but unless we explicitly set it,
 	// ILI9341_DISPLAY_INVERSION_ON will have no effect.
 	eglib_SendCommandByte(eglib, ILI9341_NORMAL_DISPLAY_MODE_ON);
 
-	// Frame Rate C6
-	eglib_SendCommandByte(eglib, 0xC6);
-	eglib_SendDataByte(eglib, 0x15);     // F = 60 Hz  1F = 39 Hz
-
-	eglib_SendCommandByte(eglib, 0xB7);  // GATE Control
-	eglib_SendDataByte(eglib, 0x35);     // defaults 35h HN:VGH,  LN:VGL  0..7
-
-    // set pixel format
-	set_interface_pixel_format(eglib);
+    // UCG_C11(0x03a, 0x066),                /* set pixel format to 18 bit */
+	eglib_SendCommandByte(eglib, ILI9341_INTERFACE_PIXEL_FORMAT);
+	eglib_SendDataByte(eglib, ILI9341_INTERFACE_PIXEL_FORMAT_RGB_INTERFACE_262K | ILI9341_INTERFACE_PIXEL_FORMAT_COLOR_18BIT );
 
 	// UCG_C14(0x0b6, 0x00a, 0x082 | (1<<5), 0x027, 0x000),  /* display function control (POR values, except for shift direction bit) */
 	eglib_SendCommandByte(eglib, 0xb6 );
 	eglib_SendDataByte(eglib,0x0a );
-	eglib_SendDataByte(eglib, 0xE2 );  // Bit6: GS,  Bit5: SS  (82 def)
+	eglib_SendDataByte(eglib, 0x082 | (1<<5) );
 	eglib_SendDataByte(eglib,0x27 );
 	eglib_SendDataByte(eglib,0x00 );
 
@@ -529,30 +402,14 @@ static void init(eglib_t *eglib) {
 	eglib_SendCommandByte(eglib, 0xc1 );
 	eglib_SendDataByte(eglib,0x02 );
 
-	//   VRH (C3):  08 (4.1V) default -> 13 (4.5V) in sample  0..3F
-	eglib_SendCommandByte(eglib, 0xc3 );
-	eglib_SendDataByte(eglib,0x00 );
-
-	//   VRL (C4):  20 (0V) default -> none in sample        0..3F
-	eglib_SendCommandByte(eglib, 0xc4 );
-	eglib_SendDataByte(eglib,0x30 );
-
-	// CABCCTRL
+	// UCG_C11(0x0c7, 0x0c0),                /* VCOM control 2, enable VCOM control 1 */
 	eglib_SendCommandByte(eglib, 0xc7 );
-	eglib_SendDataByte(eglib,0x00 );  // not set in example, 00 -> default
+	eglib_SendDataByte(eglib,0xc0 );
 
-	// C5 VCOMOFFEST  0x20 default   0..3Fh
+	// UCG_C12(0x0c5, 0x031, 0x03c),         /* VCOM control 1, POR=31,3C */
 	eglib_SendCommandByte(eglib, 0xc5 );
-	eglib_SendDataByte(eglib,0x20 );
-
-	// VCOM 77
-	eglib_SendCommandByte(eglib, 0xBB );
-	eglib_SendDataByte(eglib,0x35 );        // 0..3Fh, default 20
-
-	// POWER CONTROL
-	eglib_SendCommandByte(eglib, 0xD0 );
-	eglib_SendDataByte(eglib,0xA4 );
-	eglib_SendDataByte(eglib,0xA1 );
+	eglib_SendDataByte(eglib,0x31 );
+	eglib_SendDataByte(eglib,0x3c );
 
 	// UCG_C15(0x0cb, 0x039, 0x02c, 0x000, 0x034, 0x002),    /* power control A (POR values) */
 	eglib_SendCommandByte(eglib, 0xcb );
@@ -575,60 +432,29 @@ static void init(eglib_t *eglib) {
 	uint8_t seqcp[] = { 0x066, 0x000  };
 	eglib_Send(eglib, HAL_DATA, seqcp, sizeof(seqcp) );
 
+	// UCG_C10(0x029),                               /* display on */
+	eglib_SendCommandByte(eglib, ILI9341_DISPLAY_ON );
+
 	//  UCG_C14(  0x02a, 0x000, 0x000, 0x000, 0x0ef),              /* Horizontal GRAM Address Set */
 	eglib_SendCommandByte(eglib, ILI9341_COLUMN_ADDRESS_SET );
-	uint8_t seqga[] = { 0x000, 0x000, 0x000, 0x0ab};               // AB = 171
+	uint8_t seqga[] = { 0x000, 0x000, 0x000, 0x0ef };
 	eglib_Send(eglib, HAL_DATA, seqga, sizeof(seqga) );
 
 	//  UCG_C14(  0x02b, 0x000, 0x000, 0x001, 0x03f),              /* Vertical GRAM Address Set */
 	eglib_SendCommandByte(eglib, ILI9341_ROW_ADDRESS_SET );
-	uint8_t seqra[] = {0x000, 0x000, 0x001, 0x03f };               // 13F = 319
+	uint8_t seqra[] = {0x000, 0x000, 0x001, 0x03f };
 	eglib_Send(eglib, HAL_DATA, seqra, sizeof(seqra) );
-
-
-	// Gamma PVGAMCTRL
-	eglib_SendCommandByte(eglib, 0xE0 );
-	eglib_SendDataByte(eglib, 0xF0 );
-	eglib_SendDataByte(eglib, 0x00 );
-	eglib_SendDataByte(eglib, 0x04 );
-	eglib_SendDataByte(eglib, 0x04 );
-	eglib_SendDataByte(eglib, 0x04 );
-	eglib_SendDataByte(eglib, 0x05 );
-	eglib_SendDataByte(eglib, 0x29 );
-	eglib_SendDataByte(eglib, 0x33 );
-	eglib_SendDataByte(eglib, 0x3E );
-	eglib_SendDataByte(eglib, 0x38 );
-	eglib_SendDataByte(eglib, 0x12 );
-	eglib_SendDataByte(eglib, 0x12 );
-	eglib_SendDataByte(eglib, 0x28 );
-	eglib_SendDataByte(eglib, 0x30 );
-
-	// Gamma NVGAMCTRL
-	eglib_SendCommandByte(eglib, 0xE1 );
-	eglib_SendDataByte(eglib, 0xF0 );
-	eglib_SendDataByte(eglib, 0x07 );
-	eglib_SendDataByte(eglib, 0x0A );
-	eglib_SendDataByte(eglib, 0x0D );
-	eglib_SendDataByte(eglib, 0x0B );
-	eglib_SendDataByte(eglib, 0x07 );
-	eglib_SendDataByte(eglib, 0x28 );
-	eglib_SendDataByte(eglib, 0x33 );
-	eglib_SendDataByte(eglib, 0x3E );
-	eglib_SendDataByte(eglib, 0x36 );
-	eglib_SendDataByte(eglib, 0x14 );
-	eglib_SendDataByte(eglib, 0x14 );
-	eglib_SendDataByte(eglib, 0x29 );
-	eglib_SendDataByte(eglib, 0x32 );
 
 	// UCG_C10(  0x02c),               /* Write Data to GRAM */
 	eglib_SendCommandByte(eglib, ILI9341_MEMORY_WRITE );
 
-	// UCG_C10(0x029),                               /* display on */
-	eglib_SendCommandByte(eglib, ILI9341_DISPLAY_ON );
+	// Clear RAM
+	// clear_memory(eglib);
+
+	// Main screen turn on
+	// eglib_SendCommandByte(eglib, ILI9341_DISPLAY_ON);
 
 	eglib_CommEnd(eglib);
-
-	ESP_LOGI("ili", "init()");
 };
 
 static void sleep_in(eglib_t *eglib) {
@@ -682,7 +508,6 @@ static void draw_pixel_color(
 	coordinate_t x, coordinate_t y, color_t color
 ) {
 	eglib_CommBegin(eglib);
-	y+=34;
 
 	set_column_address(eglib, x, x);
 	set_row_address(eglib, y, y);
@@ -703,8 +528,8 @@ static void draw_line(
 	color_t (*get_next_color)(eglib_t *eglib)
 ) {
 	// ESP_LOGI("ili DL","x:%d y:%d dir:%d len:%d", x, y, direction, length );
+	static uint8_t *buffer;
 	eglib_CommBegin(eglib);
-	y+=34;
 	if(direction == DISPLAY_LINE_DIRECTION_RIGHT) {
 		// ESP_LOGI("DL","x:%d y:%d RIGHT %d", x, y, length  );
 		set_column_address(eglib, x, x + length );
@@ -729,34 +554,15 @@ static void draw_line(
 		ESP_LOGW("draw_line","draw_line method not implemented");
 	}
 	eglib_SendCommandByte(eglib, ILI9341_MEMORY_WRITE);
-	color_t color = eglib->drawing.color_index[0];
-	int len_pix=get_bytes_per_pixel(eglib);  // max 3
-	uint8_t buf[4] = { 0,0,0,0 };
-	ili9341_config_t *display_config = eglib_GetDisplayConfig(eglib);
-	switch(display_config->color) {
-	case ILI9341_COLOR_12_BIT:
-		buf[0] = color.r & 0xf0;
-		buf[0] |= (color.g & 0xf0) >> 4;
-		buf[1] = color.b & 0xf0;
-		break;
-	case ILI9341_COLOR_16_BIT:
-		buf[0] = color.r & 0xf8;
-		buf[0] |= color.g >> 5;
-		buf[1] = (color.g >> 2) << 5;
-		buf[1] |= color.b >> 3;
-		break;
-	case ILI9341_COLOR_18_BIT:
-		buf[0] = color.r & ~0x03;
-		buf[1] = color.g & ~0x03;
-		buf[2] = color.b & ~0x03;
-		break;
-	default:
-		while(true);
+	color_t c = eglib->drawing.color_index[0];
+	buffer = malloc( length*3 );
+	for( int i=0; i<length*3; i+=3 ){
+		buffer[i]   = c.r;
+		buffer[i+1] = c.g;
+		buffer[i+2] = c.b;
 	}
-	for( int i=0; i<length; i++ ){
-		for(int i=0;i < len_pix; i++)
-			eglib_SendDataByte(eglib, buf[i]);
-	}
+	eglib_SendData(eglib, buffer, length*3  );
+	free( buffer );
 	eglib_CommEnd(eglib);
 }
 
@@ -772,11 +578,10 @@ static void send_buffer(
 	// if((uint32_t)x * get_bits_per_pixel(eglib) % 8)
 	//	x -= 1;
 	eglib_CommBegin(eglib);
-	y+=34;
     set_column_address(eglib, x, x + width -1);
     set_row_address(eglib, y-height -1, y );
     eglib_SendCommandByte(eglib, ILI9341_MEMORY_WRITE);
-    eglib_SendData( eglib, buffer, width*height*get_bytes_per_pixel(eglib) );
+    eglib_SendData( eglib, buffer, width*height*3 );
 	eglib_CommEnd(eglib);
 }
 
