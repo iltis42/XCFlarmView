@@ -102,15 +102,15 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 		logs = log( 2+1 );
 	float new_radius = zoom*logs*SCALE;
 
-	if( oldN != -1.0 )
+	if( oldN != -1.0 && ((oldN != north) || (old_radius != new_radius)) )
 		drawN( x,y, true, oldN, old_radius );
 	if( (old_radius != 0.0) && (old_radius != new_radius) ){
 		egl->setColor(COLOR_BLACK);
 		egl->drawCircle( x,y, old_radius );
 	}
 	egl->setColor(COLOR_GREEN);
-	egl->drawCircle( x,y, new_radius );
 	drawN( x,y, false, north, new_radius );
+	egl->drawCircle( x,y, new_radius );
 	old_radius = new_radius;
 }
 
