@@ -328,7 +328,7 @@ void Target::checkAlarm(){
 
 
 void Target::draw(bool erase){
-	ESP_LOGI(FNAME,"draw( ID:%06X erase:%d )",  pflaa.ID, erase );
+	// ESP_LOGI(FNAME,"draw( ID:%06X erase:%d )",  pflaa.ID, erase );
 	checkAlarm();
 	int size = std::min( 30.0, std::min( 60.0, 10.0+10.0/dist )  );  // maybe wrapping min surplus
 	if( (display_mode.get() == DISPLAY_MULTI) || ((display_mode.get() == DISPLAY_SIMPLE) && isNearest() ) ){
