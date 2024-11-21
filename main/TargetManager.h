@@ -20,16 +20,18 @@ public:
 	static void tick();
 	static void drawAirplane( int x, int y, float north=0.0 );
 	static void begin();
+	inline static void redrawInfo() { redrawNeeded = true; };
 private:
 	static std::map< unsigned int, Target> targets;
 	static std::map< unsigned int, Target>::iterator id_iter;
 	static float oldN;
-	static void drawN( int x, int y, bool erase, float north );
+	static void drawN( int x, int y, bool erase, float north, float azoom );
 	static void printAlarm( const char*alarm, int x, int y, int inactive );
 	static void printAlarmLevel( const char*alarm, int x, int y, int level );
 	static void nextTarget(int timer);
 	static void taskTargetMgr(void *pvParameters);
-	static void printVersions( int x, int y, const char *prefix, const char *ver );
+	static void printVersions( int x, int y, const char *prefix, const char *ver, int len );
+	static void clearScreen();
 	static int old_TX;
 	static int old_GPS;
 	static int old_error;
@@ -40,11 +42,13 @@ private:
 	static TaskHandle_t pid;
 	static unsigned int min_id;
 	static bool redrawNeeded;
+	static bool erase_info;
 	static int old_sw_len;
 	static int old_hw_len;
 	static int old_obst_len;
 	static int old_prog;
 	static int info_timer;
+	static float old_radius;
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */
