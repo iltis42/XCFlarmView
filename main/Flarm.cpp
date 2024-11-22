@@ -14,8 +14,11 @@
 #define ALARM_TIMEOUT (10* (1000/TASK_PERIOD))
 
 int Flarm::RX = 0;
-int Flarm::TX = 1;
-int Flarm::GPS = 1;
+int Flarm::TX = 0;
+int Flarm::GPS = 0;
+int Flarm::last_RX = 1;
+int Flarm::last_TX = 1;
+int Flarm::last_GPS = 1;
 int Flarm::Power = 0;
 int Flarm::AlarmLevel = 0;
 int Flarm::RelativeBearing = 0;
@@ -58,7 +61,7 @@ int Flarm::pflae_severity=0;
 int Flarm::pflae_error=0;
 
 bool Flarm::flarm_sim = false;
-
+t_flags Flarm::flags = { false, false, false, false, false, false, false, false };
 
 extern xSemaphoreHandle spiMutex;
 
@@ -129,12 +132,6 @@ void Flarm::taskFlarm(void *pvParameters)
 		delay(TASK_PERIOD);
 		_tick++;
 	}
-}
-
-void Flarm::clearVersions(){
-	HwVersion[0] = '\0';
-	SwVersion[0] = '\0';
-	ObstVersion[0] = '\0';
 }
 
 /*
@@ -321,6 +318,10 @@ void Flarm::progress(){  //  per second
 			if( pflau_timeout == 0 ){
 				TX = 0;
 				GPS = 0;
+				RX = 0;
+				flags.tx = true;
+				flags.gps = true;
+				flags.rx  = true;
 			}
 		}
 	}
@@ -470,10 +471,12 @@ void Flarm::parsePFLAE( const char *pflae ) {
 	if( queryType == 'A' ){
 		if( error ){
 			pflae_error = error;
+			flags.error=true;
 		}
 		ESP_LOGI(FNAME,"PFLAE %c %d %02X %s", queryType, pflae_severity, pflae_error, getErrorString(pflae_error) );
 		if( ret >= 1 && pflae_severity == 0 && queryType == 'A' ){
 			ESP_LOGI(FNAME,"PFLAE alarm cleared");
+			flags.error=false;
 		}
 	}
 }
@@ -531,6 +534,19 @@ void Flarm::parsePFLAU( const char *pflau, bool sim_data ) {
 	_tick=0;
 	timeout = FLARM_TIMEOUT;
 	pflau_timeout = PFLAU_TIMEOUT;
+	if( TX != last_TX ){
+		last_TX = TX;
+		flags.tx = true;
+	}
+	if( RX != last_RX ){
+		last_RX = RX;
+		flags.rx = true;
+	}
+	if( GPS != last_GPS ){
+		last_GPS = GPS;
+		flags.gps = true;
+	}
+
 }
 
 void Flarm::parsePFLAX( const char *msg, int port ) {
@@ -602,11 +618,18 @@ void Flarm::parsePFLAV( const char *pflav ) {
 	}
 	char query;
 	sscanf( pflav, "$PFLAV,%c,%[^,],%[^,],%[^,]",&query,HwVersion,SwVersion,ObstVersion );
-	if( ObstVersion[0] == '*' ) // there is no obstacle database
-		ObstVersion[0] = '\0';
+
 	if( query == 'A' ){
 		ESP_LOGI(FNAME,"PFLAV %c %s %s %s", query, HwVersion,SwVersion,ObstVersion );
+		flags.swVersion=true;
+		flags.hwVersion=true;
+		flags.odbVersion=true;
 	}
+	if( ObstVersion[0] == '*' ){ // there is no obstacle database
+		ObstVersion[0] = '\0';
+		flags.odbVersion=false;
+	}
+
 	timeout = FLARM_TIMEOUT;
 }
 
@@ -645,7 +668,7 @@ void Flarm::parsePFLAQ( const char *pflaq ) {
 	else if( commas == 3 )
 		sscanf( pflaq, "$PFLAQ,%[^,],%[^,],%d",Operation,Info,&Progress );
 	ESP_LOGI(FNAME,"PFLAQ %s %s %d", Operation,Info,Progress );
-
+	flags.progress = true;
 	timeout = FLARM_TIMEOUT;
 }
 

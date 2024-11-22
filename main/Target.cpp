@@ -10,7 +10,6 @@
 #include <AdaptUGC.h>
 #include "vector.h"
 #include "flarmnetdata.h"
-#include "Colors.h"
 #include <cmath>
 #include <algorithm>
 #include <flarmview.h>
@@ -80,6 +79,7 @@ void Target::drawID( uint8_t r, uint8_t g, uint8_t b ){
 		w=egl->getStrWidth(cur_id);
 		if( w>150 ){
 			egl->setFont( ucg_font_fub14_hf );
+			w=egl->getStrWidth(cur_id);
 		}
 		if( w>150 ){
 			ESP_LOGW(FNAME,"ID >%s< longer than 150 pixel (%d)", cur_id, w );
@@ -191,11 +191,11 @@ void Target::drawInfo(bool erase){
 
 	egl->setFont( ucg_font_fub14_hf );
 
-	if( inch2dot4 ){
-		int w=egl->getStrWidth("ID");
-		egl->setPrintPos( (DISPLAY_W-5)-w, DISPLAY_H-37 );
-		egl->printf("ID");
-	}
+	// if( inch2dot4 ){
+	int w=egl->getStrWidth("ID");
+	egl->setPrintPos( (DISPLAY_W-5)-w, DISPLAY_H-37 );
+	egl->printf("ID");
+	//}
 
 	if( inch2dot4 ){
 		sprintf(s,"Dis %s", Units::DistanceUnit() );
@@ -292,7 +292,7 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 		if( !erase ){
 			egl->setColor( color.color[0], color.color[1], color.color[2] );
 			egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
-			if( y0 > 290 || y1 > 290 || y2 > 290 ){  // need to refresh ID
+			if( y0 > DISPLAY_H-30 || y1 > DISPLAY_H-30 || y2 > DISPLAY_H-30 ){  // need to refresh ID
 				TargetManager::redrawInfo();
 			}
 			if( closest ){

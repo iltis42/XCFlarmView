@@ -3,6 +3,7 @@ extern "C" {
 }
 #include "inttypes.h"
 #include "Arduino.h"
+#include "Colors.h"
 
 #pragma once
 

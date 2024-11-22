@@ -25,6 +25,17 @@ typedef struct {
 	char acftType[3];
 } nmea_pflaa_s;
 
+typedef struct flarm_flags{
+	bool error;
+	bool swVersion;
+	bool hwVersion;
+	bool odbVersion;
+	bool progress;
+	bool tx;
+	bool rx;
+	bool gps;
+}t_flags;
+
 /* Value indexes */
 #define NMEA_PFLAA_ALARMLEVEL		 0
 #define NMEA_PFLAA_RELATIVE_NORTH	 1
@@ -92,7 +103,6 @@ public:
 		return false;
 	}
 	static void begin();
-	static void clearVersions();
 	static void taskFlarm(void *pvParameters);
 	static void startSim() { flarm_sim = true; };
 	static inline bool getSim() { return flarm_sim; };
@@ -106,6 +116,22 @@ public:
 	static inline const char * getObstVersion()  { return ObstVersion; };
 	static inline unsigned int getProgress()  { return Progress; };
 	static const char* getOperationString();
+	static inline bool getSwVersionFlag() { return flags.swVersion; };
+	static inline void resetSwVersionFlag() {  flags.swVersion = false; };
+	static inline bool getHwVersionFlag() {  return flags.hwVersion; };
+	static inline void resetHwVersionFlag() {  flags.hwVersion = false; };
+	static inline bool getODBVersionFlag() {  return flags.odbVersion;  };
+	static inline void resetODBVersionFlag() {  flags.odbVersion = false; };
+	static inline bool getProgressFlag() {  return flags.progress; };
+	static inline void resetProgressFlag() {  flags.progress = false; };
+	static inline bool getErrorFlag() {  return flags.error; };
+	static inline void resetErrorFlag() {  flags.error = false; };
+	static inline bool getTxFlag() {  return flags.tx; };
+	static inline void resetTxFlag() {  flags.tx = false; };
+	static inline bool getRxFlag() {  return flags.rx; };
+	static inline void resetRxFlag() {  flags.rx = false; };
+	static inline bool getGPSFlag() {  return flags.gps; };
+	static inline void resetGPSFlag() {  flags.gps = false; };
 
 private:
 	static int calcNMEACheckSum(const char *nmea);
@@ -115,9 +141,10 @@ private:
 	static void drawTriangle( int x, int y, int rb, int dist, int size=15, int factor=2, bool erase=false );
 	static void flarmSim();
 
-
+	static t_flags flags;
 	static AdaptUGC* ucg;
 	static int RX,TX,GPS,Power;
+	static int last_RX,last_TX,last_GPS;
 	static int AlarmLevel;
 	static int RelativeBearing,RelativeVertical,RelativeDistance;
 	static float gndSpeedKnots;

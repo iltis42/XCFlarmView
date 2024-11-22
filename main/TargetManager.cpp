@@ -19,8 +19,6 @@ std::map< unsigned int, Target> TargetManager::targets;
 std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.begin();
 extern AdaptUGC *egl;
 float TargetManager::oldN   = -1.0;
-int TargetManager::old_TX   = -1;
-int TargetManager::old_GPS  = -1;
 int TargetManager::id_timer =  0;
 int TargetManager::_tick =  0;
 int TargetManager::holddown =  0;
@@ -28,16 +26,10 @@ TaskHandle_t TargetManager::pid = 0;
 unsigned int TargetManager::min_id = 0;
 bool TargetManager::redrawNeeded = true;
 bool TargetManager::erase_info = false;
-int  TargetManager::old_error = 0;
-int  TargetManager::old_severity = 0;
-int TargetManager::old_sw_len = -1;
-int TargetManager::old_hw_len = -1;
-int TargetManager::old_obst_len = -1;
-int TargetManager::old_prog = -1;
 int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
 
-#define INFO_TIME (10*(1000/TASKPERIOD)/DISPLAYTICK)  // all 10 sec
+#define INFO_TIME (5*(1000/TASKPERIOD)/DISPLAYTICK)  // all ~10 sec
 
 void TargetManager::begin(){
 	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 10, &pid, 0);
@@ -181,12 +173,13 @@ void TargetManager::printVersions( int x, int y, const char *prefix, const char 
 
 void TargetManager::clearScreen(){
 	egl->clearScreen();
-	old_GPS = -1;
-	old_sw_len = -1;
-	old_hw_len = -1;
-	old_obst_len = -1;
-	old_prog = -1;
-	redrawNeeded = true;
+	// redrawNeeded = true;
+}
+
+void TargetManager::rewindInfoTimer(){
+	if( !info_timer )
+		egl->clearScreen();
+	info_timer = INFO_TIME;
 }
 
 void TargetManager::tick(){
@@ -214,129 +207,128 @@ void TargetManager::tick(){
 	if( !(_tick%5) ){ // all 5 ticks
 		if( SetupMenu::isActive() )
 			return;
-		if( info_timer )
+		if( info_timer > 0 )
 			info_timer--;
 
-		int tx=Flarm::getTXBit();  // 0 or 1
-		int gps=Flarm::getGPSBit();
-		if( old_TX != tx ){
-			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
+		if( Flarm::getTxFlag() ){
+			int tx=Flarm::getTXBit();  // 0 or 1
+			ESP_LOGI(FNAME,"TX alarm: %d", tx );
 			if( !tx )
-				clearScreen();
+				rewindInfoTimer();
+			else
+				Flarm::resetTxFlag();
 			printAlarm( "NO TX", 10, 100, tx );
-			old_TX = tx;
 		}
-
-		if( old_GPS != gps ){  // 0,1 or 2
-			ESP_LOGI(FNAME,"GPS changed, old: %d, new: %d", old_GPS, gps );
+		if( Flarm::getGPSFlag() ){
+			int gps=Flarm::getGPSBit();  // 0,1 or 2
+			ESP_LOGI(FNAME,"GPS alarm: %d", gps );
+			if( !gps )
+				rewindInfoTimer();
+			else
+				Flarm::resetGPSFlag();
 			printAlarm( "NO GPS", 10, 120, gps );
-			old_GPS = gps;
 		}
-		int severity =  Flarm::getErrorSeverity();
-		int error_code =  Flarm::getErrorCode();
-		if( old_error != error_code || old_severity != severity ){
-				printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
-				old_error = error_code;
-				old_severity = severity;
+		if( Flarm::getErrorFlag() ){
+			int severity =  Flarm::getErrorSeverity();
+		    int error_code = Flarm::getErrorCode();
+			ESP_LOGI(FNAME,"PFLAE error code new:%d  severity new:%d", error_code, severity  );
+			rewindInfoTimer();
+#ifdef inch2dot4
+			printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
+#else
+			printAlarmLevel( Flarm::getErrorString(error_code), 10, 80, severity );
+#endif
+			Flarm::resetErrorFlag();
 		}
-		int swlen=strlen( Flarm::getSwVersion() );
-		if( swlen && (swlen != old_sw_len) )
-		{
+		if( Flarm::getSwVersionFlag() ){  // flag ensures there is a valid string
+			rewindInfoTimer();
 			printVersions( 10, 20, "Flarm SW: ", Flarm::getSwVersion(), erase_info );
-			old_sw_len = swlen;
+			Flarm::resetSwVersionFlag();
 		}
-		int len=strlen( Flarm::getHwVersion() );
-		if( len && (len != old_hw_len) )
-		{
+		if( Flarm::getHwVersionFlag() ){
+			rewindInfoTimer();
 			printVersions( 10, 40, "Flarm HW: ", Flarm::getHwVersion(), erase_info );
-			old_hw_len = len;
+			Flarm::resetHwVersionFlag();
 		}
-		len=strlen( Flarm::getObstVersion() );
-		if( len && (len != old_obst_len) )
-		{
-			printVersions( 10, 60, "Flarm Obst: ", Flarm::getObstVersion(), erase_info );
-			old_obst_len = len;
+		if( Flarm::getODBVersionFlag()){
+			rewindInfoTimer();
+			printVersions( 10, 60, "Flarm ODB: ", Flarm::getObstVersion(), erase_info );
+			Flarm::resetODBVersionFlag();
 		}
-		// ESP_LOGI(FNAME,"swlen=%d; info_timer=%d", swlen, info_timer);
-		if( info_timer == 1 ){
-			ESP_LOGI(FNAME,"NOW CLEAR info");
-			erase_info = true;
-			old_sw_len = -1;  // retrigger drawing
-			old_hw_len = -1;
-			old_obst_len = -1;
-		}
-		if( erase_info ){
-			if( swlen == old_sw_len )
-				erase_info = false; // reset erase info flag
-		}
-
 		unsigned int prog = Flarm::getProgress();
-		if( prog && (prog != old_prog) ){
-			info_timer = INFO_TIME;
+		if( Flarm::getProgressFlag() ){
+			rewindInfoTimer();
 			egl->setColor(COLOR_WHITE);
 			egl->setFont(ucg_font_ncenR14_hr);
 			egl->setPrintPos( 10, 20 );
 			egl->printf( "%s: %d %%  ", Flarm::getOperationString(), prog );
-			old_prog = prog;
+			Flarm::resetProgressFlag();
 		}
-
-		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
+		ESP_LOGI(FNAME,"info_timer=%d", info_timer);
+		if( info_timer == 1 ){
+			ESP_LOGI(FNAME,"NOW CLEAR info");
+			egl->clearScreen();
+			redrawNeeded = true; // redraw of traffic and info
+		}
 
 		// Pass one: determine proximity
-		for (auto it=targets.begin(); it!=targets.end(); it++ ){
-			it->second.ageTarget();
-			if( SetupMenu::isActive() )
-				return;
-			it->second.nearest(false);
-			if( it->second.getAge() < AGEOUT ){
-				if( it->second.haveAlarm() )
-					id_timer=0;
-				if( !id_timer ){
-					if( (it->second.getProximity() < min_dist)  ){
-						min_dist = it->second.getDist();
-						min_id = it->first;
+		if( !info_timer ){
+			drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
+			for (auto it=targets.begin(); it!=targets.end(); it++ ){
+				it->second.ageTarget();
+				if( SetupMenu::isActive() )
+					return;
+				it->second.nearest(false);
+				if( it->second.getAge() < AGEOUT ){
+					if( it->second.haveAlarm() )
+						id_timer=0;
+					if( !id_timer ){
+						if( (it->second.getProximity() < min_dist)  ){
+							min_dist = it->second.getDist();
+							min_id = it->first;
+						}
+					}else{
+						if( id_iter != targets.end() && it->first == id_iter->first ){
+							it->second.nearest(true);
+						}
 					}
-				}else{
-					if( id_iter != targets.end() && it->first == id_iter->first ){
+				}
+			}
+			// Pass 2, draw targets
+			for (auto it=targets.begin(); it!=targets.end(); ){
+				if( SetupMenu::isActive() )
+					return;
+				if( !id_timer )
+				{
+					if( it->first == min_id ){
 						it->second.nearest(true);
+					}else{
+						it->second.nearest(false);
 					}
 				}
-			}
-		}
-		// Pass 2, draw targets
-		for (auto it=targets.begin(); it!=targets.end(); ){
-			if( SetupMenu::isActive() )
-				return;
-			if( !id_timer )
-			{
-				if( it->first == min_id ){
-					it->second.nearest(true);
-				}else{
-					it->second.nearest(false);
-				}
-			}
-			if( it->second.getAge() < AGEOUT ){
-				if( it->second.isNearest() || it->second.haveAlarm() ){
-					// closest == true
-					if( redrawNeeded ){
-						it->second.redrawInfo(); // forced redraw of all fields
-						redrawNeeded = false;
+				if( it->second.getAge() < AGEOUT ){
+					if( it->second.isNearest() || it->second.haveAlarm() ){
+						// closest == true
+						if( redrawNeeded ){
+							it->second.redrawInfo(); // forced redraw of all fields
+							redrawNeeded = false;
+						}
+						it->second.drawInfo();
 					}
-					it->second.drawInfo();
+					it->second.draw(false);
+					it->second.checkClose();
+					it++;
 				}
-				it->second.draw(false);
-				it->second.checkClose();
-				it++;
-			}
-			else{
-				if( id_iter->first == it->first ){  // move on id_iter in case
-					id_iter++;
+				else{
+					if( id_iter->first == it->first ){  // move on id_iter in case
+						id_iter++;
+					}
+					if( it->second.isNearest() ){   // only nearest has info to erase
+						it->second.drawInfo(true);
+					}
+					it->second.draw(true);     // age/erase
+					targets.erase( it++ );
 				}
-				if( it->second.isNearest() ){   // only nearest has info to erase
-					it->second.drawInfo(true);
-				}
-				it->second.draw(true);     // age/erase
-				targets.erase( it++ );
 			}
 		}
 
