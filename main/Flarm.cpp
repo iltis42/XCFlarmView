@@ -71,7 +71,7 @@ extern xSemaphoreHandle spiMutex;
 int Flarm::sim_tick=0;
 
 static std::map<int, const char*> FlarmErrors = {
-		{ 0x00, "                                             " },
+		{ 0x00, "                            " },
 		{ 0x11, "Firmware expired" },
 		{ 0x12, "Firmware update error" },
 		{ 0x21, "Power voltage low" },
@@ -83,38 +83,39 @@ static std::map<int, const char*> FlarmErrors = {
 		{ 0x27, "LED error" },
 		{ 0x28, "EEPROM error" },
 		{ 0x29, "General hardware error" },
-		{ 0x2A, "Transp. Mode-C/S/ADS-B unserviceable" },
+		{ 0x2A, "XPDR Mode-C/S/ADS-B U/S" },
 		{ 0x2B, "EEPROM error" },
 		{ 0x2C, "GPIO error" },
 		{ 0x31, "GPS communication" },
-		{ 0x32, "Configuration of GPS module" },
+		{ 0x32, "GPS configuration" },
 		{ 0x33, "GPS antenna" },
 		{ 0x41, "RF communication" },
-		{ 0x42, "Same ID FLARM received, suppressed" },
-		{ 0x43, "Wrong ICAO 24-bit address or radio ID" },
+		{ 0x42, "FLARM ID dup., suppressed" },
+		{ 0x43, "Invalid ICAO 24-bit/Rad ID" },
 		{ 0x51, "Communication" },
 		{ 0x61, "Flash memory" },
 		{ 0x71, "Pressure sensor" },
-		{ 0x81, "Obstacle database file type error" },
-		{ 0x82, "Obstacle database expired" },
+		{ 0x81, "ODB file type error" },
+		{ 0x82, "ODB expired" },
 		{ 0x91, "Flight recorder" },
-		{ 0x93, "Engine-noise recording not possible" },
+		{ 0x93, "ENL rec. not possible" },
 		{ 0x94, "Range analyzer" },
-		{ 0xA1, "Configuration error SD/USB" },
-		{ 0xB1, "Obstacle database invalid" },
-		{ 0xB2, "Invalid IGC feature license" },
-		{ 0xB3, "Invalid AUD feature license" },
-		{ 0xB4, "Invalid ENL feature license" },
-		{ 0xB5, "Invalid RFB feature license" },
-		{ 0xB6, "Invalid TIS feature license" },
+		{ 0xA1, "Config error SD/USB" },
+		{ 0xB1, "ODB invalid error" },
+		{ 0xB2, "IGC license error" },
+		{ 0xB3, "AUD license error" },
+		{ 0xB4, "ENL license error" },
+		{ 0xB5, "RFB license error" },
+		{ 0xB6, "TIS license error" },
 		{ 0x100, "Generic error" },
-		{ 0x101, "Flash File System error" },
-		{ 0x110, "Failure upd. FW of external display" },
-		{ 0x120, "Outside designated region" },
+		{ 0x101, "Flash FS error" },
+		{ 0x110, "FW upd. error ext. display" },
+		{ 0x120, "Outside design, region" },
 		{ 0xF1, "Other" },
 };
 
 const char * Flarm::getErrorString( int index ) {
+	ESP_LOGI(FNAME," index: %d find: %d", index, FlarmErrors.count( index ) );
 	if( FlarmErrors.count( index ) )
 		return FlarmErrors[ index ];
 	else
@@ -452,7 +453,7 @@ void Flarm::parseGPGGA( const char *gpgga ) {
 	}
 }
 
-// parsePFLAE $PFLAE,A,0,0*33
+// parsePFLAE $PFLAE,A,0,0*33   $PFLAE,A,2,2A,XPDR receiver*79
 // PFLAE,<QueryType>,<Severity>,<ErrorCode>[,<Message>]
 
 void Flarm::parsePFLAE( const char *pflae ) {
@@ -466,19 +467,12 @@ void Flarm::parsePFLAE( const char *pflae ) {
 	}
 	timeout = FLARM_TIMEOUT;
 	char queryType;
-	int error;
-	int ret=sscanf( pflae+3,"LAE,%c,%d,%x", &queryType, &pflae_severity, &error );
-	if( queryType == 'A' ){
-		if( error ){
-			pflae_error = error;
+	int ret=sscanf( pflae+3,"LAE,%c,%d,%x", &queryType, &pflae_severity, &pflae_error );
+	if( queryType == 'A' && ret == 3 ){
+			ESP_LOGI(FNAME,"PFLAE ret:%d, QT:%c SV:%d EC:%02X MSG:%s", ret, queryType, pflae_severity, pflae_error, getErrorString(pflae_error) );
 			flags.error=true;
-		}
-		ESP_LOGI(FNAME,"PFLAE %c %d %02X %s", queryType, pflae_severity, pflae_error, getErrorString(pflae_error) );
-		if( ret >= 1 && pflae_severity == 0 && queryType == 'A' ){
-			ESP_LOGI(FNAME,"PFLAE alarm cleared");
-			flags.error=false;
-		}
-	}
+	}else
+		ESP_LOGW(FNAME,"Ignored PFLAE Query or wrong format: <%s>", pflae );
 }
 
 /* PFLAU,<RX>,<TX>,<GPS>,<Power>,<AlarmLevel>,<RelativeBearing>,<AlarmType>,<RelativeVertical>,<RelativeDistance>,<ID>

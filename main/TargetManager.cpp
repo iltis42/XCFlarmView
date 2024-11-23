@@ -155,7 +155,7 @@ void TargetManager::nextTarget(int timer){
 			}
 		}
 		if( id_iter != targets.end() )
-			ESP_LOGI( FNAME, "next target: %06X", id_iter->first );
+			ESP_LOGI( FNAME, "next target: %06X",id_iter->first );
 	}
 }
 
@@ -231,7 +231,7 @@ void TargetManager::tick(){
 		if( Flarm::getErrorFlag() ){
 			int severity =  Flarm::getErrorSeverity();
 		    int error_code = Flarm::getErrorCode();
-			ESP_LOGI(FNAME,"PFLAE error code new:%d  severity new:%d", error_code, severity  );
+			ESP_LOGI(FNAME,"PFLAE error code new:%d  severity new:%d error-txt:%s", error_code, severity, Flarm::getErrorString(error_code)  );
 			rewindInfoTimer();
 #ifdef inch2dot4
 			printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
@@ -264,7 +264,7 @@ void TargetManager::tick(){
 			egl->printf( "%s: %d %%  ", Flarm::getOperationString(), prog );
 			Flarm::resetProgressFlag();
 		}
-		ESP_LOGI(FNAME,"info_timer=%d", info_timer);
+	//	ESP_LOGI(FNAME,"info_timer=%d", info_timer);
 		if( info_timer == 1 ){
 			ESP_LOGI(FNAME,"NOW CLEAR info");
 			egl->clearScreen();

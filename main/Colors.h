@@ -14,7 +14,7 @@
 #define COLOR_RED    0 ,0,255
 #define COLOR_ORANGE 255,125,0
 #define LIGHT_GREEN  127,255,0
-#define COLOR_YELLOW 255, 255, 0
+#define COLOR_YELLOW 0, 255, 255
 #define DARK_GREY    25, 25, 25
 #define COLOR_MGREY  90, 90, 90
 #define COLOR_BLUE   255, 0, 0
