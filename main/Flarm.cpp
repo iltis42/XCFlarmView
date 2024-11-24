@@ -71,7 +71,7 @@ extern xSemaphoreHandle spiMutex;
 int Flarm::sim_tick=0;
 
 static std::map<int, const char*> FlarmErrors = {
-		{ 0x00, "                            " },
+		{ 0x00, "                                                 " },
 		{ 0x11, "Firmware expired" },
 		{ 0x12, "Firmware update error" },
 		{ 0x21, "Power voltage low" },
@@ -101,12 +101,12 @@ static std::map<int, const char*> FlarmErrors = {
 		{ 0x93, "ENL rec. not possible" },
 		{ 0x94, "Range analyzer" },
 		{ 0xA1, "Config error SD/USB" },
-		{ 0xB1, "ODB invalid error" },
-		{ 0xB2, "IGC license error" },
-		{ 0xB3, "AUD license error" },
-		{ 0xB4, "ENL license error" },
-		{ 0xB5, "RFB license error" },
-		{ 0xB6, "TIS license error" },
+		{ 0xB1, "Obstacle DB invalid" },
+		{ 0xB2, "IGC license invalid" },
+		{ 0xB3, "AUD license invalid" },
+		{ 0xB4, "ENL license invalid" },
+		{ 0xB5, "RFB license invalid" },
+		{ 0xB6, "TIS license invalid" },
 		{ 0x100, "Generic error" },
 		{ 0x101, "Flash FS error" },
 		{ 0x110, "FW upd. error ext. display" },
