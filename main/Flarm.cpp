@@ -295,8 +295,7 @@ void Flarm::flarmSim(){
 			parseNMEA( str, strlen(str) );
 			// ESP_LOGI(FNAME,"Serial FLARM SIM: %s",  str );
 		}
-		if( !(_tick%2) )
-			sim_tick++;
+		sim_tick++;
 	}else{
 		flarm_sim=false; // end sim mode
 	}
@@ -330,9 +329,17 @@ void Flarm::progress(){  //  per second
 		alarm_timeout--;
 	}
 	// ESP_LOGI(FNAME,"progress, connected_timeout=%d", connected_timeout );
+	// Two FLARM targets plus GPS info = 6 messages per second, we play double speed
+	// "$GPRMC,134957.00,A,4900.97485,N,01032.86602,E,52.638,272.61,160622,,,A*58\n",
+	// "$PGRMZ,6696,F,2*05\n",
+	// "$GPGGA,134957.00,4900.97485,N,01032.86602,E,1,10,0.82,2147.3,M,47.9,M,,*63\n",
+	// "$PFLAA,0,-741,1281,66,2,DDAC9C,305,,29,2.5,1*3C\n",
+	// "$PFLAA,0,152,-447,-367,2,DF184C,76,,38,1.2,1*2D\n",
+	// "$PFLAU,2,1,2,1,0,41,0,-367,516*4A\n",
+
 	if( flarm_sim ){
-		flarmSim();
-		flarmSim();
+		for( int i=0; i<12; i++ )
+			flarmSim();
 	}else{  // no PFLAU in flarm Simulation
 		if( _pflau_timeout ){
 			_pflau_timeout--;

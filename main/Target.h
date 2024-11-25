@@ -16,7 +16,8 @@
 #define SCALE 30  // 1km @ zoom = 1
 #define TASKPERIOD 50  // ms
 #define DISPLAYTICK  5  // all 5 ticks = 250 mS
-#define AGEOUT (15*((1000/((DISPLAYTICK*TASKPERIOD)+70.0))))  // 15 seconds
+                               //  5   * 50  = 250 mS -> 1000 / 250 = 4
+#define AGEOUT (30*((1000/((DISPLAYTICK*TASKPERIOD)))))  // 15 seconds
 
 class Target {
 public:
@@ -52,6 +53,7 @@ private:
 	};
 	nmea_pflaa_s pflaa;
 	int age;
+	float dist_buzz;
 	int _buzzedHoldDown;
 	int rel_target_heading;
 	float rel_target_dir;

@@ -60,6 +60,14 @@ Target::Target( nmea_pflaa_s a_pflaa ) {
 			comp=(char*)flarmnet[i].comp;
 		}
 	}
+	if( notify_near.get() == BUZZ_OFF )
+		dist_buzz = -1.0;
+	else if( notify_near.get() == BUZZ_1KM )
+		dist_buzz = 1.0;
+	else if( notify_near.get() == BUZZ_2KM )
+		dist_buzz = 2.0;
+	else
+		dist_buzz = 10.0;
 }
 
 void Target::drawDist( uint8_t r, uint8_t g, uint8_t b ){
@@ -228,15 +236,10 @@ void Target::drawInfo(bool erase){
 }
 
 void Target::checkClose(){
-	// ESP_LOGI(FNAME,"ID %06X, close Target Buzzer dist=%.2f Holddown= %d", pflaa.ID, dist, _buzzedHoldDown );
-	float dist_buzz = 10.0;
-	if( notify_near.get() == BUZZ_OFF )
+	if(dist_buzz < 0.0)
 		return;
-	else if( notify_near.get() == BUZZ_1KM )
-		dist_buzz = 1.0;
-	else if( notify_near.get() == BUZZ_2KM )
-		dist_buzz = 2.0;
-	else if( dist < dist_buzz && (_buzzedHoldDown == 0) ){
+	// ESP_LOGI(FNAME,"ID %06X, close Target Buzzer dist:%.2f Holddown:%d, db:%.2f", pflaa.ID, dist, _buzzedHoldDown, dist_buzz );
+	if(  dist < dist_buzz && (_buzzedHoldDown == 0) ){
 		ESP_LOGI(FNAME,"BUZZ dist=%.2f", dist );
 		Buzzer::play2( BUZZ_DH, 200,audio_volume.get() , BUZZ_E, 200, audio_volume.get() );
 		_buzzedHoldDown = 12000;
@@ -311,19 +314,19 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 			old_sidelen = sideLength;
 		}
 	}else{
-		ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d out of screen", pflaa.ID, ax, ay );
+		// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d out of screen", pflaa.ID, ax, ay );
 	}
 }
 
 void Target::checkAlarm(){
 	if( pflaa.alarmLevel == 1 ){
-		Buzzer::play2( BUZZ_DH, 150,audio_volume.get(), BUZZ_DH, 150, 0, 2 );
+		Buzzer::play2( BUZZ_DH, 150,audio_volume.get(), BUZZ_DH, 150, 0, 6 );
 		setAlarm();
 	}else if( pflaa.alarmLevel == 2 ){
-		Buzzer::play2( BUZZ_E, 100,audio_volume.get(), BUZZ_E, 100, 0, 3 );
+		Buzzer::play2( BUZZ_E, 100,audio_volume.get(), BUZZ_E, 100, 0, 10 );
 		setAlarm();
 	}else if( pflaa.alarmLevel == 3 ){
-		Buzzer::play2( BUZZ_F, 70,audio_volume.get(), BUZZ_F, 70, 0, 5 );
+		Buzzer::play2( BUZZ_F, 70,audio_volume.get(), BUZZ_F, 70, 0, 15 );
 		setAlarm();
 	}
 	if( alarm_timer == 0 )

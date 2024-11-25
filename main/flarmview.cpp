@@ -135,18 +135,21 @@ extern "C" void app_main(void)
     menu->begin();
     Switch::startTask();
 
-    if( traffic_demo.get() ){
-    	ESP_LOGI(FNAME,"Traffic Demo");
-    	traffic_demo.set(0);
-    	traffic_demo.commit();
-    	Flarm::startSim();
-    }
+
 
     egl->clearScreen();
     Flarm::begin();
     Serial::begin();
     TargetManager::begin();
     Buzzer::play2( BUZZ_DH, 150,audio_volume.get(), BUZZ_DH, 1000, 0, 1 );
+
+    if( traffic_demo.get() ){
+    	ESP_LOGI(FNAME,"Traffic Demo");
+    	traffic_demo.set(0);
+    	traffic_demo.commit();
+    	delay( 100 );
+    	Flarm::startSim();
+    }
 
     if( Serial::selfTest() )
     	printf("Serial Loop Test OK");
