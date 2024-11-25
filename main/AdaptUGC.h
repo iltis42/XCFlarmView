@@ -98,6 +98,9 @@ public:
 	inline void setColor( uint8_t r, uint8_t g, uint8_t b ) {
 		eglib_SetIndexColor(eglib, 0, r, g, b);
 	}	
+	inline void setColor( ucg_color_t c ) {
+			eglib_SetIndexColor(eglib, 0, c.color[0], c.color[1], c.color[2] );
+	}
 	// graphics
 	inline void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1)  { eglib_DrawLine(eglib, x0, y0, x1, y1); }
 	inline void drawBox(int16_t x, int16_t y, int16_t w, int16_t h)  { eglib_DrawBox(eglib, x, y, w, h); }

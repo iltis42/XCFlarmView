@@ -109,9 +109,9 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 	old_radius = new_radius;
 }
 
-void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
-	if( inactive == 0 ){
-		egl->setColor(COLOR_RED); // G=0 R=255 B=0  RED Color
+void TargetManager::printAlarm( const char*alarm, int x, int y, bool print, ucg_color_t color ){
+	if( print ){
+		egl->setColor( color ); // G=0 R=255 B=0  RED Color
 	}else{
 		egl->setColor(COLOR_BLACK);
 	}
@@ -177,8 +177,7 @@ void TargetManager::clearScreen(){
 }
 
 void TargetManager::rewindInfoTimer(){
-	if( !info_timer )
-		egl->clearScreen();
+	ESP_LOGI(FNAME,"rewindInfoTimer() %d", info_timer );
 	info_timer = INFO_TIME;
 }
 
@@ -201,8 +200,9 @@ void TargetManager::tick(){
 		if( id_timer )
 			id_timer --;
 	}
-	if( !(_tick%10) )
+	if( !(_tick%20) ){  // all 50 mS
 		ESP_LOGI(FNAME,"Num targets: %d", targets.size() );
+	}
 
 	if( !(_tick%5) ){ // all 5 ticks
 		if( SetupMenu::isActive() )
@@ -213,20 +213,30 @@ void TargetManager::tick(){
 		if( Flarm::getTxFlag() ){
 			int tx=Flarm::getTXBit();  // 0 or 1
 			ESP_LOGI(FNAME,"TX alarm: %d", tx );
-			if( !tx )
-				rewindInfoTimer();
-			else
-				Flarm::resetTxFlag();
-			printAlarm( "NO TX", 10, 100, tx );
+			printAlarm( "NO TX ", 10, 100, tx==0 );
+			Flarm::resetTxFlag();
+		}
+		if( Flarm::getRxFlag()){
+			int rx=Flarm::getRXNum();
+			ESP_LOGI(FNAME,"New RX: %d", rx );
+			char txt[16];
+			sprintf( txt, " RX %d ", rx );
+			printAlarm( txt, DISPLAY_W-egl->getStrWidth(txt)-5, DISPLAY_H/2-10, rx != 0, {COLOR_GREEN} );
+			Flarm::resetRxFlag();
 		}
 		if( Flarm::getGPSFlag() ){
 			int gps=Flarm::getGPSBit();  // 0,1 or 2
-			ESP_LOGI(FNAME,"GPS alarm: %d", gps );
-			if( !gps )
-				rewindInfoTimer();
-			else
-				Flarm::resetGPSFlag();
-			printAlarm( "NO GPS", 10, 120, gps );
+			ESP_LOGI(FNAME,"GPS status: %d", gps );
+			printAlarm( "NO GPS ", 10, 120, gps==0 );
+			Flarm::resetGPSFlag();
+		}
+		if( Flarm::getConnectedFlag() ){
+			bool conn = Flarm::connected();
+			ESP_LOGI(FNAME,"Flarm connected alarm: %d", !conn );
+			if( conn==false )
+				egl->clearScreen();
+			printAlarm( "NO FLARM ", 10, 140, conn==false );
+			Flarm::resetConnectedFlag();
 		}
 		if( Flarm::getErrorFlag() ){
 			int severity =  Flarm::getErrorSeverity();
@@ -272,29 +282,31 @@ void TargetManager::tick(){
 		}
 
 		// Pass one: determine proximity
-		if( !info_timer ){
+		if( !info_timer && Flarm::connected() )
 			drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
-			for (auto it=targets.begin(); it!=targets.end(); it++ ){
-				it->second.ageTarget();
-				if( SetupMenu::isActive() )
-					return;
-				it->second.nearest(false);
-				if( it->second.getAge() < AGEOUT ){
-					if( it->second.haveAlarm() )
-						id_timer=0;
-					if( !id_timer ){
-						if( (it->second.getProximity() < min_dist)  ){
-							min_dist = it->second.getDist();
-							min_id = it->first;
-						}
-					}else{
-						if( id_iter != targets.end() && it->first == id_iter->first ){
-							it->second.nearest(true);
-						}
+
+		for (auto it=targets.begin(); it!=targets.end(); it++ ){
+			it->second.ageTarget();
+			if( SetupMenu::isActive() )
+				return;
+			it->second.nearest(false);
+			if( it->second.getAge() < AGEOUT ){
+				if( it->second.haveAlarm() )
+					id_timer=0;
+				if( !id_timer ){
+					if( (it->second.getProximity() < min_dist)  ){
+						min_dist = it->second.getDist();
+						min_id = it->first;
+					}
+				}else{
+					if( id_iter != targets.end() && it->first == id_iter->first ){
+						it->second.nearest(true);
 					}
 				}
 			}
-			// Pass 2, draw targets
+		}
+		// Pass 2, draw targets
+		if( !info_timer && Flarm::connected() ){
 			for (auto it=targets.begin(); it!=targets.end(); ){
 				if( SetupMenu::isActive() )
 					return;
@@ -333,4 +345,4 @@ void TargetManager::tick(){
 		}
 
 	}
-}
+	}

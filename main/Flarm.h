@@ -34,6 +34,7 @@ typedef struct flarm_flags{
 	bool tx;
 	bool rx;
 	bool gps;
+	bool connected;
 }t_flags;
 
 /* Value indexes */
@@ -71,7 +72,7 @@ public:
 	static void drawFlarmWarning();
 	static void initFlarmWarning();
 	static void progress();
-	static bool connected(); // returns true if Flarm is connected
+	static bool connected() { return _connected; };     // returns true if Flarm is connected
 	static inline bool getGPS( float &gndSpeedKmh, float &gndTrack ) {
 		if( myGPS_OK ) {
 			gndSpeedKmh = Units::knots2kmh(gndSpeedKnots);
@@ -107,6 +108,7 @@ public:
 	static void startSim() { flarm_sim = true; };
 	static inline bool getSim() { return flarm_sim; };
 	static inline int getTXBit() { return TX; };
+	static inline int getRXNum() { return RX; };
 	static inline int getGPSBit() { return GPS; };
 	static inline int getErrorSeverity() { return pflae_severity; };
 	static inline int getErrorCode() { return pflae_error; };
@@ -132,6 +134,8 @@ public:
 	static inline void resetRxFlag() {  flags.rx = false; };
 	static inline bool getGPSFlag() {  return flags.gps; };
 	static inline void resetGPSFlag() {  flags.gps = false; };
+	static inline bool getConnectedFlag() {  return flags.connected; };
+	static inline void resetConnectedFlag() {  flags.connected = false; };
 
 private:
 	static int calcNMEACheckSum(const char *nmea);
@@ -140,6 +144,7 @@ private:
 	static void drawClearVerticalTriangle( int x, int y, int rb, int dist, int size, int factor );
 	static void drawTriangle( int x, int y, int rb, int dist, int size=15, int factor=2, bool erase=false );
 	static void flarmSim();
+	static void pflau_timeout();
 
 	static t_flags flags;
 	static AdaptUGC* ucg;
@@ -150,6 +155,7 @@ private:
 	static float gndSpeedKnots;
 	static float gndCourse;
 	static bool  myGPS_OK;
+	static bool _connected;
 	static int AlarmType;
 	static char ID[20];
 	static int oldDist;
@@ -157,7 +163,7 @@ private:
 	static int oldBear;
 	static int alarmOld;
 	static int _tick;
-	static int timeout;
+	static int connected_timeout;
 	static int alarm_timeout;
 	static int ext_alt_timer;
 	static int _numSat;
@@ -165,7 +171,7 @@ private:
 	static e_audio_alarm_type_t alarm;
 	static TaskHandle_t pid;
 	static bool flarm_sim;
-	static int pflau_timeout;
+	static int _pflau_timeout;
 	static int  pflae_severity;
 	static int  pflae_error;
 	static char HwVersion[16];

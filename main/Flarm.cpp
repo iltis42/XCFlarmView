@@ -7,18 +7,18 @@
 #include <iostream>
 #include <sstream>
 
-#define TASK_PERIOD 250  // ms
+#define TASK_PERIOD 1000  // ms
 
-#define FLARM_TIMEOUT (120* (1000/TASK_PERIOD))
+#define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
 #define PFLAU_TIMEOUT (10* (1000/TASK_PERIOD))
 #define ALARM_TIMEOUT (10* (1000/TASK_PERIOD))
 
 int Flarm::RX = 0;
 int Flarm::TX = 0;
 int Flarm::GPS = 0;
-int Flarm::last_RX = 1;
+int Flarm::last_RX = -1;
 int Flarm::last_TX = 1;
-int Flarm::last_GPS = 1;
+int Flarm::last_GPS = -1;
 int Flarm::Power = 0;
 int Flarm::AlarmLevel = 0;
 int Flarm::RelativeBearing = 0;
@@ -28,9 +28,10 @@ int Flarm::RelativeDistance = 0;
 float Flarm::gndSpeedKnots = 0;
 float Flarm::gndCourse = 0;
 bool Flarm::myGPS_OK = false;
+bool Flarm::_connected = true;
 char Flarm::ID[20] = "";
 int Flarm::bincom = 0;
-int Flarm::pflau_timeout = PFLAU_TIMEOUT;
+int Flarm::_pflau_timeout = PFLAU_TIMEOUT;
 TaskHandle_t Flarm::pid = 0;
 AdaptUGC* Flarm::ucg;
 e_audio_alarm_type_t Flarm::alarm = AUDIO_ALARM_OFF;
@@ -52,7 +53,7 @@ int Flarm::oldVertical = 0;
 int Flarm::oldBear = 0;
 int Flarm::alarmOld=0;
 int Flarm::_tick=0;
-int Flarm::timeout=0;
+int Flarm::connected_timeout=ALARM_TIMEOUT;
 int Flarm::alarm_timeout=0;
 int Flarm::ext_alt_timer=0;
 int Flarm::_numSat=0;
@@ -61,7 +62,7 @@ int Flarm::pflae_severity=0;
 int Flarm::pflae_error=0;
 
 bool Flarm::flarm_sim = false;
-t_flags Flarm::flags = { false, false, false, false, false, false, false, false };
+t_flags Flarm::flags = { false, false, false, false, false, false, false, false, false };
 
 extern xSemaphoreHandle spiMutex;
 
@@ -255,7 +256,7 @@ void Flarm::parsePFLAA( const char *pflaa ){
 		sscanf(token.c_str(), "%s", PFLAA.acftType);
 
 	_tick=0;
-	timeout = FLARM_TIMEOUT;
+	connected_timeout = FLARM_TIMEOUT;
 	TargetManager::receiveTarget( PFLAA );
 }
 
@@ -301,28 +302,42 @@ void Flarm::flarmSim(){
 	}
 }
 
+void Flarm::pflau_timeout(){
+	TX = 1;   // TX alarm on
+	GPS = 0;  // GPS no GPS
+	RX = 0;   // RX no target
+	flags.tx = true;
+	flags.gps = true;
+	flags.rx  = true;
+}
+
+static bool old_connected = true;
 
 void Flarm::progress(){  //  per second
-	if( timeout ){
-		timeout--;
+	if( connected_timeout ){
+		connected_timeout--;
+	}
+	if( connected_timeout == 0 )
+		_connected = false;
+	else
+		_connected = true;
+
+	if( old_connected != _connected ){
+		old_connected = _connected;
+		flags.connected = true;  // notify connected change
 	}
 	if( alarm_timeout ){
 		alarm_timeout--;
 	}
-	// ESP_LOGI(FNAME,"progress, timeout=%d", timeout );
+	// ESP_LOGI(FNAME,"progress, connected_timeout=%d", connected_timeout );
 	if( flarm_sim ){
 		flarmSim();
 		flarmSim();
 	}else{  // no PFLAU in flarm Simulation
-		if( pflau_timeout ){
-			pflau_timeout--;
-			if( pflau_timeout == 0 ){
-				TX = 0;
-				GPS = 0;
-				RX = 0;
-				flags.tx = true;
-				flags.gps = true;
-				flags.rx  = true;
+		if( _pflau_timeout ){
+			_pflau_timeout--;
+			if( _pflau_timeout == 1 ){
+				pflau_timeout();
 			}
 		}
 	}
@@ -354,14 +369,6 @@ void Flarm::parseNMEA( const char *str, int len ){
 	}
 }
 
-
-bool Flarm::connected(){
-	// ESP_LOGI(FNAME,"timeout=%d", timeout );
-	if( timeout > 0 )
-		return true;
-	else
-		return false;
-};
 
 /*
 eg1. $GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62
@@ -405,7 +412,7 @@ void Flarm::parseGPRMC( const char *gprmc ) {
 			ESP_LOGI(FNAME,"GPRMC, GPS status changed to bad, rmc:%s gps:%d", gprmc, myGPS_OK );
 		}
 	}
-	timeout = FLARM_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
 	// ESP_LOGI(FNAME,"parseGPRMC() GPS: %d, Speed: %3.1f knots, Track: %3.1f° ", myGPS_OK, gndSpeedKnots, gndCourse );
 }
 
@@ -449,7 +456,7 @@ void Flarm::parseGPGGA( const char *gpgga ) {
 		if( numSat != _numSat ){
 			_numSat = numSat;
 		}
-		timeout = FLARM_TIMEOUT;
+		connected_timeout =FLARM_TIMEOUT;
 	}
 }
 
@@ -465,7 +472,7 @@ void Flarm::parsePFLAE( const char *pflae ) {
 		ESP_LOGW(FNAME,"CHECKSUM ERROR: %s; calculcated CS: %d != delivered CS %d", pflae, calc_cs, cs );
 		return;
 	}
-	timeout = FLARM_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
 	char queryType;
 	int ret=sscanf( pflae+3,"LAE,%c,%d,%x", &queryType, &pflae_severity, &pflae_error );
 	if( queryType == 'A' && ret == 3 ){
@@ -479,6 +486,10 @@ void Flarm::parsePFLAE( const char *pflae ) {
 		$PFLAU,3,1,2,1,2,-30,2,-32,755*FLARM is working properly and currently receives 3 other aircraft.
 		The most dangerous of these aircraft is at 11 o’clock, position 32m below and 755m away. It is a level 2 alarm
 
+
+<RX> Decimal integer value. Range: from 0 to 99.
+Number of devices with unique IDs currently received
+regardless of the horizontal or vertical separation
 
 <TX>
 Decimal integer value. Range: from 0 to 1.
@@ -526,8 +537,8 @@ void Flarm::parsePFLAU( const char *pflau, bool sim_data ) {
 	// ESP_LOGI(FNAME,"parsePFLAU() RB: %d ALT:%d  DIST %d",RelativeBearing,RelativeVertical, RelativeDistance );
 	sprintf( ID,"%06x", id );
 	_tick=0;
-	timeout = FLARM_TIMEOUT;
-	pflau_timeout = PFLAU_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
+	_pflau_timeout = PFLAU_TIMEOUT;
 	if( TX != last_TX ){
 		last_TX = TX;
 		flags.tx = true;
@@ -563,7 +574,7 @@ void Flarm::parsePFLAX( const char *msg, int port ) {
 		int old = bincom;
 		bincom = 5;
 		ESP_LOGI(FNAME,"bincom: %d --> %d", old, bincom  );
-		timeout = FLARM_TIMEOUT;
+		connected_timeout =FLARM_TIMEOUT;
 	}
 }
 
@@ -595,7 +606,7 @@ void Flarm::parsePGRMZ( const char *pgrmz ) {
 		return;
 	}
 	sscanf( pgrmz, "$PGRMZ,%d,F,2",&alt1013_ft );
-	timeout = FLARM_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
 	ext_alt_timer = 10;  // Fall back to internal Barometer after 10 seconds
 }
 
@@ -624,7 +635,7 @@ void Flarm::parsePFLAV( const char *pflav ) {
 		flags.odbVersion=false;
 	}
 
-	timeout = FLARM_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
 }
 
 static std::map<const char*, const char*> OperationTypes = {
@@ -663,7 +674,7 @@ void Flarm::parsePFLAQ( const char *pflaq ) {
 		sscanf( pflaq, "$PFLAQ,%[^,],%[^,],%d",Operation,Info,&Progress );
 	ESP_LOGI(FNAME,"PFLAQ %s %s %d", Operation,Info,Progress );
 	flags.progress = true;
-	timeout = FLARM_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
 }
 
 int rbOld = -500; // outside normal range
