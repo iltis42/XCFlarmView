@@ -72,6 +72,8 @@ bool Serial::bincom_mode = false;  // we start with bincom timer inactive
 int Serial::trials=0;
 int Serial::baudrate = 0;
 
+#define HUNTBAUDRATE_HOLDDOWN 24000   // 120 sec
+
 int Serial::pullBlock( RingBufCPP<SString, QUEUE_SIZE>& q, char *block, int size ){
         xSemaphoreTake(qMutex,portMAX_DELAY );
         int total_len = 0;
@@ -152,7 +154,7 @@ void Serial::serialHandler(void *pvParameters)
 	// Make a pause, that has avoided core dumps during enable the RX interrupt.
 	delay( 1000 );  // delay a bit serial task startup unit startup of system is through
 	ESP_LOGI(FNAME,"S1 serial handler startup");
-    unsigned int start_holddown = 24000;  // 14000 * 5 mS = 120 sec
+  unsigned int start_holddown = HUNTBAUDRATE_HOLDDOWN;  // 14000 * 5 mS = 120 sec
 	while( true ) {
 		// Stack supervision
 		if( uxTaskGetStackHighWaterMark( pid ) < 256 )
@@ -184,8 +186,12 @@ void Serial::serialHandler(void *pvParameters)
 			process( buf, rxBytes );
 			DM.monitorString( MON_S1, DIR_RX, buf, rxBytes );
 		}
+		// ESP_LOGI(FNAME,"FC: %d, HD: %d", Flarm::connected(), start_holddown );
 		if( !Flarm::connected() && !start_holddown ){
 			huntBaudrate();
+		}
+		if( Flarm::connected() ){
+			start_holddown = HUNTBAUDRATE_HOLDDOWN;
 		}
 		if( Flarm::connected() && (serial1_speed.get() != baudrate) ){
 			saveBaudrate();
@@ -255,17 +261,16 @@ void Serial::saveBaudrate(){
 
 
 void Serial::huntBaudrate(){
-	if( !Flarm::connected() ){
-		trials++;
-		if( trials>200 ) { // An active Flarm sends every second at least
-			trials = 0;
-			baudrate++;
-			if( baudrate > 6 ){
-				baudrate=1;  // 4800
-			}
-			uart_set_baudrate(uart_num, baud[baudrate]);
-			ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
+	trials++;
+	if( trials>200 ) { // An active Flarm sends every second at least
+		trials = 0;
+		baudrate++;
+		if( baudrate > 6 ){
+			baudrate=1;  // 4800
 		}
+		uart_set_baudrate(uart_num, baud[baudrate]);
+
+		ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
 	}
 }
 

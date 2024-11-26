@@ -34,7 +34,7 @@ public:
 	static void volume( uint vol=0 );
 	static void frequency( uint f);
 	static void play2( uint f1=BUZZ_DH, uint d1=200, uint v1=100, uint f2=BUZZ_E, uint d2=200, uint v2=0, uint repetition=1 );
-	static void play( uint freq=BUZZ_DH, uint duration=200, uint volume=100 );
+	static void play( uint freq=BUZZ_DH, uint duration=200, uint volume=100, uint freq2=BUZZ_DH, uint duration2=0, uint volume2=100 );
 private:
 	static TaskHandle_t pid;
 	static void taskStart();

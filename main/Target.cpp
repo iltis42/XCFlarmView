@@ -10,7 +10,6 @@
 #include <AdaptUGC.h>
 #include "vector.h"
 #include "flarmnetdata.h"
-#include "Colors.h"
 #include <cmath>
 #include <algorithm>
 #include <flarmview.h>
@@ -61,6 +60,14 @@ Target::Target( nmea_pflaa_s a_pflaa ) {
 			comp=(char*)flarmnet[i].comp;
 		}
 	}
+	if( notify_near.get() == BUZZ_OFF )
+		dist_buzz = -1.0;
+	else if( notify_near.get() == BUZZ_1KM )
+		dist_buzz = 1.0;
+	else if( notify_near.get() == BUZZ_2KM )
+		dist_buzz = 2.0;
+	else
+		dist_buzz = 10.0;
 }
 
 void Target::drawDist( uint8_t r, uint8_t g, uint8_t b ){
@@ -80,6 +87,7 @@ void Target::drawID( uint8_t r, uint8_t g, uint8_t b ){
 		w=egl->getStrWidth(cur_id);
 		if( w>150 ){
 			egl->setFont( ucg_font_fub14_hf );
+			w=egl->getStrWidth(cur_id);
 		}
 		if( w>150 ){
 			ESP_LOGW(FNAME,"ID >%s< longer than 150 pixel (%d)", cur_id, w );
@@ -191,11 +199,11 @@ void Target::drawInfo(bool erase){
 
 	egl->setFont( ucg_font_fub14_hf );
 
-	if( inch2dot4 ){
-		int w=egl->getStrWidth("ID");
-		egl->setPrintPos( (DISPLAY_W-5)-w, DISPLAY_H-37 );
-		egl->printf("ID");
-	}
+	// if( inch2dot4 ){
+	int w=egl->getStrWidth("ID");
+	egl->setPrintPos( (DISPLAY_W-5)-w, DISPLAY_H-37 );
+	egl->printf("ID");
+	//}
 
 	if( inch2dot4 ){
 		sprintf(s,"Dis %s", Units::DistanceUnit() );
@@ -228,15 +236,10 @@ void Target::drawInfo(bool erase){
 }
 
 void Target::checkClose(){
-	// ESP_LOGI(FNAME,"ID %06X, close Target Buzzer dist=%.2f Holddown= %d", pflaa.ID, dist, _buzzedHoldDown );
-	float dist_buzz = 10.0;
-	if( notify_near.get() == BUZZ_OFF )
+	if(dist_buzz < 0.0)
 		return;
-	else if( notify_near.get() == BUZZ_1KM )
-		dist_buzz = 1.0;
-	else if( notify_near.get() == BUZZ_2KM )
-		dist_buzz = 2.0;
-	else if( dist < dist_buzz && (_buzzedHoldDown == 0) ){
+	// ESP_LOGI(FNAME,"ID %06X, close Target Buzzer dist:%.2f Holddown:%d, db:%.2f", pflaa.ID, dist, _buzzedHoldDown, dist_buzz );
+	if(  dist < dist_buzz && (_buzzedHoldDown == 0) ){
 		ESP_LOGI(FNAME,"BUZZ dist=%.2f", dist );
 		Buzzer::play2( BUZZ_DH, 200,audio_volume.get() , BUZZ_E, 200, audio_volume.get() );
 		_buzzedHoldDown = 12000;
@@ -252,10 +255,17 @@ void Target::recalc(){
 	dist = sqrt( pflaa.relNorth*pflaa.relNorth + pflaa.relEast*pflaa.relEast )/1000.0; // distance in km float
 	float relV=float(pflaa.relVertical/1000.0);
 	prox=sqrt( relV*relV + dist*dist );  // proximity 3D
+
+#ifdef inch2dot4
 	float logs = dist;
 	if( log_scale.get() )
 		logs = log( 2+dist );
 	float pix = fmax( zoom*logs*SCALE, 20.0 );
+#else
+	float logs = log( 2+prox );
+	float pix = fmax( logs*SCALE, 30.0 );
+#endif
+  
 	// ESP_LOGI(FNAME,"prox: %f, log:%f, pix:%f", prox, logs, pix );
 	x=(DISPLAY_W/2)+pix*sin(D2R(rel_target_dir));
 	y=(DISPLAY_H/2)-pix*cos(D2R(rel_target_dir));
@@ -286,7 +296,7 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 		if( !erase ){
 			egl->setColor( color.color[0], color.color[1], color.color[2] );
 			egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
-			if( y0 > 290 || y1 > 290 || y2 > 290 ){  // need to refresh ID
+			if( y0 > DISPLAY_H-30 || y1 > DISPLAY_H-30 || y2 > DISPLAY_H-30 ){  // need to refresh ID
 				TargetManager::redrawInfo();
 			}
 			if( closest ){
@@ -305,19 +315,19 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 			old_sidelen = sideLength;
 		}
 	}else{
-		ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d out of screen", pflaa.ID, ax, ay );
+		// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d out of screen", pflaa.ID, ax, ay );
 	}
 }
 
 void Target::checkAlarm(){
 	if( pflaa.alarmLevel == 1 ){
-		Buzzer::play2( BUZZ_DH, 150,audio_volume.get(), BUZZ_DH, 150, 0, 2 );
+		Buzzer::play2( BUZZ_DH, 150,audio_volume.get(), BUZZ_DH, 150, 0, 6 );
 		setAlarm();
 	}else if( pflaa.alarmLevel == 2 ){
-		Buzzer::play2( BUZZ_E, 100,audio_volume.get(), BUZZ_E, 100, 0, 3 );
+		Buzzer::play2( BUZZ_E, 100,audio_volume.get(), BUZZ_E, 100, 0, 10 );
 		setAlarm();
 	}else if( pflaa.alarmLevel == 3 ){
-		Buzzer::play2( BUZZ_F, 70,audio_volume.get(), BUZZ_F, 70, 0, 5 );
+		Buzzer::play2( BUZZ_F, 70,audio_volume.get(), BUZZ_F, 70, 0, 15 );
 		setAlarm();
 	}
 	if( alarm_timer == 0 )

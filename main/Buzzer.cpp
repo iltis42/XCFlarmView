@@ -36,9 +36,12 @@ int Buzzer::vol = 0;
 xQueueHandle Buzzer::queue = 0;
 
 typedef struct s_tone{
-	uint frequency: 16;  // max 4096 Hz
-	uint duration: 16;   // max 4096 mS
-	uint volume:16;       // max 100
+	uint frequency: 12;  // max 4096 Hz
+	uint duration: 12;   // max 4096 mS
+	uint volume:8;       // max 100
+	uint frequency2: 12;  // max 4096 Hz
+	uint duration2: 12;   // max 4096 mS
+	uint volume2:8;       // max 100
 }tone_t;
 
 /* Warning:
@@ -106,9 +109,11 @@ void Buzzer::frequency( uint f ){
 }
 
 void Buzzer::play2( uint f1, uint d1, uint v1, uint f2, uint d2, uint v2, uint repetition )
-{ 	for(int i=0; i<repetition; i++ ){
-		play(f1,d1,v1);
-		play(f2,d2,v2);
+{
+	xQueueReset(queue); // empty queue
+	// ESP_LOGI(FNAME,"Buzzer play2() f:%d d:%d v:%d r:%d", f1, d1, v1, repetition );
+	for(int i=0; i<repetition; i++ ){
+		play(f1,d1,v1,f2,d2,v2);
 	}
 }
 
@@ -122,13 +127,20 @@ void Buzzer::buzz_task(void *pvParameters)
 			volume(t.volume);
     		delay(t.duration);
     		volume(0);
+    		if( t.duration2 )
+    		{
+    			frequency(t.frequency2);
+    			volume(t.volume2);
+    			delay(t.duration2);
+    			volume(0);
+    		}
 		}
 		// delay(20);
 	}
 }
 
-void Buzzer::play( uint f, uint d, uint v ) {
-	tone_t t = { f, d, v };
+void Buzzer::play( uint f, uint d, uint v, uint f2, uint d2, uint v2 ) {
+	tone_t t = { f, d, v, f2, d2, v2 };
 	xQueueSend(queue, &t, 0);
 };
 

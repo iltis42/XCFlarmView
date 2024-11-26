@@ -19,8 +19,6 @@ std::map< unsigned int, Target> TargetManager::targets;
 std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.begin();
 extern AdaptUGC *egl;
 float TargetManager::oldN   = -1.0;
-int TargetManager::old_TX   = -1;
-int TargetManager::old_GPS  = -1;
 int TargetManager::id_timer =  0;
 int TargetManager::_tick =  0;
 int TargetManager::holddown =  0;
@@ -28,18 +26,14 @@ TaskHandle_t TargetManager::pid = 0;
 unsigned int TargetManager::min_id = 0;
 bool TargetManager::redrawNeeded = true;
 bool TargetManager::erase_info = false;
-int  TargetManager::old_error = 0;
-int  TargetManager::old_severity = 0;
-int TargetManager::old_sw_len = -1;
-int TargetManager::old_hw_len = -1;
-int TargetManager::old_obst_len = -1;
-int TargetManager::old_prog = -1;
 int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
+xSemaphoreHandle display=NULL;
 
-#define INFO_TIME (10*(1000/TASKPERIOD)/DISPLAYTICK)  // all 10 sec
+#define INFO_TIME (5*(1000/TASKPERIOD)/DISPLAYTICK)  // all ~10 sec
 
 void TargetManager::begin(){
+	display=xSemaphoreCreateMutex();
 	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 10, &pid, 0);
 }
 
@@ -92,16 +86,19 @@ void TargetManager::drawN( int x, int y, bool erase, float north, float dist ){
 void TargetManager::drawAirplane( int x, int y, float north ){
 	if( SetupMenu::isActive() )
 		return;
+	xSemaphoreTake(display,portMAX_DELAY );
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setColor( COLOR_WHITE );
 	egl->drawTetragon( x-15,y-1, x-15,y+1, x+15,y+1, x+15,y-1 );  // wings
 	egl->drawTetragon( x-1,y+10, x-1,y-6, x+1,y-6, x+1,y+10 ); // fuselage
 	egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
+	float new_radius = 25;
+#ifdef inch2dot4
 	float logs = 1;
 	if( log_scale.get() )
 		logs = log( 2+1 );
-	float new_radius = zoom*logs*SCALE;
-
+	new_radius = zoom*logs*SCALE;
+#endif
 	if( oldN != -1.0 && ((oldN != north) || (old_radius != new_radius)) )
 		drawN( x,y, true, oldN, old_radius );
 	if( (old_radius != 0.0) && (old_radius != new_radius) ){
@@ -112,17 +109,22 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 	drawN( x,y, false, north, new_radius );
 	egl->drawCircle( x,y, new_radius );
 	old_radius = new_radius;
+	xSemaphoreGive(display);
 }
 
-void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
-	if( inactive == 0 ){
-		egl->setColor(COLOR_RED); // G=0 R=255 B=0  RED Color
+void TargetManager::printAlarm( const char*alarm, int x, int y, bool print, ucg_color_t color ){
+	// ESP_LOGI(FNAME,"printAlarm: %s, x:%d y:%d", alarm, x,y );
+	xSemaphoreTake(display,portMAX_DELAY );
+	if( print ){
+		egl->setColor( color ); // G=0 R=255 B=0  RED Color
 	}else{
 		egl->setColor(COLOR_BLACK);
 	}
-	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos( x, y );
+
+	egl->setFont(ucg_font_ncenR14_hr);
 	egl->printf( alarm );
+	xSemaphoreGive(display);
 }
 
 /*
@@ -134,6 +136,7 @@ void TargetManager::printAlarm( const char*alarm, int x, int y, int inactive ){
 */
 
 void TargetManager::printAlarmLevel( const char*alarm, int x, int y, int level ){
+	xSemaphoreTake(display,portMAX_DELAY );
 	if( level == 0 ){
 		egl->setColor(COLOR_BLACK); // G=0 R=255 B=0  RED Color
 	}else if( level == 1 ){
@@ -146,6 +149,7 @@ void TargetManager::printAlarmLevel( const char*alarm, int x, int y, int level )
 	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos( x, y );
 	egl->printf( alarm );
+	xSemaphoreGive(display);
 }
 
 void TargetManager::nextTarget(int timer){
@@ -160,7 +164,7 @@ void TargetManager::nextTarget(int timer){
 			}
 		}
 		if( id_iter != targets.end() )
-			ESP_LOGI( FNAME, "next target: %06X", id_iter->first );
+			ESP_LOGI( FNAME, "next target: %06X",id_iter->first );
 	}
 }
 
@@ -178,12 +182,14 @@ void TargetManager::printVersions( int x, int y, const char *prefix, const char 
 
 void TargetManager::clearScreen(){
 	egl->clearScreen();
-	old_GPS = -1;
-	old_sw_len = -1;
-	old_hw_len = -1;
-	old_obst_len = -1;
-	old_prog = -1;
-	redrawNeeded = true;
+	// redrawNeeded = true;
+}
+
+void TargetManager::rewindInfoTimer(){
+	if( info_timer == 0 )
+		egl->clearScreen();
+	ESP_LOGI(FNAME,"rewindInfoTimer() %d", info_timer );
+	info_timer = INFO_TIME;
 }
 
 void TargetManager::tick(){
@@ -192,7 +198,11 @@ void TargetManager::tick(){
 	if( holddown )
 		holddown--;
 
+#ifdef inch2dot4
 	if( !holddown && swMode.isClosed() ){
+#else
+	if( !holddown && Switch::isClosed() ){
+#endif
 		// ESP_LOGI(FNAME,"SW closed");
 		nextTarget( id_timer );
 		id_timer = 10 * (1000/TASKPERIOD);  // 10 seconds
@@ -201,54 +211,70 @@ void TargetManager::tick(){
 		if( id_timer )
 			id_timer --;
 	}
-	if( !(_tick%10) )
+	if( !(_tick%20) ){  // all 50 mS
 		ESP_LOGI(FNAME,"Num targets: %d", targets.size() );
+	}
 
 	if( !(_tick%5) ){ // all 5 ticks
 		if( SetupMenu::isActive() )
 			return;
-		if( info_timer )
+		if( info_timer > 0 )
 			info_timer--;
 
-		int tx=Flarm::getTXBit();  // 0 or 1
-		int gps=Flarm::getGPSBit();
-		if( old_TX != tx ){
-			ESP_LOGI(FNAME,"TX changed, old: %d, new: %d", old_TX, tx );
-			if( !tx )
-				clearScreen();
-			printAlarm( "NO TX", 10, 100, tx );
-			old_TX = tx;
+		if( Flarm::getTxFlag() || !(_tick%200) ){
+			int tx=Flarm::getTXBit();  // 0 or 1
+			ESP_LOGI(FNAME,"TX alarm: %d", tx );
+			printAlarm( "NO TX ", 10, 100, tx==0 );
+			Flarm::resetTxFlag();
 		}
-
-		if( old_GPS != gps ){  // 0,1 or 2
-			ESP_LOGI(FNAME,"GPS changed, old: %d, new: %d", old_GPS, gps );
-			printAlarm( "NO GPS", 10, 120, gps );
-			old_GPS = gps;
+		if( Flarm::getRxFlag()){
+			int rx=Flarm::getRXNum();
+			ESP_LOGI(FNAME,"New RX: %d", rx );
+			char txt[16];
+			sprintf( txt, " RX %d ", rx );
+			printAlarm( txt, DISPLAY_W-egl->getStrWidth(txt)-5, (DISPLAY_H/2)+10, rx != 0, {COLOR_GREEN} );
+			Flarm::resetRxFlag();
 		}
-		int severity =  Flarm::getErrorSeverity();
-		int error_code =  Flarm::getErrorCode();
-		if( old_error != error_code || old_severity != severity ){
-				printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
-				old_error = error_code;
-				old_severity = severity;
+		if( Flarm::getGPSFlag() || !(_tick%200) ){  // all 10 seconds
+			int gps=Flarm::getGPSBit();  // 0,1 or 2
+			ESP_LOGI(FNAME,"GPS status: %d", gps );
+			printAlarm( "NO GPS ", 10, 120, gps==0 );
+			Flarm::resetGPSFlag();
 		}
-		int swlen=strlen( Flarm::getSwVersion() );
-		if( swlen && (swlen != old_sw_len) )
-		{
+		if( Flarm::getConnectedFlag() ){
+			bool conn = Flarm::connected();
+			ESP_LOGI(FNAME,"Flarm connected alarm: %d", !conn );
+			if( conn==false )
+				egl->clearScreen();
+			printAlarm( "NO FLARM ", 10, 140, conn==false );
+			Flarm::resetConnectedFlag();
+		}
+		if( Flarm::getErrorFlag() ){
+			int severity =  Flarm::getErrorSeverity();
+		    int error_code = Flarm::getErrorCode();
+			ESP_LOGI(FNAME,"PFLAE error code new:%d  severity new:%d error-txt:%s", error_code, severity, Flarm::getErrorString(error_code)  );
+			rewindInfoTimer();
+#ifdef inch2dot4
+			printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
+#else
+			printAlarmLevel( Flarm::getErrorString(error_code), 10, 80, severity );
+#endif
+			Flarm::resetErrorFlag();
+		}
+		if( Flarm::getSwVersionFlag() ){  // flag ensures there is a valid string
+			rewindInfoTimer();
 			printVersions( 10, 20, "Flarm SW: ", Flarm::getSwVersion(), erase_info );
-			old_sw_len = swlen;
+			Flarm::resetSwVersionFlag();
 		}
-		int len=strlen( Flarm::getHwVersion() );
-		if( len && (len != old_hw_len) )
-		{
+		if( Flarm::getHwVersionFlag() ){
+			rewindInfoTimer();
 			printVersions( 10, 40, "Flarm HW: ", Flarm::getHwVersion(), erase_info );
-			old_hw_len = len;
+			Flarm::resetHwVersionFlag();
 		}
-		len=strlen( Flarm::getObstVersion() );
-		if( len && (len != old_obst_len) )
-		{
-			printVersions( 10, 60, "Flarm Obst: ", Flarm::getObstVersion(), erase_info );
-			old_obst_len = len;
+		if( Flarm::getODBVersionFlag()){
+			rewindInfoTimer();
+			printVersions( 10, 60, "Flarm ODB: ", Flarm::getObstVersion(), erase_info );
+			Flarm::resetODBVersionFlag();
 		}
 		// ESP_LOGI(FNAME,"swlen=%d; info_timer=%d", swlen, info_timer);
 		if( info_timer == 1 ){
@@ -264,18 +290,27 @@ void TargetManager::tick(){
 		}
 
 		unsigned int prog = Flarm::getProgress();
-		if( prog && (prog != old_prog) ){
-			info_timer = INFO_TIME;
+		if( Flarm::getProgressFlag() ){
+			rewindInfoTimer();
+			xSemaphoreTake(display,portMAX_DELAY );
 			egl->setColor(COLOR_WHITE);
 			egl->setFont(ucg_font_ncenR14_hr);
-			egl->setPrintPos( 10, 20 );
-			egl->printf( "%s: %d %%  ", Flarm::getOperationString(), prog );
-			old_prog = prog;
+			egl->setPrintPos( 10, 60 );
+			egl->printf( "%s: %d %%  ", Flarm::getOperationString(Flarm::getOperationKey()), prog );
+			xSemaphoreGive(display);
+			Flarm::resetProgressFlag();
+		}
+	//	ESP_LOGI(FNAME,"info_timer=%d", info_timer);
+		if( info_timer == 1 ){
+			ESP_LOGI(FNAME,"NOW CLEAR info");
+			egl->clearScreen();
+			redrawNeeded = true; // redraw of traffic and info
 		}
 
-		drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
-
 		// Pass one: determine proximity
+		if( !info_timer && Flarm::connected() )
+			drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
+
 		for (auto it=targets.begin(); it!=targets.end(); it++ ){
 			it->second.ageTarget();
 			if( SetupMenu::isActive() )
@@ -297,36 +332,41 @@ void TargetManager::tick(){
 			}
 		}
 		// Pass 2, draw targets
-		for (auto it=targets.begin(); it!=targets.end(); ){
-			if( SetupMenu::isActive() )
-				return;
-			if( !id_timer )
-			{
-				if( it->first == min_id ){
-					it->second.nearest(true);
-				}else{
-					it->second.nearest(false);
-				}
-			}
-			if( it->second.getAge() < AGEOUT ){
-				if( it->second.isNearest() || it->second.haveAlarm() ){
-					// closest == true
-					if( redrawNeeded ){
-						it->second.redrawInfo(); // forced redraw of all fields
-						redrawNeeded = false;
+		if( !info_timer && Flarm::connected() ){
+			for (auto it=targets.begin(); it!=targets.end(); ){
+				if( SetupMenu::isActive() )
+					return;
+				if( !id_timer )
+				{
+					if( it->first == min_id ){
+						it->second.nearest(true);
+					}else{
+						it->second.nearest(false);
 					}
-					it->second.drawInfo();
 				}
-				it->second.draw(false);
-				it->second.checkClose();
-				it++;
-			}
-			else{
-				if( id_iter->first == it->first ){  // move on id_iter in case
-					id_iter++;
+				if( it->second.getAge() < AGEOUT ){
+					if( it->second.isNearest() || it->second.haveAlarm() ){
+						// closest == true
+						if( redrawNeeded ){
+							it->second.redrawInfo(); // forced redraw of all fields
+							redrawNeeded = false;
+						}
+						it->second.drawInfo();
+					}
+					it->second.draw(false);
+					if( !(_tick%2) )
+						it->second.checkClose();
+					it++;
 				}
-				if( it->second.isNearest() ){   // only nearest has info to erase
-					it->second.drawInfo(true);
+				else{
+					if( id_iter->first == it->first ){  // move on id_iter in case
+						id_iter++;
+					}
+					if( it->second.isNearest() ){   // only nearest has info to erase
+						it->second.drawInfo(true);
+					}
+					it->second.draw(true);     // age/erase
+					targets.erase( it++ );
 				}
 				it->second.draw(true);     // age/erase
 				targets.erase( it++ );
@@ -334,4 +374,4 @@ void TargetManager::tick(){
 		}
 
 	}
-}
+	}

@@ -7,15 +7,18 @@
 #include <iostream>
 #include <sstream>
 
-#define TASK_PERIOD 250  // ms
+#define TASK_PERIOD 1000  // ms
 
-#define FLARM_TIMEOUT (120* (1000/TASK_PERIOD))
+#define FLARM_TIMEOUT (10* (1000/TASK_PERIOD))
 #define PFLAU_TIMEOUT (10* (1000/TASK_PERIOD))
 #define ALARM_TIMEOUT (10* (1000/TASK_PERIOD))
 
 int Flarm::RX = 0;
-int Flarm::TX = 1;
-int Flarm::GPS = 1;
+int Flarm::TX = 0;
+int Flarm::GPS = 0;
+int Flarm::last_RX = -1;
+int Flarm::last_TX = 1;
+int Flarm::last_GPS = -1;
 int Flarm::Power = 0;
 int Flarm::AlarmLevel = 0;
 int Flarm::RelativeBearing = 0;
@@ -25,9 +28,10 @@ int Flarm::RelativeDistance = 0;
 float Flarm::gndSpeedKnots = 0;
 float Flarm::gndCourse = 0;
 bool Flarm::myGPS_OK = false;
+bool Flarm::_connected = true;
 char Flarm::ID[20] = "";
 int Flarm::bincom = 0;
-int Flarm::pflau_timeout = PFLAU_TIMEOUT;
+int Flarm::_pflau_timeout = PFLAU_TIMEOUT;
 TaskHandle_t Flarm::pid = 0;
 AdaptUGC* Flarm::ucg;
 e_audio_alarm_type_t Flarm::alarm = AUDIO_ALARM_OFF;
@@ -49,7 +53,7 @@ int Flarm::oldVertical = 0;
 int Flarm::oldBear = 0;
 int Flarm::alarmOld=0;
 int Flarm::_tick=0;
-int Flarm::timeout=0;
+int Flarm::connected_timeout=ALARM_TIMEOUT;
 int Flarm::alarm_timeout=0;
 int Flarm::ext_alt_timer=0;
 int Flarm::_numSat=0;
@@ -58,7 +62,7 @@ int Flarm::pflae_severity=0;
 int Flarm::pflae_error=0;
 
 bool Flarm::flarm_sim = false;
-
+t_flags Flarm::flags = { false, false, false, false, false, false, false, false, false };
 
 extern xSemaphoreHandle spiMutex;
 
@@ -68,7 +72,7 @@ extern xSemaphoreHandle spiMutex;
 int Flarm::sim_tick=0;
 
 static std::map<int, const char*> FlarmErrors = {
-		{ 0x00, "                                             " },
+		{ 0x00, "                                                 " },
 		{ 0x11, "Firmware expired" },
 		{ 0x12, "Firmware update error" },
 		{ 0x21, "Power voltage low" },
@@ -80,38 +84,39 @@ static std::map<int, const char*> FlarmErrors = {
 		{ 0x27, "LED error" },
 		{ 0x28, "EEPROM error" },
 		{ 0x29, "General hardware error" },
-		{ 0x2A, "Transp. Mode-C/S/ADS-B unserviceable" },
+		{ 0x2A, "XPDR Mode-C/S/ADS-B U/S" },
 		{ 0x2B, "EEPROM error" },
 		{ 0x2C, "GPIO error" },
 		{ 0x31, "GPS communication" },
-		{ 0x32, "Configuration of GPS module" },
+		{ 0x32, "GPS configuration" },
 		{ 0x33, "GPS antenna" },
 		{ 0x41, "RF communication" },
-		{ 0x42, "Same ID FLARM received, suppressed" },
-		{ 0x43, "Wrong ICAO 24-bit address or radio ID" },
+		{ 0x42, "FLARM ID dup., suppressed" },
+		{ 0x43, "Invalid ICAO 24-bit/Rad ID" },
 		{ 0x51, "Communication" },
 		{ 0x61, "Flash memory" },
 		{ 0x71, "Pressure sensor" },
-		{ 0x81, "Obstacle database file type error" },
-		{ 0x82, "Obstacle database expired" },
+		{ 0x81, "ODB file type error" },
+		{ 0x82, "ODB expired" },
 		{ 0x91, "Flight recorder" },
-		{ 0x93, "Engine-noise recording not possible" },
+		{ 0x93, "ENL rec. not possible" },
 		{ 0x94, "Range analyzer" },
-		{ 0xA1, "Configuration error SD/USB" },
-		{ 0xB1, "Obstacle database invalid" },
-		{ 0xB2, "Invalid IGC feature license" },
-		{ 0xB3, "Invalid AUD feature license" },
-		{ 0xB4, "Invalid ENL feature license" },
-		{ 0xB5, "Invalid RFB feature license" },
-		{ 0xB6, "Invalid TIS feature license" },
+		{ 0xA1, "Config error SD/USB" },
+		{ 0xB1, "Obstacle DB invalid" },
+		{ 0xB2, "IGC license invalid" },
+		{ 0xB3, "AUD license invalid" },
+		{ 0xB4, "ENL license invalid" },
+		{ 0xB5, "RFB license invalid" },
+		{ 0xB6, "TIS license invalid" },
 		{ 0x100, "Generic error" },
-		{ 0x101, "Flash File System error" },
-		{ 0x110, "Failure upd. FW of external display" },
-		{ 0x120, "Outside designated region" },
+		{ 0x101, "Flash FS error" },
+		{ 0x110, "FW upd. error ext. display" },
+		{ 0x120, "Outside design, region" },
 		{ 0xF1, "Other" },
 };
 
 const char * Flarm::getErrorString( int index ) {
+	ESP_LOGI(FNAME," index: %d find: %d", index, FlarmErrors.count( index ) );
 	if( FlarmErrors.count( index ) )
 		return FlarmErrors[ index ];
 	else
@@ -129,12 +134,6 @@ void Flarm::taskFlarm(void *pvParameters)
 		delay(TASK_PERIOD);
 		_tick++;
 	}
-}
-
-void Flarm::clearVersions(){
-	HwVersion[0] = '\0';
-	SwVersion[0] = '\0';
-	ObstVersion[0] = '\0';
 }
 
 /*
@@ -257,7 +256,7 @@ void Flarm::parsePFLAA( const char *pflaa ){
 		sscanf(token.c_str(), "%s", PFLAA.acftType);
 
 	_tick=0;
-	timeout = FLARM_TIMEOUT;
+	connected_timeout = FLARM_TIMEOUT;
 	TargetManager::receiveTarget( PFLAA );
 }
 
@@ -296,31 +295,56 @@ void Flarm::flarmSim(){
 			parseNMEA( str, strlen(str) );
 			// ESP_LOGI(FNAME,"Serial FLARM SIM: %s",  str );
 		}
-		if( !(_tick%2) )
-			sim_tick++;
+		sim_tick++;
 	}else{
 		flarm_sim=false; // end sim mode
 	}
 }
 
+void Flarm::pflau_timeout(){
+	TX = 1;   // TX alarm on
+	GPS = 0;  // GPS no GPS
+	RX = 0;   // RX no target
+	flags.tx = true;
+	flags.gps = true;
+	flags.rx  = true;
+}
+
+static bool old_connected = true;
 
 void Flarm::progress(){  //  per second
-	if( timeout ){
-		timeout--;
+	if( connected_timeout ){
+		connected_timeout--;
+	}
+	if( connected_timeout == 0 )
+		_connected = false;
+	else
+		_connected = true;
+
+	if( old_connected != _connected ){
+		old_connected = _connected;
+		flags.connected = true;  // notify connected change
 	}
 	if( alarm_timeout ){
 		alarm_timeout--;
 	}
-	// ESP_LOGI(FNAME,"progress, timeout=%d", timeout );
+	// ESP_LOGI(FNAME,"progress, connected_timeout=%d", connected_timeout );
+	// Two FLARM targets plus GPS info = 6 messages per second, we play double speed
+	// "$GPRMC,134957.00,A,4900.97485,N,01032.86602,E,52.638,272.61,160622,,,A*58\n",
+	// "$PGRMZ,6696,F,2*05\n",
+	// "$GPGGA,134957.00,4900.97485,N,01032.86602,E,1,10,0.82,2147.3,M,47.9,M,,*63\n",
+	// "$PFLAA,0,-741,1281,66,2,DDAC9C,305,,29,2.5,1*3C\n",
+	// "$PFLAA,0,152,-447,-367,2,DF184C,76,,38,1.2,1*2D\n",
+	// "$PFLAU,2,1,2,1,0,41,0,-367,516*4A\n",
+
 	if( flarm_sim ){
-		flarmSim();
-		flarmSim();
+		for( int i=0; i<12; i++ )
+			flarmSim();
 	}else{  // no PFLAU in flarm Simulation
-		if( pflau_timeout ){
-			pflau_timeout--;
-			if( pflau_timeout == 0 ){
-				TX = 0;
-				GPS = 0;
+		if( _pflau_timeout ){
+			_pflau_timeout--;
+			if( _pflau_timeout == 1 ){
+				pflau_timeout();
 			}
 		}
 	}
@@ -350,16 +374,11 @@ void Flarm::parseNMEA( const char *str, int len ){
 	else if( !strncmp( str+1, "PFLAE,", 5 )) {  // On Task declaration or re-connect
 		parsePFLAE( str );
 	}
+	else if( !strncmp( str+1, "PFLAQ,", 5 )) {
+		parsePFLAQ( str );
+	}
 }
 
-
-bool Flarm::connected(){
-	// ESP_LOGI(FNAME,"timeout=%d", timeout );
-	if( timeout > 0 )
-		return true;
-	else
-		return false;
-};
 
 /*
 eg1. $GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62
@@ -403,7 +422,7 @@ void Flarm::parseGPRMC( const char *gprmc ) {
 			ESP_LOGI(FNAME,"GPRMC, GPS status changed to bad, rmc:%s gps:%d", gprmc, myGPS_OK );
 		}
 	}
-	timeout = FLARM_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
 	// ESP_LOGI(FNAME,"parseGPRMC() GPS: %d, Speed: %3.1f knots, Track: %3.1f° ", myGPS_OK, gndSpeedKnots, gndCourse );
 }
 
@@ -447,11 +466,11 @@ void Flarm::parseGPGGA( const char *gpgga ) {
 		if( numSat != _numSat ){
 			_numSat = numSat;
 		}
-		timeout = FLARM_TIMEOUT;
+		connected_timeout =FLARM_TIMEOUT;
 	}
 }
 
-// parsePFLAE $PFLAE,A,0,0*33
+// parsePFLAE $PFLAE,A,0,0*33   $PFLAE,A,2,2A,XPDR receiver*79
 // PFLAE,<QueryType>,<Severity>,<ErrorCode>[,<Message>]
 
 void Flarm::parsePFLAE( const char *pflae ) {
@@ -463,25 +482,24 @@ void Flarm::parsePFLAE( const char *pflae ) {
 		ESP_LOGW(FNAME,"CHECKSUM ERROR: %s; calculcated CS: %d != delivered CS %d", pflae, calc_cs, cs );
 		return;
 	}
-	timeout = FLARM_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
 	char queryType;
-	int error;
-	int ret=sscanf( pflae+3,"LAE,%c,%d,%x", &queryType, &pflae_severity, &error );
-	if( queryType == 'A' ){
-		if( error ){
-			pflae_error = error;
-		}
-		ESP_LOGI(FNAME,"PFLAE %c %d %02X %s", queryType, pflae_severity, pflae_error, getErrorString(pflae_error) );
-		if( ret >= 1 && pflae_severity == 0 && queryType == 'A' ){
-			ESP_LOGI(FNAME,"PFLAE alarm cleared");
-		}
-	}
+	int ret=sscanf( pflae+3,"LAE,%c,%d,%x", &queryType, &pflae_severity, &pflae_error );
+	if( queryType == 'A' && ret == 3 ){
+			ESP_LOGI(FNAME,"PFLAE ret:%d, QT:%c SV:%d EC:%02X MSG:%s", ret, queryType, pflae_severity, pflae_error, getErrorString(pflae_error) );
+			flags.error=true;
+	}else
+		ESP_LOGW(FNAME,"Ignored PFLAE Query or wrong format: <%s>", pflae );
 }
 
 /* PFLAU,<RX>,<TX>,<GPS>,<Power>,<AlarmLevel>,<RelativeBearing>,<AlarmType>,<RelativeVertical>,<RelativeDistance>,<ID>
 		$PFLAU,3,1,2,1,2,-30,2,-32,755*FLARM is working properly and currently receives 3 other aircraft.
 		The most dangerous of these aircraft is at 11 o’clock, position 32m below and 755m away. It is a level 2 alarm
 
+
+<RX> Decimal integer value. Range: from 0 to 99.
+Number of devices with unique IDs currently received
+regardless of the horizontal or vertical separation
 
 <TX>
 Decimal integer value. Range: from 0 to 1.
@@ -529,8 +547,21 @@ void Flarm::parsePFLAU( const char *pflau, bool sim_data ) {
 	// ESP_LOGI(FNAME,"parsePFLAU() RB: %d ALT:%d  DIST %d",RelativeBearing,RelativeVertical, RelativeDistance );
 	sprintf( ID,"%06x", id );
 	_tick=0;
-	timeout = FLARM_TIMEOUT;
-	pflau_timeout = PFLAU_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
+	_pflau_timeout = PFLAU_TIMEOUT;
+	if( TX != last_TX ){
+		last_TX = TX;
+		flags.tx = true;
+	}
+	if( RX != last_RX ){
+		last_RX = RX;
+		flags.rx = true;
+	}
+	if( GPS != last_GPS ){
+		last_GPS = GPS;
+		flags.gps = true;
+	}
+
 }
 
 void Flarm::parsePFLAX( const char *msg, int port ) {
@@ -553,7 +584,7 @@ void Flarm::parsePFLAX( const char *msg, int port ) {
 		int old = bincom;
 		bincom = 5;
 		ESP_LOGI(FNAME,"bincom: %d --> %d", old, bincom  );
-		timeout = FLARM_TIMEOUT;
+		connected_timeout =FLARM_TIMEOUT;
 	}
 }
 
@@ -585,7 +616,7 @@ void Flarm::parsePGRMZ( const char *pgrmz ) {
 		return;
 	}
 	sscanf( pgrmz, "$PGRMZ,%d,F,2",&alt1013_ft );
-	timeout = FLARM_TIMEOUT;
+	connected_timeout =FLARM_TIMEOUT;
 	ext_alt_timer = 10;  // Fall back to internal Barometer after 10 seconds
 }
 
@@ -602,35 +633,49 @@ void Flarm::parsePFLAV( const char *pflav ) {
 	}
 	char query;
 	sscanf( pflav, "$PFLAV,%c,%[^,],%[^,],%[^,]",&query,HwVersion,SwVersion,ObstVersion );
-	if( ObstVersion[0] == '*' ) // there is no obstacle database
-		ObstVersion[0] = '\0';
+
 	if( query == 'A' ){
 		ESP_LOGI(FNAME,"PFLAV %c %s %s %s", query, HwVersion,SwVersion,ObstVersion );
+		flags.swVersion=true;
+		flags.hwVersion=true;
+		flags.odbVersion=true;
 	}
-	timeout = FLARM_TIMEOUT;
+	if( ObstVersion[0] == '*' ){ // there is no obstacle database
+		ObstVersion[0] = '\0';
+		flags.odbVersion=false;
+	}
+
+	connected_timeout =FLARM_TIMEOUT;
 }
 
-static std::map<const char*, const char*> OperationTypes = {
-		{ "IGC", "IGC files download" },
-		{ "FW" , "Firmware update" },
-		{ "OBST", "Obstacle database update" },
-		{ "DUMP", "Diagnostic dump" },
-		{ "RESTORE", "Restore file system" },
-		{ "SCAN" , "Internal consistency check" }
+static std::map<std::string, const char*> OperationTypes = {
+    { "IGC", "IGC files download" },
+    { "FW", "Firmware update" },
+    { "OBST", "ODB update" },
+    { "DUMP", "Diagnostic dump" },
+    { "RESTORE", "Restore file system" },
+    { "SCAN", "Internal consis. check" }
 };
 
-const char* Flarm::getOperationString(){
-	if( OperationTypes.count( Operation ) )
-		return OperationTypes[Operation];
-	else
-		return "";
+const char* Flarm::getOperationString(const char *key) {
+    ESP_LOGI(FNAME, "getOperationString( key %s )", key);
+    auto it = OperationTypes.find(key); // `std::string` unterstützt direkten Vergleich mit `const char*`.
+    if (it != OperationTypes.end()) {
+        ESP_LOGI(FNAME, "Return OP: key %s LongString: %s", key, it->second);
+        return it->second;
+    } else {
+        ESP_LOGI(FNAME, "Key unknown, return internal operation");
+        return "Internal OP";
+    }
 }
 
 // PFLAQ,<Operation>,<Info>,<Progress>
 void Flarm::parsePFLAQ( const char *pflaq ) {
+	ESP_LOGI(FNAME,"PFLAQ %s", pflaq );
 	int cs;
 	int calc_cs=calcNMEACheckSum( pflaq );
 	cs = getNMEACheckSum( pflaq );
+	memset( Operation, 0, sizeof( Operation ) );
 	if( cs != calc_cs ){
 		ESP_LOGW(FNAME,"CHECKSUM ERROR: %s; calculcated CS: %d != delivered CS %d", pflaq, calc_cs, cs );
 		return;
@@ -640,13 +685,18 @@ void Flarm::parsePFLAQ( const char *pflaq ) {
 		if( pflaq[i] == ',' )
 			commas++;
 	}
-	if( commas == 2 )
+	if( commas == 2 ){
 		sscanf( pflaq, "$PFLAQ,%[^,],%d",Operation,&Progress );
-	else if( commas == 3 )
+		ESP_LOGI(FNAME,"2 PFLAQ %s %d", Operation, Progress );
+		ESP_LOGI(FNAME,"2 PFLAQ %s %d %s", Operation, Progress, getOperationString(Operation) );
+	}
+	else if( commas == 3 ){
 		sscanf( pflaq, "$PFLAQ,%[^,],%[^,],%d",Operation,Info,&Progress );
-	ESP_LOGI(FNAME,"PFLAQ %s %s %d", Operation,Info,Progress );
-
-	timeout = FLARM_TIMEOUT;
+		ESP_LOGI(FNAME,"3 PFLAQ %s %s %d", Operation, Info, Progress );
+	    // ESP_LOGI(FNAME,"3 PFLAQ %s %s %d %s", Operation,Info,Progress, getOperationString[Operation] );
+	}
+	flags.progress = true;
+	connected_timeout = FLARM_TIMEOUT;
 }
 
 int rbOld = -500; // outside normal range
