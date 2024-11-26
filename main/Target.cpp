@@ -265,7 +265,6 @@ void Target::recalc(){
 		float logs = log( 2+prox );
 		pix = fmax( logs*SCALE, 30.0 );
 	}
-  
 	// ESP_LOGI(FNAME,"prox: %f, log:%f, pix:%f", prox, logs, pix );
 	x=(DISPLAY_W/2)+pix*sin(D2R(rel_target_dir));
 	y=(DISPLAY_H/2)-pix*cos(D2R(rel_target_dir));
