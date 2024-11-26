@@ -226,7 +226,7 @@ void TargetManager::tick(){
 		}
 		if( Flarm::getRxFlag()){
 			int rx=Flarm::getRXNum();
-			ESP_LOGI(FNAME,"New RX: %d", rx );
+			// ESP_LOGI(FNAME,"New RX: %d", rx );
 			char txt[16];
 			sprintf( txt, " RX %d ", rx );
 			printAlarm( txt, DISPLAY_W-egl->getStrWidth(txt)-5, DISPLAY_H-60, rx != 0, {COLOR_GREEN} );
