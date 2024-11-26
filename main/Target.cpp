@@ -255,16 +255,16 @@ void Target::recalc(){
 	dist = sqrt( pflaa.relNorth*pflaa.relNorth + pflaa.relEast*pflaa.relEast )/1000.0; // distance in km float
 	float relV=float(pflaa.relVertical/1000.0);
 	prox=sqrt( relV*relV + dist*dist );  // proximity 3D
-
-#ifdef inch2dot4
-	float logs = dist;
-	if( log_scale.get() )
-		logs = log( 2+dist );
-	float pix = fmax( zoom*logs*SCALE, 20.0 );
-#else
-	float logs = log( 2+prox );
-	float pix = fmax( logs*SCALE, 30.0 );
-#endif
+	float pix;
+	if( inch2dot4 ){
+		float logs = dist;
+		if( log_scale.get() )
+			logs = log( 2+dist );
+		pix = fmax( zoom*logs*SCALE, 20.0 );
+	}else{
+		float logs = log( 2+prox );
+		pix = fmax( logs*SCALE, 30.0 );
+	}
   
 	// ESP_LOGI(FNAME,"prox: %f, log:%f, pix:%f", prox, logs, pix );
 	x=(DISPLAY_W/2)+pix*sin(D2R(rel_target_dir));
