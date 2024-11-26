@@ -188,6 +188,8 @@ void TargetManager::clearScreen(){
 }
 
 void TargetManager::rewindInfoTimer(){
+	if( info_timer == 0 )
+		egl->clearScreen();
 	ESP_LOGI(FNAME,"rewindInfoTimer() %d", info_timer );
 	info_timer = INFO_TIME;
 }
