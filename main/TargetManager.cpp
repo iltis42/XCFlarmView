@@ -223,7 +223,7 @@ void TargetManager::tick(){
 		if( info_timer > 0 )
 			info_timer--;
 
-		if( Flarm::getTxFlag() ){
+		if( Flarm::getTxFlag() || !(_tick%200) ){
 			int tx=Flarm::getTXBit();  // 0 or 1
 			ESP_LOGI(FNAME,"TX alarm: %d", tx );
 			printAlarm( "NO TX ", 10, 100, tx==0 );
@@ -237,7 +237,7 @@ void TargetManager::tick(){
 			printAlarm( txt, DISPLAY_W-egl->getStrWidth(txt)-5, (DISPLAY_H/2)+10, rx != 0, {COLOR_GREEN} );
 			Flarm::resetRxFlag();
 		}
-		if( Flarm::getGPSFlag() ){
+		if( Flarm::getGPSFlag() || !(_tick%200) ){  // all 10 seconds
 			int gps=Flarm::getGPSBit();  // 0,1 or 2
 			ESP_LOGI(FNAME,"GPS status: %d", gps );
 			printAlarm( "NO GPS ", 10, 120, gps==0 );
