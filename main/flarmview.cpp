@@ -33,6 +33,7 @@ AdaptUGC *egl = 0;
 OTA *ota = 0;
 bool inch2dot4=false;
 DataMonitor DM;
+float zoom=1.0;
 
 class SwitchObs: public SwitchObserver
 {
