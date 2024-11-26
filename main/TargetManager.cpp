@@ -15,7 +15,6 @@
 #include "SetupMenu.h"
 #include "flarmview.h"
 
-
 std::map< unsigned int, Target> TargetManager::targets;
 std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.begin();
 extern AdaptUGC *egl;
@@ -55,7 +54,7 @@ TargetManager::TargetManager() {
 void TargetManager::receiveTarget( nmea_pflaa_s &pflaa ){
 	// ESP_LOGI(FNAME,"ID %06X (dec) %d ", pflaa.ID, pflaa.ID );
 	if( (pflaa.groundSpeed < 10) && (display_non_moving_target.get() == NON_MOVE_HIDE) ){
-		return;
+			return;
 	}
 	if( targets.find(pflaa.ID) == targets.end() ){
 		targets[ pflaa.ID ] = Target ( pflaa );
@@ -70,7 +69,7 @@ TargetManager::~TargetManager() {
 }
 
 void TargetManager::drawN( int x, int y, bool erase, float north, float dist ){
-	if( SetupMenu::isActive() )
+  if( SetupMenu::isActive() )
 		return;
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
 	egl->setFontPosCenter();
@@ -94,12 +93,13 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 	egl->drawTetragon( x-1,y+10, x-1,y-6, x+1,y-6, x+1,y+10 ); // fuselage
 	egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
 	float new_radius = 25;
-	if( inch2dot4 ){   // support zooming
+	if( inch2dot4 ){
 		float logs = 1;
 		if( log_scale.get() )
 			logs = log( 2+1 );
 		new_radius = zoom*logs*SCALE;
 	}
+
 	if( oldN != -1.0 && ((oldN != north) || (old_radius != new_radius)) )
 		drawN( x,y, true, oldN, old_radius );
 	if( (old_radius != 0.0) && (old_radius != new_radius) ){
@@ -134,7 +134,7 @@ void TargetManager::printAlarm( const char*alarm, int x, int y, bool print, ucg_
 1 = information only, i.e. normal operation
 2 = functionality may be reduced
 3 = fatal problem, device will not work
- */
+*/
 
 void TargetManager::printAlarmLevel( const char*alarm, int x, int y, int level ){
 	xSemaphoreTake(display,portMAX_DELAY );
@@ -200,166 +200,159 @@ void TargetManager::tick(){
 		holddown--;
 
 	if( !holddown && swMode.isClosed() ){
-			// ESP_LOGI(FNAME,"SW closed");
-			nextTarget( id_timer );
-			id_timer = 10 * (1000/TASKPERIOD);  // 10 seconds
-			holddown=5;
-		}else{
-			if( id_timer )
-				id_timer --;
+		// ESP_LOGI(FNAME,"SW closed");
+		nextTarget( id_timer );
+		id_timer = 10 * (1000/TASKPERIOD);  // 10 seconds
+		holddown=5;
+	}else{
+		if( id_timer )
+			id_timer --;
+	}
+	if( !(_tick%20) ){  // all 50 mS
+		ESP_LOGI(FNAME,"Num targets: %d", targets.size() );
+	}
+
+	if( !(_tick%5) ){ // all 5 ticks
+		if( SetupMenu::isActive() )
+			return;
+		if( info_timer > 0 )
+			info_timer--;
+
+		if( Flarm::getTxFlag() || !(_tick%200) ){
+			int tx=Flarm::getTXBit();  // 0 or 1
+			ESP_LOGI(FNAME,"TX alarm: %d", tx );
+			printAlarm( "NO TX ", 10, 100, tx==0 );
+			Flarm::resetTxFlag();
 		}
-		if( !(_tick%20) ){  // all 50 mS
-			ESP_LOGI(FNAME,"Num targets: %d", targets.size() );
+		if( Flarm::getRxFlag()){
+			int rx=Flarm::getRXNum();
+			ESP_LOGI(FNAME,"New RX: %d", rx );
+			char txt[16];
+			sprintf( txt, " RX %d ", rx );
+			printAlarm( txt, DISPLAY_W-egl->getStrWidth(txt)-5, DISPLAY_H-60, rx != 0, {COLOR_GREEN} );
+			Flarm::resetRxFlag();
+		}
+		if( Flarm::getGPSFlag() || !(_tick%200) ){  // all 10 seconds
+			int gps=Flarm::getGPSBit();  // 0,1 or 2
+			ESP_LOGI(FNAME,"GPS status: %d", gps );
+			printAlarm( "NO GPS ", 10, 120, gps==0 );
+			Flarm::resetGPSFlag();
+		}
+		if( Flarm::getConnectedFlag() ){
+			bool conn = Flarm::connected();
+			ESP_LOGI(FNAME,"Flarm connected alarm: %d", !conn );
+			if( conn==false )
+				egl->clearScreen();
+			printAlarm( "NO FLARM ", 10, 140, conn==false );
+			Flarm::resetConnectedFlag();
+		}
+		if( Flarm::getErrorFlag() ){
+			int severity =  Flarm::getErrorSeverity();
+		    int error_code = Flarm::getErrorCode();
+			ESP_LOGI(FNAME,"PFLAE error code new:%d  severity new:%d error-txt:%s", error_code, severity, Flarm::getErrorString(error_code)  );
+			rewindInfoTimer();
+			if( inch2dot4 )
+				printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
+			else
+				printAlarmLevel( Flarm::getErrorString(error_code), 10, 80, severity );
+			Flarm::resetErrorFlag();
+		}
+		if( Flarm::getSwVersionFlag() ){  // flag ensures there is a valid string
+			rewindInfoTimer();
+			printVersions( 10, 20, "Flarm SW: ", Flarm::getSwVersion(), erase_info );
+			Flarm::resetSwVersionFlag();
+		}
+		if( Flarm::getHwVersionFlag() ){
+			rewindInfoTimer();
+			printVersions( 10, 40, "Flarm HW: ", Flarm::getHwVersion(), erase_info );
+			Flarm::resetHwVersionFlag();
+		}
+		if( Flarm::getODBVersionFlag()){
+			rewindInfoTimer();
+			printVersions( 10, 60, "Flarm ODB: ", Flarm::getObstVersion(), erase_info );
+			Flarm::resetODBVersionFlag();
+		}
+		unsigned int prog = Flarm::getProgress();
+		if( Flarm::getProgressFlag() ){
+			rewindInfoTimer();
+			xSemaphoreTake(display,portMAX_DELAY );
+			egl->setColor(COLOR_WHITE);
+			egl->setFont(ucg_font_ncenR14_hr);
+			egl->setPrintPos( 10, 60 );
+			egl->printf( "%s: %d %%  ", Flarm::getOperationString(Flarm::getOperationKey()), prog );
+			xSemaphoreGive(display);
+			Flarm::resetProgressFlag();
+		}
+	//	ESP_LOGI(FNAME,"info_timer=%d", info_timer);
+		if( info_timer == 1 ){
+			ESP_LOGI(FNAME,"NOW CLEAR info");
+			egl->clearScreen();
+			redrawNeeded = true; // redraw of traffic and info
 		}
 
-		if( !(_tick%5) ){ // all 5 ticks
+		// Pass one: determine proximity
+		if( !info_timer && Flarm::connected() )
+			drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
+
+		for (auto it=targets.begin(); it!=targets.end(); it++ ){
+			it->second.ageTarget();
 			if( SetupMenu::isActive() )
 				return;
-			if( info_timer > 0 )
-				info_timer--;
-
-			if( Flarm::getTxFlag() || !(_tick%200) ){
-				int tx=Flarm::getTXBit();  // 0 or 1
-				ESP_LOGI(FNAME,"TX alarm: %d", tx );
-				printAlarm( "NO TX ", 10, 100, tx==0 );
-				Flarm::resetTxFlag();
+			it->second.nearest(false);
+			if( it->second.getAge() < AGEOUT ){
+				if( it->second.haveAlarm() )
+					id_timer=0;
+				if( !id_timer ){
+					if( (it->second.getProximity() < min_dist)  ){
+						min_dist = it->second.getDist();
+						min_id = it->first;
+					}
+				}else{
+					if( id_iter != targets.end() && it->first == id_iter->first ){
+						it->second.nearest(true);
+					}
+				}
 			}
-			if( Flarm::getRxFlag()){
-				int rx=Flarm::getRXNum();
-				ESP_LOGI(FNAME,"New RX: %d", rx );
-				char txt[16];
-				sprintf( txt, " RX %d ", rx );
-				printAlarm( txt, DISPLAY_W-egl->getStrWidth(txt)-5, (DISPLAY_H)-60, rx != 0, {COLOR_GREEN} );
-				Flarm::resetRxFlag();
-			}
-			if( Flarm::getGPSFlag() || !(_tick%200) ){  // all 10 seconds
-				int gps=Flarm::getGPSBit();  // 0,1 or 2
-				ESP_LOGI(FNAME,"GPS status: %d", gps );
-				printAlarm( "NO GPS ", 10, 120, gps==0 );
-				Flarm::resetGPSFlag();
-			}
-			if( Flarm::getConnectedFlag() ){
-				bool conn = Flarm::connected();
-				ESP_LOGI(FNAME,"Flarm connected alarm: %d", !conn );
-				if( conn==false )
-					egl->clearScreen();
-				printAlarm( "NO FLARM ", 10, 140, conn==false );
-				Flarm::resetConnectedFlag();
-			}
-			if( Flarm::getErrorFlag() ){
-				int severity =  Flarm::getErrorSeverity();
-				int error_code = Flarm::getErrorCode();
-				ESP_LOGI(FNAME,"PFLAE error code new:%d  severity new:%d error-txt:%s", error_code, severity, Flarm::getErrorString(error_code)  );
-				rewindInfoTimer();
-				if( inch2dot4 )
-					printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
-				else
-					printAlarmLevel( Flarm::getErrorString(error_code), 10, 80, severity );
-				Flarm::resetErrorFlag();
-			}
-			if( Flarm::getSwVersionFlag() ){  // flag ensures there is a valid string
-				rewindInfoTimer();
-				printVersions( 10, 20, "Flarm SW: ", Flarm::getSwVersion(), erase_info );
-				Flarm::resetSwVersionFlag();
-			}
-			if( Flarm::getHwVersionFlag() ){
-				rewindInfoTimer();
-				printVersions( 10, 40, "Flarm HW: ", Flarm::getHwVersion(), erase_info );
-				Flarm::resetHwVersionFlag();
-			}
-			if( Flarm::getODBVersionFlag()){
-				rewindInfoTimer();
-				printVersions( 10, 60, "Flarm ODB: ", Flarm::getObstVersion(), erase_info );
-				Flarm::resetODBVersionFlag();
-			}
-			// ESP_LOGI(FNAME,"swlen=%d; info_timer=%d", swlen, info_timer);
-			if( info_timer == 1 ){
-				ESP_LOGI(FNAME,"NOW CLEAR info");
-				erase_info = true;
-			}
-
-			unsigned int prog = Flarm::getProgress();
-			if( Flarm::getProgressFlag() ){
-				rewindInfoTimer();
-				xSemaphoreTake(display,portMAX_DELAY );
-				egl->setColor(COLOR_WHITE);
-				egl->setFont(ucg_font_ncenR14_hr);
-				egl->setPrintPos( 10, 60 );
-				egl->printf( "%s: %d %%  ", Flarm::getOperationString(Flarm::getOperationKey()), prog );
-				xSemaphoreGive(display);
-				Flarm::resetProgressFlag();
-			}
-			//	ESP_LOGI(FNAME,"info_timer=%d", info_timer);
-			if( info_timer == 1 ){
-				ESP_LOGI(FNAME,"NOW CLEAR info");
-				egl->clearScreen();
-				redrawNeeded = true; // redraw of traffic and info
-			}
-
-			// Pass one: determine proximity
-			if( !info_timer && Flarm::connected() )
-				drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
-
-			for (auto it=targets.begin(); it!=targets.end(); it++ ){
-				it->second.ageTarget();
+		}
+		// Pass 2, draw targets
+		if( !info_timer && Flarm::connected() ){
+			for (auto it=targets.begin(); it!=targets.end(); ){
 				if( SetupMenu::isActive() )
 					return;
-				it->second.nearest(false);
-				if( it->second.getAge() < AGEOUT ){
-					if( it->second.haveAlarm() )
-						id_timer=0;
-					if( !id_timer ){
-						if( (it->second.getProximity() < min_dist)  ){
-							min_dist = it->second.getDist();
-							min_id = it->first;
-						}
+				if( !id_timer )
+				{
+					if( it->first == min_id ){
+						it->second.nearest(true);
 					}else{
-						if( id_iter != targets.end() && it->first == id_iter->first ){
-							it->second.nearest(true);
-						}
+						it->second.nearest(false);
 					}
 				}
-			}
-			// Pass 2, draw targets
-			if( !info_timer && Flarm::connected() ){
-				for (auto it=targets.begin(); it!=targets.end(); ){
-					if( SetupMenu::isActive() )
-						return;
-					if( !id_timer )
-					{
-						if( it->first == min_id ){
-							it->second.nearest(true);
-						}else{
-							it->second.nearest(false);
+				if( it->second.getAge() < AGEOUT ){
+					if( it->second.isNearest() || it->second.haveAlarm() ){
+						// closest == true
+						if( redrawNeeded ){
+							it->second.redrawInfo(); // forced redraw of all fields
+							redrawNeeded = false;
 						}
+						it->second.drawInfo();
 					}
-					if( it->second.getAge() < AGEOUT ){
-						if( it->second.isNearest() || it->second.haveAlarm() ){
-							// closest == true
-							if( redrawNeeded ){
-								it->second.redrawInfo(); // forced redraw of all fields
-								redrawNeeded = false;
-							}
-							it->second.drawInfo();
-						}
-						it->second.draw(false);
-						if( !(_tick%2) )
-							it->second.checkClose();
-						it++;
+					it->second.draw(false);
+					if( !(_tick%2) )
+						it->second.checkClose();
+					it++;
+				}
+				else{
+					if( id_iter->first == it->first ){  // move on id_iter in case
+						id_iter++;
 					}
-					else{
-						if( id_iter->first == it->first ){  // move on id_iter in case
-							id_iter++;
-						}
-						if( it->second.isNearest() ){   // only nearest has info to erase
-							it->second.drawInfo(true);
-						}
-						it->second.draw(true);     // age/erase
-						targets.erase( it++ );
+					if( it->second.isNearest() ){   // only nearest has info to erase
+						it->second.drawInfo(true);
 					}
-
+					it->second.draw(true);     // age/erase
+					targets.erase( it++ );
 				}
 			}
-
 		}
+
+	}
 	}
