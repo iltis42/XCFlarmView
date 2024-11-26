@@ -30,7 +30,6 @@ int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
 xSemaphoreHandle display=NULL;
 
-
 #define INFO_TIME (5*(1000/TASKPERIOD)/DISPLAYTICK)  // all ~10 sec
 
 void TargetManager::begin(){
@@ -100,7 +99,6 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 		logs = log( 2+1 );
 	new_radius = zoom*logs*SCALE;
 #endif
-
 	if( oldN != -1.0 && ((oldN != north) || (old_radius != new_radius)) )
 		drawN( x,y, true, oldN, old_radius );
 	if( (old_radius != 0.0) && (old_radius != new_radius) ){
@@ -278,6 +276,19 @@ void TargetManager::tick(){
 			printVersions( 10, 60, "Flarm ODB: ", Flarm::getObstVersion(), erase_info );
 			Flarm::resetODBVersionFlag();
 		}
+		// ESP_LOGI(FNAME,"swlen=%d; info_timer=%d", swlen, info_timer);
+		if( info_timer == 1 ){
+			ESP_LOGI(FNAME,"NOW CLEAR info");
+			erase_info = true;
+			old_sw_len = -1;  // retrigger drawing
+			old_hw_len = -1;
+			old_obst_len = -1;
+		}
+		if( erase_info ){
+			if( swlen == old_sw_len )
+				erase_info = false; // reset erase info flag
+		}
+
 		unsigned int prog = Flarm::getProgress();
 		if( Flarm::getProgressFlag() ){
 			rewindInfoTimer();
@@ -357,6 +368,8 @@ void TargetManager::tick(){
 					it->second.draw(true);     // age/erase
 					targets.erase( it++ );
 				}
+				it->second.draw(true);     // age/erase
+				targets.erase( it++ );
 			}
 		}
 

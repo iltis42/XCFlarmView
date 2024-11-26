@@ -31,25 +31,14 @@
 
 AdaptUGC *egl = 0;
 OTA *ota = 0;
-bool inch2dot4=false;
 DataMonitor DM;
 
-class SwitchObs: public SwitchObserver
-{
-public:
-	SwitchObs(const char* name) : SwitchObserver() {
-		ESP_LOGI(FNAME,"attach me %s", name );
-		Switch::attach(this);
-	};
-	~SwitchObs() {};
-	void doubleClick() {};
-	void press() {};
-	void longPress() {  ESP_LOGI(FNAME,"LONGPRESS");
-
-					 };
-};
-
-static SetupMenu *menu=0;
+SetupMenu *menu=0;
+bool inch2dot4=false;
+Switch swUp;
+Switch swDown;
+Switch swMode;
+float zoom=1.0;
 
 extern "C" void app_main(void)
 {
@@ -87,7 +76,8 @@ extern "C" void app_main(void)
     egl = new AdaptUGC();
     DM.begin( egl );
     egl->begin();
-    // egl->setRedBlueTwist( true );
+    egl->setColor(0, COLOR_WHITE );
+    egl->setColor(1, COLOR_BLACK );
     egl->clearScreen();
     Buzzer::init(2700);
     Buzzer::play2( BUZZ_C, 500,audio_volume.get(), BUZZ_C, 1000, 0, 1 );
@@ -97,9 +87,16 @@ extern "C" void app_main(void)
     std::string ver( "SW Ver.: " );
     ver += V.version();
 
-    egl->setFont(ucg_font_fub20_hn);
+    if( DISPLAY_W == 240 )
+    	inch2dot4 = true;
+
+    if( inch2dot4 )
+    	egl->setFont(ucg_font_fub14_hn);
+    else
+    	egl->setFont(ucg_font_fub20_hn);
+
     egl->setColor(COLOR_WHITE);
-    egl->setPrintPos( 50, 35 );
+    egl->setPrintPos( 10, 35 );
     egl->print("XCFlarmView 2.0");
     if( serial1_tx_enable.get() ){ // we don't need TX pin, so disable
     	serial1_tx_enable.set(0);
@@ -111,12 +108,30 @@ extern "C" void app_main(void)
     egl->setPrintPos( 10, 115 );
     egl->printf("Flarmnet: %s", FLARMNET_VERSION );
 
+    if( serial1_tx_enable.get() ){ // we don't need TX pin, so disable
+      	serial1_tx_enable.set(0);
+    }
+
     egl->setFont(ucg_font_ncenR14_hr);
-    egl->setPrintPos( 10, 150 );
-    egl->printf("Press Button for SW-Update");
-    Switch::begin(GPIO_NUM_0);
-    for(int i=0; i<20; i++){  // 40
-    	if( Switch::isClosed() ){
+
+    if( inch2dot4 ){
+    	egl->setPrintPos( 10, 240 );
+    	egl->printf("Press Button for");
+    	egl->setPrintPos( 10, 270 );
+    	egl->printf("SW-Update");
+    }
+    else{
+    	egl->setPrintPos( 10, 150 );
+    	egl->printf("Press Button for SW-Update");
+    }
+
+    swUp.begin(GPIO_NUM_0, B_UP );
+    swDown.begin(GPIO_NUM_3, B_DOWN );
+    swMode.begin(GPIO_NUM_34, B_MODE );
+
+
+    for(int i=0; i<30; i++){  // 40
+    	if( swMode.isClosed() || swUp.isClosed() || swDown.isClosed() ){
     		egl->clearScreen();
     		ota = new OTA();
     		ota->doSoftwareUpdate();
@@ -130,18 +145,15 @@ extern "C" void app_main(void)
     egl->setColor(COLOR_WHITE);
    	egl->setPrintPos( 10, 35 );
 
-    // SwitchObs obs("main");
     menu = new SetupMenu();
     menu->begin();
     Switch::startTask();
-
-
-
+  
     egl->clearScreen();
     Flarm::begin();
     Serial::begin();
     TargetManager::begin();
-    Buzzer::play2( BUZZ_DH, 150,audio_volume.get(), BUZZ_DH, 1000, 0, 1 );
+    Buzzer::play( BUZZ_DH, 150,audio_volume.get());
 
     if( traffic_demo.get() ){
     	ESP_LOGI(FNAME,"Traffic Demo");

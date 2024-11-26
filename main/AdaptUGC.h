@@ -93,14 +93,24 @@ public:
 	inline void undoClipRange() { eglib_undoClipRange(eglib);};
 	// color
 	inline void setColor( uint8_t idx, uint8_t r, uint8_t g, uint8_t b ) {
-		eglib_SetIndexColor(eglib, idx, r, g, b);
+		twistRB?
+				eglib_SetIndexColor(eglib, idx, invertDisp?~b:b, invertDisp?~g:g, invertDisp?~r:r):
+		eglib_SetIndexColor(eglib, idx, invertDisp?~r:r, invertDisp?~g:g, invertDisp?~b:b);
 	}
-	inline void setColor( uint8_t r, uint8_t g, uint8_t b ) {
-		eglib_SetIndexColor(eglib, 0, r, g, b);
-	}	
-	inline void setColor( ucg_color_t c ) {
-			eglib_SetIndexColor(eglib, 0, c.color[0], c.color[1], c.color[2] );
+  inline void setColor( uint8_t idx, uint8_t r, uint8_t g, uint8_t b ) {
+		twistRB?
+				eglib_SetIndexColor(eglib, 0, invertDisp?~b:b, invertDisp?~g:g, invertDisp?~r:r):
+	  eglib_SetIndexColor(eglib, 0, invertDisp?~r:r, invertDisp?~g:g, invertDisp?~b:b);
 	}
+  inline void setColor( ucg_color_t c ) {
+    uint8_t r = c.color[0]; 
+    uint8_t g = c.color[1]; 
+    uint8_t b = c.color[2];
+    twistRB?
+        eglib_SetIndexColor(eglib, 0, invertDisp?~b:b, invertDisp?~g:g, invertDisp?~r:r):
+    glib_SetIndexColor(eglib, 0, invertDisp?~r:r, invertDisp?~g:g, invertDisp?~b:b);
+  }
+  
 	// graphics
 	inline void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1)  { eglib_DrawLine(eglib, x0, y0, x1, y1); }
 	inline void drawBox(int16_t x, int16_t y, int16_t w, int16_t h)  { eglib_DrawBox(eglib, x, y, w, h); }
@@ -130,7 +140,7 @@ public:
 	inline int16_t getFontDescent() { const struct font_t *font; font = eglib->drawing.font; return font->descent; };
 
 	// scrolling, clipping, clear
-	inline void clearScreen(uint8_t r=0, uint8_t g=0, uint8_t b=0){ setColor(r,g,b); eglib_ClearScreen( eglib ); };
+	inline void clearScreen() { setColor( COLOR_BLACK ); eglib_ClearScreen( eglib ); };
 	inline void scrollLines(int16_t lines) {  eglib_scrollScreen( eglib, lines ); };     	    // display driver function  tbd.
 	inline void scrollSetMargins( int16_t top, int16_t bottom ) { eglib_setScrollMargins( eglib, top, bottom ); };                 // display driver function
 	inline void setClipRange( int16_t x, int16_t y, int16_t w, int16_t h ) { eglib_setClipRange(eglib, x, y, w, h );};
@@ -140,7 +150,7 @@ private:
 
 	int16_t eglib_print_xpos = 0, eglib_print_ypos = 0;
 	int8_t eglib_font_pos = UCG_FONT_POS_BOTTOM;
-	uint8_t eglib_print_dir = UCG_PRINT_DIR_TD;
+	uint8_t eglib_print_dir = UCG_PRINT_DIR_LR;
 	eglib_t * eglib;
 	bool twistRB;
 	bool invertDisp;

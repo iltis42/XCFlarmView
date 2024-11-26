@@ -30,7 +30,7 @@ class Buzzer {
 public:
 	Buzzer();
 	virtual ~Buzzer();
-	static void init( uint frequency);
+	static void init( uint frequency=2700 );
 	static void volume( uint vol=0 );
 	static void frequency( uint f);
 	static void play2( uint f1=BUZZ_DH, uint d1=200, uint v1=100, uint f2=BUZZ_E, uint d2=200, uint v2=0, uint repetition=1 );

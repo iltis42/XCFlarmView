@@ -26,8 +26,8 @@ public:
 	void setup();
 	void display( int mode=0 );
 	const char *value() { return 0; };
-	void up( int count );  // step up to parent
-	void down( int count );
+	void up(int count);  // step up to parent
+	void down(int count);
 	void press();
 	void longPress();
 	void escape();
