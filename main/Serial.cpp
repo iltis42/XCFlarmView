@@ -186,10 +186,11 @@ void Serial::serialHandler(void *pvParameters)
 			process( buf, rxBytes );
 			DM.monitorString( MON_S1, DIR_RX, buf, rxBytes );
 		}
+		// ESP_LOGI(FNAME,"FC: %d, HD: %d", Flarm::connected(), start_holddown );
 		if( !Flarm::connected() && !start_holddown ){
 			huntBaudrate();
 		}
-		else{
+		if( Flarm::connected() ){
 			start_holddown = HUNTBAUDRATE_HOLDDOWN;
 		}
 		if( Flarm::connected() && (serial1_speed.get() != baudrate) ){
@@ -260,17 +261,16 @@ void Serial::saveBaudrate(){
 
 
 void Serial::huntBaudrate(){
-	if( !Flarm::connected() ){
-		trials++;
-		if( trials>200 ) { // An active Flarm sends every second at least
-			trials = 0;
-			baudrate++;
-			if( baudrate > 6 ){
-				baudrate=1;  // 4800
-			}
-			uart_set_baudrate(uart_num, baud[baudrate]);
-			ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
+	trials++;
+	if( trials>200 ) { // An active Flarm sends every second at least
+		trials = 0;
+		baudrate++;
+		if( baudrate > 6 ){
+			baudrate=1;  // 4800
 		}
+		uart_set_baudrate(uart_num, baud[baudrate]);
+
+		ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
 	}
 }
 

@@ -284,8 +284,8 @@ void TargetManager::tick(){
 			xSemaphoreTake(display,portMAX_DELAY );
 			egl->setColor(COLOR_WHITE);
 			egl->setFont(ucg_font_ncenR14_hr);
-			egl->setPrintPos( 10, 20 );
-			egl->printf( "%s: %d %%  ", Flarm::getOperationString(), prog );
+			egl->setPrintPos( 10, 60 );
+			egl->printf( "%s: %d %%  ", Flarm::getOperationString(Flarm::getOperationKey()), prog );
 			xSemaphoreGive(display);
 			Flarm::resetProgressFlag();
 		}

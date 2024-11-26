@@ -117,7 +117,8 @@ public:
 	static inline const char * getHwVersion()  { return HwVersion; };
 	static inline const char * getObstVersion()  { return ObstVersion; };
 	static inline unsigned int getProgress()  { return Progress; };
-	static const char* getOperationString();
+	static const char* getOperationString( const char* key );
+	static const char* getOperationKey() { return Operation;};
 	static inline bool getSwVersionFlag() { return flags.swVersion; };
 	static inline void resetSwVersionFlag() {  flags.swVersion = false; };
 	static inline bool getHwVersionFlag() {  return flags.hwVersion; };

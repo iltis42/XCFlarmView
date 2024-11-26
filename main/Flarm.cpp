@@ -374,6 +374,9 @@ void Flarm::parseNMEA( const char *str, int len ){
 	else if( !strncmp( str+1, "PFLAE,", 5 )) {  // On Task declaration or re-connect
 		parsePFLAE( str );
 	}
+	else if( !strncmp( str+1, "PFLAQ,", 5 )) {
+		parsePFLAQ( str );
+	}
 }
 
 
@@ -645,27 +648,34 @@ void Flarm::parsePFLAV( const char *pflav ) {
 	connected_timeout =FLARM_TIMEOUT;
 }
 
-static std::map<const char*, const char*> OperationTypes = {
-		{ "IGC", "IGC files download" },
-		{ "FW" , "Firmware update" },
-		{ "OBST", "Obstacle database update" },
-		{ "DUMP", "Diagnostic dump" },
-		{ "RESTORE", "Restore file system" },
-		{ "SCAN" , "Internal consistency check" }
+static std::map<std::string, const char*> OperationTypes = {
+    { "IGC", "IGC files download" },
+    { "FW", "Firmware update" },
+    { "OBST", "Obstacle database update" },
+    { "DUMP", "Diagnostic dump" },
+    { "RESTORE", "Restore file system" },
+    { "SCAN", "Internal consistency check" }
 };
 
-const char* Flarm::getOperationString(){
-	if( OperationTypes.count( Operation ) )
-		return OperationTypes[Operation];
-	else
-		return "";
+const char* Flarm::getOperationString(const char *key) {
+    ESP_LOGI(FNAME, "getOperationString( key %s )", key);
+    auto it = OperationTypes.find(key); // `std::string` unterstützt direkten Vergleich mit `const char*`.
+    if (it != OperationTypes.end()) {
+        ESP_LOGI(FNAME, "Return OP: key %s LongString: %s", key, it->second);
+        return it->second;
+    } else {
+        ESP_LOGI(FNAME, "Return empty string");
+        return "";
+    }
 }
 
 // PFLAQ,<Operation>,<Info>,<Progress>
 void Flarm::parsePFLAQ( const char *pflaq ) {
+	ESP_LOGI(FNAME,"PFLAQ %s", pflaq );
 	int cs;
 	int calc_cs=calcNMEACheckSum( pflaq );
 	cs = getNMEACheckSum( pflaq );
+	memset( Operation, 0, sizeof( Operation ) );
 	if( cs != calc_cs ){
 		ESP_LOGW(FNAME,"CHECKSUM ERROR: %s; calculcated CS: %d != delivered CS %d", pflaq, calc_cs, cs );
 		return;
@@ -675,13 +685,18 @@ void Flarm::parsePFLAQ( const char *pflaq ) {
 		if( pflaq[i] == ',' )
 			commas++;
 	}
-	if( commas == 2 )
+	if( commas == 2 ){
 		sscanf( pflaq, "$PFLAQ,%[^,],%d",Operation,&Progress );
-	else if( commas == 3 )
+		ESP_LOGI(FNAME,"2 PFLAQ %s %d", Operation, Progress );
+		ESP_LOGI(FNAME,"2 PFLAQ %s %d %s", Operation, Progress, getOperationString(Operation) );
+	}
+	else if( commas == 3 ){
 		sscanf( pflaq, "$PFLAQ,%[^,],%[^,],%d",Operation,Info,&Progress );
-	ESP_LOGI(FNAME,"PFLAQ %s %s %d", Operation,Info,Progress );
+		ESP_LOGI(FNAME,"3 PFLAQ %s %s %d", Operation, Info, Progress );
+	    // ESP_LOGI(FNAME,"3 PFLAQ %s %s %d %s", Operation,Info,Progress, getOperationString[Operation] );
+	}
 	flags.progress = true;
-	connected_timeout =FLARM_TIMEOUT;
+	connected_timeout = FLARM_TIMEOUT;
 }
 
 int rbOld = -500; // outside normal range
