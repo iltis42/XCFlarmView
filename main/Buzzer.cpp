@@ -105,6 +105,7 @@ void Buzzer::init(uint freq)
 
 void Buzzer::frequency( uint f ){
 	ESP_ERROR_CHECK(ledc_set_freq( LEDC_MODE, LEDC_TIMER, f));
+	// ESP_LOGI(FNAME,"Buzzer::f=%d", f );
 }
 
 void Buzzer::play2( uint f1, uint d1, uint v1, uint f2, uint d2, uint v2, uint repetition )
@@ -144,9 +145,9 @@ void Buzzer::play( uint f, uint d, uint v, uint f2, uint d2, uint v2 ) {
 };
 
 void Buzzer::volume( uint vol ){
-	uint volume =  (vol*4096)/(100);
-	// ESP_LOGI(FNAME,"Buzzer::vol=%d", vol);
-	ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, volume ));
+	uint duty =  (vol*4096)/(100);
+	// ESP_LOGI(FNAME,"Buzzer::vol=%d duty=%d", vol, duty );
+	ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty ));
 	ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 }
 
