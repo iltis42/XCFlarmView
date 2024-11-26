@@ -651,10 +651,10 @@ void Flarm::parsePFLAV( const char *pflav ) {
 static std::map<std::string, const char*> OperationTypes = {
     { "IGC", "IGC files download" },
     { "FW", "Firmware update" },
-    { "OBST", "Obstacle database update" },
+    { "OBST", "ODB update" },
     { "DUMP", "Diagnostic dump" },
     { "RESTORE", "Restore file system" },
-    { "SCAN", "Internal consistency check" }
+    { "SCAN", "Internal consis. check" }
 };
 
 const char* Flarm::getOperationString(const char *key) {
@@ -664,8 +664,8 @@ const char* Flarm::getOperationString(const char *key) {
         ESP_LOGI(FNAME, "Return OP: key %s LongString: %s", key, it->second);
         return it->second;
     } else {
-        ESP_LOGI(FNAME, "Return empty string");
-        return "";
+        ESP_LOGI(FNAME, "Key unknown, return internal operation");
+        return "Internal OP";
     }
 }
 
