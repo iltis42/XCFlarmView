@@ -233,8 +233,8 @@ void TargetManager::tick(){
 				int rx=Flarm::getRXNum();
 				ESP_LOGI(FNAME,"New RX: %d", rx );
 				char txt[16];
-				sprintf( txt, " RX %d ", rx );
-				printAlarm( txt, DISPLAY_W-egl->getStrWidth(txt)-5, (DISPLAY_H/2)+10, rx != 0, {COLOR_GREEN} );
+				sprintf( txt, " RX %d", rx );
+				printAlarm( txt, DISPLAY_W-egl->getStrWidth(txt)-5, (DISPLAY_H)-60, rx != 0, {COLOR_GREEN} );
 				Flarm::resetRxFlag();
 			}
 			if( Flarm::getGPSFlag() || !(_tick%200) ){  // all 10 seconds
