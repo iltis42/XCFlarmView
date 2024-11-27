@@ -71,7 +71,7 @@ void Switch::switchTask(void *pvParameters){
 
 void Switch::startTask(){
 	ESP_LOGI(FNAME,"taskStart");
-	xTaskCreatePinnedToCore(&switchTask, "Switch", 6096, NULL, 15, &pid, 0);
+	xTaskCreatePinnedToCore(&switchTask, "Switch", 6096, NULL, 9, &pid, 0);
 }
 
 void Switch::begin( gpio_num_t sw ){
