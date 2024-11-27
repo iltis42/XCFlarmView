@@ -30,7 +30,6 @@ int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
 xSemaphoreHandle display=NULL;
 
-
 #define INFO_TIME (5*(1000/TASKPERIOD)/DISPLAYTICK)  // all ~10 sec
 
 void TargetManager::begin(){
@@ -94,12 +93,12 @@ void TargetManager::drawAirplane( int x, int y, float north ){
 	egl->drawTetragon( x-1,y+10, x-1,y-6, x+1,y-6, x+1,y+10 ); // fuselage
 	egl->drawTetragon( x-4,y+10, x-4,y+9, x+4,y+9, x+4,y+10 ); // elevator
 	float new_radius = 25;
-#ifdef inch2dot4
-	float logs = 1;
-	if( log_scale.get() )
-		logs = log( 2+1 );
-	new_radius = zoom*logs*SCALE;
-#endif
+	if( inch2dot4 ){
+		float logs = 1;
+		if( log_scale.get() )
+			logs = log( 2+1 );
+		new_radius = zoom*logs*SCALE;
+	}
 
 	if( oldN != -1.0 && ((oldN != north) || (old_radius != new_radius)) )
 		drawN( x,y, true, oldN, old_radius );
@@ -201,7 +200,7 @@ void TargetManager::tick(){
 		holddown--;
 
 	if( display_mode.get() == DISPLAY_MULTI ){
-		if( !holddown && Switch::isClosed() ){
+		if( !holddown && swMode::isClosed() ){
 			// ESP_LOGI(FNAME,"SW closed");
 			nextTarget( id_timer );
 			id_timer = 10 * (1000/TASKPERIOD);  // 10 seconds
@@ -229,7 +228,7 @@ void TargetManager::tick(){
 		}
 		if( Flarm::getRxFlag()){
 			int rx=Flarm::getRXNum();
-			ESP_LOGI(FNAME,"New RX: %d", rx );
+			// ESP_LOGI(FNAME,"New RX: %d", rx );
 			char txt[16];
 			sprintf( txt, " RX %d ", rx );
 			printAlarm( txt, DISPLAY_W-egl->getStrWidth(txt)-5, DISPLAY_H-60, rx != 0, {COLOR_GREEN} );
@@ -254,11 +253,10 @@ void TargetManager::tick(){
 		    int error_code = Flarm::getErrorCode();
 			ESP_LOGI(FNAME,"PFLAE error code new:%d  severity new:%d error-txt:%s", error_code, severity, Flarm::getErrorString(error_code)  );
 			rewindInfoTimer();
-#ifdef inch2dot4
-			printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
-#else
-			printAlarmLevel( Flarm::getErrorString(error_code), 10, 80, severity );
-#endif
+			if( inch2dot4 )
+				printAlarmLevel( Flarm::getErrorString(error_code), 10, 140, severity );
+			else
+				printAlarmLevel( Flarm::getErrorString(error_code), 10, 80, severity );
 			Flarm::resetErrorFlag();
 		}
 		if( Flarm::getSwVersionFlag() ){  // flag ensures there is a valid string
