@@ -162,8 +162,8 @@ void SetupMenu::up(int count){
 	}
 	if( !_menu_active ){
 		ESP_LOGI(FNAME,"zoom up %s", _title );
-		if( zoom < 5.0 )
-			zoom = zoom * 1.3;
+		if( zoom < 3.7 )
+			zoom = zoom * 1.25;
 		return;
 	}
 	ESP_LOGI(FNAME,"down %d %d %d", highlight, _childs.size(), focus );
@@ -186,7 +186,7 @@ void SetupMenu::down(int count){
 		return;
 	if( !_menu_active ){
 		if( zoom > 0.5 )
-			zoom = zoom * 0.7;
+			zoom = zoom / 1.25;
 		ESP_LOGI(FNAME,"zoom down %f", zoom );
 		return;
 	}
