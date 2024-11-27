@@ -272,49 +272,45 @@ void Target::recalc(){
 }
 
 void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool erase, bool closest, ucg_color_t color ){
-	if( ax > 0 && ax <= DISPLAY_W && ay > 0 && ay <= DISPLAY_H ){
-		// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%d, len:%d, ers:%d, age:%d", pflaa.ID, ax,ay,bearing, sideLength, erase, age );
-		float radians = D2R(bearing-90.0);
-		float axt=ax-sideLength/4*sin(D2R((float)bearing));  // offset the Triangle to center of gravity (and circle)
-		float ayt=ay+sideLength/4*cos(D2R((float)bearing));
-		// Calculate the triangle's vertices
-		int x0 = rint(axt + sideLength * cos(radians));   // arrow head
-		int y0 = rint(ayt + sideLength * sin(radians));
-		int x1 = rint(axt + sideLength/2 * cos(radians + 2 * M_PI / 3));  // base left
-		int y1 = rint(ayt + sideLength/2 * sin(radians + 2 * M_PI / 3));
-		int x2 = rint(axt + sideLength/2 * cos(radians - 2 * M_PI / 3));  // base right
-		int y2 = rint(ayt + sideLength/2 * sin(radians - 2 * M_PI / 3));
-		if( erase || old_x0 != -1000 ){
-			if( erase || (old_closest != closest) || (old_sidelen != sideLength) || (old_x0 != x0) || (old_y0 != y0) || (old_x1 != x1) || (old_y1 != y1) || (old_x2 != x2) || (old_y2 != y2) ){
-				egl->setColor( COLOR_BLACK );
-				egl->drawTriangle( old_x0,old_y0,old_x1,old_y1,old_x2,old_y2 );
-				if( old_closest )
-					egl->drawCircle( old_ax,old_ay, rint( (float)old_sidelen*0.75 ) );
-			}
+	// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%d, len:%d, ers:%d, age:%d", pflaa.ID, ax,ay,bearing, sideLength, erase, age );
+	float radians = D2R(bearing-90.0);
+	float axt=ax-sideLength/4*sin(D2R((float)bearing));  // offset the Triangle to center of gravity (and circle)
+	float ayt=ay+sideLength/4*cos(D2R((float)bearing));
+	// Calculate the triangle's vertices
+	int x0 = rint(axt + sideLength * cos(radians));   // arrow head
+	int y0 = rint(ayt + sideLength * sin(radians));
+	int x1 = rint(axt + sideLength/2 * cos(radians + 2 * M_PI / 3));  // base left
+	int y1 = rint(ayt + sideLength/2 * sin(radians + 2 * M_PI / 3));
+	int x2 = rint(axt + sideLength/2 * cos(radians - 2 * M_PI / 3));  // base right
+	int y2 = rint(ayt + sideLength/2 * sin(radians - 2 * M_PI / 3));
+	if( erase || old_x0 != -1000 ){
+		if( erase || (old_closest != closest) || (old_sidelen != sideLength) || (old_x0 != x0) || (old_y0 != y0) || (old_x1 != x1) || (old_y1 != y1) || (old_x2 != x2) || (old_y2 != y2) ){
+			egl->setColor( COLOR_BLACK );
+			egl->drawTriangle( old_x0,old_y0,old_x1,old_y1,old_x2,old_y2 );
+			if( old_closest )
+				egl->drawCircle( old_ax,old_ay, rint( (float)old_sidelen*0.75 ) );
 		}
-		if( !erase ){
-			egl->setColor( color.color[0], color.color[1], color.color[2] );
-			egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
-			if( y0 > DISPLAY_H-30 || y1 > DISPLAY_H-30 || y2 > DISPLAY_H-30 ){  // need to refresh ID
-				TargetManager::redrawInfo();
-			}
-			if( closest ){
-				egl->drawCircle( ax,ay, rint( (float)sideLength*0.75 ) );
-			}
-			// ESP_LOGI(FNAME,"drawFlarmTarget II (ID: %06X): x:%d, y:%d, bear:%d, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
-			old_x0 = x0;
-			old_y0 = y0;
-			old_x1 = x1;
-			old_y1 = y1;
-			old_x2 = x2;
-			old_y2 = y2;
-			old_ax = ax;
-			old_ay = ay;
-			old_closest = closest;
-			old_sidelen = sideLength;
+	}
+	if( !erase ){
+		egl->setColor( color.color[0], color.color[1], color.color[2] );
+		egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
+		if( y0 > DISPLAY_H-30 || y1 > DISPLAY_H-30 || y2 > DISPLAY_H-30 ){  // need to refresh ID
+			TargetManager::redrawInfo();
 		}
-	}else{
-		// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d out of screen", pflaa.ID, ax, ay );
+		if( closest ){
+			egl->drawCircle( ax,ay, rint( (float)sideLength*0.75 ) );
+		}
+		// ESP_LOGI(FNAME,"drawFlarmTarget II (ID: %06X): x:%d, y:%d, bear:%d, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
+		old_x0 = x0;
+		old_y0 = y0;
+		old_x1 = x1;
+		old_y1 = y1;
+		old_x2 = x2;
+		old_y2 = y2;
+		old_ax = ax;
+		old_ay = ay;
+		old_closest = closest;
+		old_sidelen = sideLength;
 	}
 }
 
