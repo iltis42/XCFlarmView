@@ -199,14 +199,16 @@ void TargetManager::tick(){
 	if( holddown )
 		holddown--;
 
-	if( !holddown && swMode.isClosed() ){
-		// ESP_LOGI(FNAME,"SW closed");
-		nextTarget( id_timer );
-		id_timer = 10 * (1000/TASKPERIOD);  // 10 seconds
-		holddown=5;
-	}else{
-		if( id_timer )
-			id_timer --;
+	if( display_mode.get() == DISPLAY_MULTI ){
+		if( !holddown && swMode::isClosed() ){
+			// ESP_LOGI(FNAME,"SW closed");
+			nextTarget( id_timer );
+			id_timer = 10 * (1000/TASKPERIOD);  // 10 seconds
+			holddown=5;
+		}else{
+			if( id_timer )
+				id_timer --;
+		}
 	}
 	if( !(_tick%20) ){  // all 50 mS
 		ESP_LOGI(FNAME,"Num targets: %d", targets.size() );
@@ -327,7 +329,7 @@ void TargetManager::tick(){
 						it->second.nearest(false);
 					}
 				}
-				if( it->second.getAge() < AGEOUT ){
+				if( it->second.getAge() < AGEOUT && ((display_mode.get() == DISPLAY_MULTI) || ((display_mode.get() == DISPLAY_SIMPLE) && it->second.isNearest() ))){
 					if( it->second.isNearest() || it->second.haveAlarm() ){
 						// closest == true
 						if( redrawNeeded ){

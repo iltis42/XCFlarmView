@@ -340,29 +340,27 @@ void Target::draw(bool erase){
 	// ESP_LOGI(FNAME,"draw( ID:%06X erase:%d )",  pflaa.ID, erase );
 	checkAlarm();
 	int size = std::min( 30.0, std::min( 60.0, 10.0+10.0/dist )  );  // maybe wrapping min surplus
-	if( (display_mode.get() == DISPLAY_MULTI) || ((display_mode.get() == DISPLAY_SIMPLE) && isNearest() ) ){
-		uint8_t brightness=uint8_t(255.0 - 255.0 * std::min(1.0, (age/(double)AGEOUT)) ); // fade out with growing age
-		ucg_color_t color;
-		if( (dist < 1.0) && sameAlt() ){
-			if( haveAlarm() ){
-				if( !(blink%2) ){
-					color = { COLOR_WHITE };
-				}
-				else
-				{
-					color = { COLOR_RED };
-				}
-				blink++;
-			}else{
-				color = { brightness, brightness, brightness }; // white
+	uint8_t brightness=uint8_t(255.0 - 255.0 * std::min(1.0, (age/(double)AGEOUT)) ); // fade out with growing age
+	ucg_color_t color;
+	if( (dist < 1.0) && sameAlt() ){
+		if( haveAlarm() ){
+			if( !(blink%2) ){
+				color = { COLOR_WHITE };
 			}
+			else
+			{
+				color = { COLOR_RED };
+			}
+			blink++;
+		}else{
+			color = { brightness, brightness, brightness }; // white
 		}
-		else{
-			color = { 0, brightness, 0 }; // green
-		}
-		// ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );
-		drawFlarmTarget( x, y, rel_target_heading, size, erase, is_nearest, color );
 	}
+	else{
+		color = { 0, brightness, 0 }; // green
+	}
+	// ESP_LOGI(FNAME,"drawFlarmTarget() ID:%06X, heading:%d, target-heading:%d, rel-targ-head:%d rel-targ-dir:%d dist:%.2f", pflaa.ID, int(Flarm::getGndCourse()), int(pflaa.track),  int(rel_target_heading), (int)rel_target_dir, dist );
+	drawFlarmTarget( x, y, rel_target_heading, size, erase, is_nearest, color );
 }
 
 void Target::update( nmea_pflaa_s a_pflaa ){

@@ -4,4 +4,3 @@ extern Switch swUp;
 extern Switch swDown;
 extern Switch swMode;
 extern float zoom;
-
