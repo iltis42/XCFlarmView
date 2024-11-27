@@ -32,6 +32,7 @@
 AdaptUGC *egl = 0;
 OTA *ota = 0;
 DataMonitor DM;
+float zoom=1.0;
 
 SetupMenu *menu=0;
 bool inch2dot4=false;
