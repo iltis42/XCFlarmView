@@ -200,7 +200,7 @@ void TargetManager::tick(){
 		holddown--;
 
 	if( display_mode.get() == DISPLAY_MULTI ){
-		if( !holddown && Switch::isClosed() ){
+		if( !holddown && swMode::isClosed() ){
 			// ESP_LOGI(FNAME,"SW closed");
 			nextTarget( id_timer );
 			id_timer = 10 * (1000/TASKPERIOD);  // 10 seconds

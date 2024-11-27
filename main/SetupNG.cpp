@@ -42,6 +42,7 @@ SetupNG<int>  			serial1_tx_enable( "SER1_TX_ENA", 0 );
 SetupNG<int>  			software_update( "SOFTWARE_UPDATE", 0 );
 SetupNG<int>	        log_level( "LOG_LEVEL", 3 );
 SetupNG<int>            factory_reset( "FACTORY_RES" , 0 );
+SetupNG<int>	        log_scale( "LOG_SCALE", 0 );
 
 SetupNG<int>            alt_unit( "ALT_UNIT", ALT_UNIT_METER );
 SetupNG<int>            ias_unit( "IAS_UNIT", SPEED_UNIT_KMH );
@@ -49,7 +50,7 @@ SetupNG<int>            vario_unit( "VARIO_UNIT", VARIO_UNIT_MS );
 SetupNG<int>            dst_unit( "DST_UNIT", DST_UNIT_KM );
 SetupNG<float>		    audio_volume( "AUDVOL", 100.0 );
 SetupNG<int>  			display_test( "DISPLAY_TEST", 0, RST_NONE, SYNC_NONE, VOLATILE );
-SetupNG<int> 			data_monitor("DATAMON", MON_OFF, true, SYNC_NONE, VOLATILE  );
+SetupNG<int> 			data_monitor("DATAMON", MON_OFF, RST_NONE, SYNC_NONE, VOLATILE  );
 SetupNG<int> 			traffic_demo("TRADEM", 0 );
 SetupNG<int>  			display_orientation("DISPLAY_ORIENT" , DISPLAY_NORMAL );
 SetupNG<int>  			display_mode("DISPLAY_MODE" , DISPLAY_MULTI );

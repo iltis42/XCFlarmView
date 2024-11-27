@@ -153,14 +153,14 @@ void SetupMenuSelect::display( int mode ){
 			egl->drawBox( 1,130,DISPLAY_W,40 );
 			egl->setPrintPos( 1, DISPLAY_H-30 );
 			egl->setColor( COLOR_WHITE );
-			egl->print(PROGMEM"Saved" );
+			egl->print(PROGMEM"Saved      " );
 		}
 		if( mode == 1 )
 			delay(1000);
 	}
 }
 
-void SetupMenuSelect::down(int count){
+void SetupMenuSelect::up(int count){
 	if( (selected != this)  )
 		return;
 	if( _numval > 9 ){
@@ -183,7 +183,7 @@ void SetupMenuSelect::down(int count){
 	}
 }
 
-void SetupMenuSelect::up(int count){
+void SetupMenuSelect::down(int count){
 	if( (selected != this) )
 		return;
 	if( _numval > 9 )
@@ -210,7 +210,7 @@ void SetupMenuSelect::up(int count){
 }
 
 void SetupMenuSelect::press(){
-	up(1);
+	longPress();
 }
 
 void SetupMenuSelect::longPress(){
