@@ -154,7 +154,7 @@ void Serial::serialHandler(void *pvParameters)
 	// Make a pause, that has avoided core dumps during enable the RX interrupt.
 	delay( 1000 );  // delay a bit serial task startup unit startup of system is through
 	ESP_LOGI(FNAME,"S1 serial handler startup");
-  unsigned int start_holddown = HUNTBAUDRATE_HOLDDOWN;  // 14000 * 5 mS = 120 sec
+    unsigned int start_holddown = HUNTBAUDRATE_HOLDDOWN;  // 14000 * 5 mS = 120 sec
 	while( true ) {
 		// Stack supervision
 		if( uxTaskGetStackHighWaterMark( pid ) < 256 )
@@ -189,12 +189,6 @@ void Serial::serialHandler(void *pvParameters)
 		// ESP_LOGI(FNAME,"FC: %d, HD: %d", Flarm::connected(), start_holddown );
 		if( !Flarm::connected() && !start_holddown ){
 			huntBaudrate();
-		}
-		if( Flarm::connected() ){
-			start_holddown = HUNTBAUDRATE_HOLDDOWN;
-		}
-		if( Flarm::connected() && (serial1_speed.get() != baudrate) ){
-			saveBaudrate();
 		}
 		if( start_holddown > 0 )
 			start_holddown--;
@@ -262,15 +256,22 @@ void Serial::saveBaudrate(){
 
 void Serial::huntBaudrate(){
 	trials++;
-	if( trials>200 ) { // An active Flarm sends every second at least
-		trials = 0;
-		baudrate++;
-		if( baudrate > 6 ){
-			baudrate=1;  // 4800
-		}
-		uart_set_baudrate(uart_num, baud[baudrate]);
+	if( Flarm::connected() && (serial1_speed.get() != baudrate) ){
+		saveBaudrate();
+	}else{
+		if( trials>400 ) { // An active Flarm sends every second at least
+			trials = 0;
+			baudrate++;
+			if( baudrate > 6 ){
+				baudrate=1;  // 4800
+			}
+			uart_set_baudrate(uart_num, baud[baudrate]);
+			egl->setColor(COLOR_WHITE);
+			egl->setPrintPos( 10, 40 );
+			egl->printf("Autobaud: %d    ", baud[baudrate] );
 
-		ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
+			ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
+		}
 	}
 }
 
