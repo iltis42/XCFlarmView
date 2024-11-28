@@ -24,6 +24,7 @@ int TargetManager::_tick =  0;
 int TargetManager::holddown =  0;
 TaskHandle_t TargetManager::pid = 0;
 unsigned int TargetManager::min_id = 0;
+unsigned int TargetManager::maxcl_id = 0;
 bool TargetManager::redrawNeeded = true;
 bool TargetManager::erase_info = false;
 int TargetManager::info_timer = 0;
@@ -195,6 +196,7 @@ void TargetManager::rewindInfoTimer(){
 
 void TargetManager::tick(){
 	float min_dist = 10000;
+	float max_climb = -1000.0;
 	_tick++;
 	if( holddown )
 		holddown--;
@@ -303,6 +305,10 @@ void TargetManager::tick(){
 			if( it->second.getAge() < AGEOUT ){
 				if( it->second.haveAlarm() )
 					id_timer=0;
+				if( (it->second.getClimb() > max_climb )  ){
+					max_climb = it->second.getClimb();
+					maxcl_id = it->first;
+				}
 				if( !id_timer ){
 					if( (it->second.getProximity() < min_dist)  ){
 						min_dist = it->second.getDist();
@@ -320,6 +326,10 @@ void TargetManager::tick(){
 			for (auto it=targets.begin(); it!=targets.end(); ){
 				if( SetupMenu::isActive() )
 					return;
+				if( it->first == maxcl_id )
+					it->second.best(true);
+				else
+					it->second.best(false);
 				if( !id_timer )
 				{
 					if( it->first == min_id ){

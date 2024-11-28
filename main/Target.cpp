@@ -43,6 +43,11 @@ Target::Target( nmea_pflaa_s a_pflaa ) {
 	old_x2=-1000;
 	old_y2=-1000;
 	old_track = 0;
+	old_climb = -1;
+	old_x = 0;
+	old_y = 0;
+	old_size = -1;
+
 	_buzzedHoldDown = 0;
 	dist=10000.0;
 	prox=10000.0;
@@ -271,6 +276,19 @@ void Target::recalc(){
 	// ESP_LOGI(FNAME,"recalc ID: %06X, own heading:%d targ-head:%d rel-target-head:%d (N:%.2f, E:%.2f) x:%d y:%d", pflaa.ID, int(Flarm::getGndCourse()), int(rel_target_heading), int(rel_target_dir) , pflaa.relNorth, pflaa.relEast, x, y ) ;
 }
 
+
+void Target::drawClimb( int x, int y, int size, int climb ){
+	if( climb > 1.0 ){
+		egl->setPrintPos( x-4,y-size );
+		egl->setFont(ucg_font_ncenR14_hr);
+		egl->printf("%d ", climb );
+		old_climb = climb;
+		old_size = size;
+		old_x = x;
+		old_y = y;
+	}
+}
+
 void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool erase, bool closest, ucg_color_t color ){
 	// ESP_LOGI(FNAME,"drawFlarmTarget (ID: %06X): x:%d, y:%d, bear:%d, len:%d, ers:%d, age:%d", pflaa.ID, ax,ay,bearing, sideLength, erase, age );
 	float radians = D2R(bearing-90.0);
@@ -284,16 +302,23 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 	int x2 = rint(axt + sideLength/2 * cos(radians - 2 * M_PI / 3));  // base right
 	int y2 = rint(ayt + sideLength/2 * sin(radians - 2 * M_PI / 3));
 	if( erase || old_x0 != -1000 ){
+		// second erase maybe surplus: tbc
 		if( erase || (old_closest != closest) || (old_sidelen != sideLength) || (old_x0 != x0) || (old_y0 != y0) || (old_x1 != x1) || (old_y1 != y1) || (old_x2 != x2) || (old_y2 != y2) ){
 			egl->setColor( COLOR_BLACK );
 			egl->drawTriangle( old_x0,old_y0,old_x1,old_y1,old_x2,old_y2 );
 			if( old_closest )
 				egl->drawCircle( old_ax,old_ay, rint( (float)old_sidelen*0.75 ) );
+			if( old_climb > 0 ){
+				drawClimb( old_x, old_y, old_size, old_climb );
+			}
 		}
 	}
 	if( !erase ){
 		egl->setColor( color.color[0], color.color[1], color.color[2] );
 		egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
+		if( is_best ){
+			drawClimb(x,y, sideLength, int(pflaa.climbRate + 0.5) );
+		}
 		if( y0 > DISPLAY_H-30 || y1 > DISPLAY_H-30 || y2 > DISPLAY_H-30 ){  // need to refresh ID
 			TargetManager::redrawInfo();
 		}

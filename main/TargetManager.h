@@ -38,6 +38,7 @@ private:
 	static int holddown;
 	static TaskHandle_t pid;
 	static unsigned int min_id;
+	static unsigned int maxcl_id;
 	static bool redrawNeeded;
 	static bool erase_info;
 	static int info_timer;
