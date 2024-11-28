@@ -301,9 +301,9 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 	int y1 = rint(ayt + sideLength/2 * sin(radians + 2 * M_PI / 3));
 	int x2 = rint(axt + sideLength/2 * cos(radians - 2 * M_PI / 3));  // base right
 	int y2 = rint(ayt + sideLength/2 * sin(radians - 2 * M_PI / 3));
+	int climb = int(pflaa.climbRate + 0.5);
 	if( erase || old_x0 != -1000 ){
-		// second erase maybe surplus: tbc
-		if( erase || (old_closest != closest) || (old_sidelen != sideLength) || (old_x0 != x0) || (old_y0 != y0) || (old_x1 != x1) || (old_y1 != y1) || (old_x2 != x2) || (old_y2 != y2) ){
+		if( (old_climb != climb) || (old_sidelen != sideLength) || (old_x0 != x0) || (old_y0 != y0) || (old_x1 != x1) || (old_y1 != y1) || (old_x2 != x2) || (old_y2 != y2) ){
 			egl->setColor( COLOR_BLACK );
 			egl->drawTriangle( old_x0,old_y0,old_x1,old_y1,old_x2,old_y2 );
 			if( old_closest )
@@ -317,7 +317,7 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 		egl->setColor( color.color[0], color.color[1], color.color[2] );
 		egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
 		if( is_best ){
-			drawClimb(x,y, sideLength, int(pflaa.climbRate + 0.5) );
+			drawClimb(x,y, sideLength, climb );
 		}
 		if( y0 > DISPLAY_H-30 || y1 > DISPLAY_H-30 || y2 > DISPLAY_H-30 ){  // need to refresh ID
 			TargetManager::redrawInfo();
