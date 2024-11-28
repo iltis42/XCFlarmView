@@ -243,8 +243,7 @@ void TargetManager::tick(){
 		if( Flarm::getConnectedFlag() ){
 			bool conn = Flarm::connected();
 			ESP_LOGI(FNAME,"Flarm connected alarm: %d", !conn );
-			if( conn==false )
-				egl->clearScreen();
+			egl->clearScreen();
 			printAlarm( "NO FLARM ", 10, 140, conn==false );
 			Flarm::resetConnectedFlag();
 		}
