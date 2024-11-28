@@ -28,6 +28,7 @@ public:
 	void update( nmea_pflaa_s a_pflaa );
 	inline int getAge() { return age; };
 	inline int getID() { return pflaa.ID; };
+	inline float getClimb(){ return pflaa.climbRate; };
 	inline float getDist() { return is_nearest ? dist*0.9 : dist; }; // hysteresis 10%
 	inline float getProximity() { return prox; };
 	void dumpInfo();
@@ -38,9 +39,12 @@ public:
 	inline bool haveAlarm(){ return alarm; };
 	inline bool sameAlt( uint tolerance=150 ) { return( abs( pflaa.relVertical )< tolerance ); };
 	inline void nearest( bool n ) { is_nearest=n; };
+	inline void best( bool n ) { is_best=n; };
 	inline bool isNearest() { return is_nearest; };
+	inline bool isBestClimber() { return is_best; };
 
 private:
+	void drawClimb( int x, int y, int size, int climb );
 	void checkAlarm();
 	void drawFlarmTarget( int x, int y, int bearing, int sideLength, bool erase=false, bool closest=false, ucg_color_t color={ COLOR_GREEN } );
 	void drawDist( uint8_t r, uint8_t g, uint8_t b );
@@ -64,8 +68,13 @@ private:
 	char * comp; // competition ID
 	void recalc();
 	bool is_nearest;
+	bool is_best;
 	bool alarm;
 	int alarm_timer;
+	int old_climb;
+	int old_x;
+	int old_y;
+	int old_size;
 
 	static char cur_dist[32];
 	static char cur_alt[32];
