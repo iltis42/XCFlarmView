@@ -302,7 +302,7 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 	int x2 = rint(axt + sideLength/2 * cos(radians - 2 * M_PI / 3));  // base right
 	int y2 = rint(ayt + sideLength/2 * sin(radians - 2 * M_PI / 3));
 	int climb = int(pflaa.climbRate + 0.5);
-	if( erase || old_x0 != -1000 ){
+	if( erase || old_x0 != -1000 || old_climb > 0 ){
 		if( (old_climb != climb) || (old_sidelen != sideLength) || (old_x0 != x0) || (old_y0 != y0) || (old_x1 != x1) || (old_y1 != y1) || (old_x2 != x2) || (old_y2 != y2) ){
 			egl->setColor( COLOR_BLACK );
 			egl->drawTriangle( old_x0,old_y0,old_x1,old_y1,old_x2,old_y2 );
