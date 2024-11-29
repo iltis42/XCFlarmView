@@ -57,6 +57,9 @@ private:
 	};
 	nmea_pflaa_s pflaa;
 	int age;
+	int tick;  // 1 sec
+	int raw_tick; // 250 mS
+	int last_speed_tick;
 	float dist_buzz;
 	int _buzzedHoldDown;
 	int rel_target_heading;
@@ -75,6 +78,8 @@ private:
 	int old_x;
 	int old_y;
 	int old_size;
+	float tek_climb;
+	int last_groundspeed;
 
 	static char cur_dist[32];
 	static char cur_alt[32];
