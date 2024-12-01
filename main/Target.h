@@ -51,6 +51,8 @@ private:
 	void drawVar( uint8_t r, uint8_t g, uint8_t b );
 	void drawAlt( uint8_t r, uint8_t g, uint8_t b );
 	void drawID( uint8_t r, uint8_t g, uint8_t b );
+	void recalc();
+	void tekCalc();
 	inline void setAlarm(){
 		alarm = true;
 		alarm_timer = 8;
@@ -59,7 +61,7 @@ private:
 	int age;
 	int tick;  // 1 sec
 	int raw_tick; // 250 mS
-	int last_speed_tick;
+	int last_pflaa_time;
 	float dist_buzz;
 	int _buzzedHoldDown;
 	int rel_target_heading;
@@ -69,7 +71,7 @@ private:
 	int x,y,old_ax, old_ay, old_x0, old_y0, old_x1, old_y1, old_x2, old_y2, old_closest, old_sidelen;
 	char * reg;  // registration from flarmnet DB
 	char * comp; // competition ID
-	void recalc();
+
 	bool is_nearest;
 	bool is_best;
 	bool alarm;

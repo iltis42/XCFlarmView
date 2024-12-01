@@ -43,14 +43,15 @@ Target::Target( nmea_pflaa_s a_pflaa ) {
 	old_x2=-1000;
 	old_y2=-1000;
 	old_track = 0;
-	old_climb = -1;
+	old_climb = -1000;
 	old_x = 0;
 	old_y = 0;
 	old_size = -1;
 	tek_climb = 0.0;
 	last_groundspeed = -1;
 	tick = 0;
-	last_speed_tick = -1;
+	last_pflaa_time = -1;
+	last_groundspeed = pflaa.groundSpeed;
 
 	_buzzedHoldDown = 0;
 	dist=10000.0;
@@ -277,20 +278,21 @@ void Target::recalc(){
 	// ESP_LOGI(FNAME,"prox: %f, log:%f, pix:%f", prox, logs, pix );
 	x=(DISPLAY_W/2)+pix*sin(D2R(rel_target_dir));
 	y=(DISPLAY_H/2)-pix*cos(D2R(rel_target_dir));
-	tek_climb = pflaa.climbRate;
-	if( last_speed_tick > 0 && ((tick-last_speed_tick) < 4) ){
-		float dv = (float)(pflaa.groundSpeed-last_groundspeed);  // in m/s
-		float dvq = dv*dv;
-		if( dv < 0 )
-			dvq = -dvq;
-		tek_climb += (dvq)/(2*9.81);   // -(v²/2g)
-		if( (pflaa.groundSpeed-last_groundspeed) != 0 )
-			ESP_LOGI(FNAME,"%06X tek-climb:%.1f, raw-climb:%.1f, dv:%.1f v1:%d, v2:%d", pflaa.ID, tek_climb,  pflaa.climbRate, dv, last_groundspeed, pflaa.groundSpeed );
-	}
-	last_groundspeed = pflaa.groundSpeed;
-	last_speed_tick = tick;
-
 	// ESP_LOGI(FNAME,"recalc ID: %06X, own heading:%d targ-head:%d rel-target-head:%d (N:%.2f, E:%.2f) x:%d y:%d", pflaa.ID, int(Flarm::getGndCourse()), int(rel_target_heading), int(rel_target_dir) , pflaa.relNorth, pflaa.relEast, x, y ) ;
+}
+
+// Transform to heading from ground track
+void Target::tekCalc(){
+	tek_climb = pflaa.climbRate;
+	int time_delta = tick - last_pflaa_time;
+	int v = pflaa.groundSpeed;
+	int dv = v-last_groundspeed;  // in m/s
+	if( dv < 5 && last_groundspeed > 0 && pflaa.groundSpeed > 12 && time_delta >= 1 && time_delta < 10 ){  // max 10 sec   filter coincidetial duplicates (what's happening)
+		if( time_delta != 0 )
+			tek_climb += ((v*dv)/((9.81)*(float)(time_delta)) - tek_climb)*0.2;   // -(v*dv/g)
+		// if( pflaa.groundSpeed != 0 )  // skip targets on GND
+		//	ESP_LOGI(FNAME,"%06X tek-climb:%.3f, raw-climb:%.3f, dv:%d v1:%d, v2:%d td:%d", pflaa.ID, tek_climb, pflaa.climbRate, dv, last_groundspeed, pflaa.groundSpeed, time_delta );
+	}
 }
 
 
@@ -317,14 +319,21 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 	int climb = int(tek_climb + 0.5);
 	if( erase || (old_closest != closest) || ((old_climb != climb) || (old_sidelen != sideLength) || (old_x0 != x0) || (old_y0 != y0) || (old_x1 != x1) || (old_y1 != y1) || (old_x2 != x2) || (old_y2 != y2)) ){
 		egl->setColor( COLOR_BLACK );
-		egl->drawTriangle( old_x0,old_y0,old_x1,old_y1,old_x2,old_y2 );
-		if( old_closest )
+		if( old_x0 > 0 ){
+			egl->drawTriangle( old_x0,old_y0,old_x1,old_y1,old_x2,old_y2 );
+			old_x0 = -1;
+		}
+		if( old_closest && old_sidelen > 0 ){
 			egl->drawCircle( old_ax,old_ay, rint( (float)old_sidelen*0.75 ) );
-		if( old_climb > 0 ){
+			old_sidelen =-1;
+		}
+		if( old_climb !=  -1000 ){
 			drawClimb( old_x, old_y, old_size, old_climb );
-			old_climb = -1;
+			old_climb = -1000;
 		}
 	}
+	if( x0 <= 0 || x0 > DISPLAY_W || y0 <= 0 || y0 > DISPLAY_H || x0 <= 0 || x1 > DISPLAY_W || y1 <= 0 || y1 > DISPLAY_H || x2 <= 0 || x2 > DISPLAY_W || y2 <= 0 || y2 > DISPLAY_H )
+		return;
 	if( !erase ){
 		egl->setColor( color.color[0], color.color[1], color.color[2] );
 		egl->drawTriangle( x0,y0,x1,y1,x2,y2 );
@@ -340,6 +349,7 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 		}
 		if( closest ){
 			egl->drawCircle( ax,ay, rint( (float)sideLength*0.75 ) );
+			old_sidelen = sideLength;
 		}
 		// ESP_LOGI(FNAME,"drawFlarmTarget II (ID: %06X): x:%d, y:%d, bear:%d, len:%d, ers:%d", pflaa.ID, ax,ay,bearing, sideLength, erase );
 		old_x0 = x0;
@@ -350,8 +360,6 @@ void Target::drawFlarmTarget( int ax, int ay, int bearing, int sideLength, bool 
 		old_y2 = y2;
 		old_ax = ax;
 		old_ay = ay;
-		old_closest = closest;
-		old_sidelen = sideLength;
 		old_climb = climb;
 	}
 }
@@ -405,8 +413,11 @@ void Target::update( nmea_pflaa_s a_pflaa ){
 	pflaa = a_pflaa;
 	// ESP_LOGI(FNAME,"Target (ID %06X) update()", pflaa.ID );
 	recalc();
+	if( last_pflaa_time > 0 )  // ensure there is a last pflaa
+		tekCalc();
+	last_groundspeed = pflaa.groundSpeed;
+	last_pflaa_time = tick;
 	age=0;
-	last_speed_tick = tick;
 }
 
 void Target::ageTarget(){

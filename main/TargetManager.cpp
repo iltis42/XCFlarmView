@@ -57,12 +57,14 @@ void TargetManager::receiveTarget( nmea_pflaa_s &pflaa ){
 	if( (pflaa.groundSpeed < 10) && (display_non_moving_target.get() == NON_MOVE_HIDE) ){
 			return;
 	}
+	xSemaphoreTake(display,portMAX_DELAY );
 	if( targets.find(pflaa.ID) == targets.end() ){
 		targets[ pflaa.ID ] = Target ( pflaa );
 	}
 	else
 		targets[ pflaa.ID ].update( pflaa );
 	targets[ pflaa.ID ].dumpInfo();
+	xSemaphoreGive(display);
 }
 
 TargetManager::~TargetManager() {
@@ -296,7 +298,7 @@ void TargetManager::tick(){
 		// Pass one: determine proximity
 		if( !info_timer && Flarm::connected() )
 			drawAirplane( DISPLAY_W/2,DISPLAY_H/2, Flarm::getGndCourse() );
-
+		xSemaphoreTake(display,portMAX_DELAY );
 		for (auto it=targets.begin(); it!=targets.end(); it++ ){
 			it->second.ageTarget();
 			if( SetupMenu::isActive() )
@@ -364,6 +366,6 @@ void TargetManager::tick(){
 				}
 			}
 		}
-
-	}
+		xSemaphoreGive(display);
+	  }
 	}
