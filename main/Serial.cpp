@@ -186,6 +186,11 @@ void Serial::serialHandler(void *pvParameters)
 			process( buf, rxBytes );
 			DM.monitorString( MON_S1, DIR_RX, buf, rxBytes );
 		}
+		if( Flarm::connected() ){ // normal operation
+			if( serial1_speed.get() != baudrate )    // save when new baudrate has have been detected
+				saveBaudrate();
+			start_holddown = HUNTBAUDRATE_HOLDDOWN;  // rewind autobaud hunting holddown timer
+		}
 		// ESP_LOGI(FNAME,"FC: %d, HD: %d", Flarm::connected(), start_holddown );
 		if( !Flarm::connected() && !start_holddown ){
 			huntBaudrate();
@@ -256,22 +261,18 @@ void Serial::saveBaudrate(){
 
 void Serial::huntBaudrate(){
 	trials++;
-	if( Flarm::connected() && (serial1_speed.get() != baudrate) ){
-		saveBaudrate();
-	}else{
-		if( trials>400 ) { // An active Flarm sends every second at least
-			trials = 0;
-			baudrate++;
-			if( baudrate > 6 ){
-				baudrate=1;  // 4800
-			}
-			uart_set_baudrate(uart_num, baud[baudrate]);
-			egl->setColor(COLOR_WHITE);
-			egl->setPrintPos( 10, 40 );
-			egl->printf("Autobaud: %d    ", baud[baudrate] );
-
-			ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
+	if( trials>400 ) { // An active Flarm sends every second at least
+		trials = 0;
+		baudrate++;
+		if( baudrate > 6 ){
+			baudrate=1;  // 4800
 		}
+		uart_set_baudrate(uart_num, baud[baudrate]);
+		egl->setColor(COLOR_WHITE);
+		egl->setPrintPos( 10, 40 );
+		egl->printf("Autobaud: %d    ", baud[baudrate] );
+
+		ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
 	}
 }
 

@@ -145,6 +145,7 @@ $PFLAA,0,-1234,1234,220,2,DD8F12,180,,30,-1.4,1*
 
 
 void Flarm::parsePFLAA( const char *pflaa ){
+	// ESP_LOGI(FNAME,"PFLAA %s", pflaa );
 	/*
 	http://delta-omega.com/download/EDIA/FLARM_DataportManual_v3.02E.pdf
 
