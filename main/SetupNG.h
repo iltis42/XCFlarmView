@@ -339,5 +339,6 @@ extern SetupNG<int>  		display_mode;
 extern SetupNG<int>  		display_non_moving_target;
 extern SetupNG<int>  		notify_near;
 extern SetupNG<int>  		log_scale;
+extern SetupNG<int>  		rs232_polarity;
 
 

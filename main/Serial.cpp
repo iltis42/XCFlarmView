@@ -23,6 +23,7 @@
 #include "Flarm.h"
 #include "driver/uart.h"
 #include "DataMonitor.h"
+#include "SetupMenu.h"
 
 /* Note that the standard NMEA 0183 baud rate is only 4.8 kBaud.
 Nevertheless, a lot of NMEA-compatible devices can properly work with
@@ -268,10 +269,11 @@ void Serial::huntBaudrate(){
 			baudrate=1;  // 4800
 		}
 		uart_set_baudrate(uart_num, baud[baudrate]);
-		egl->setColor(COLOR_WHITE);
-		egl->setPrintPos( 10, 40 );
-		egl->printf("Autobaud: %d    ", baud[baudrate] );
-
+		if( !SetupMenu::isActive() ){
+			egl->setColor(COLOR_WHITE);
+			egl->setPrintPos( 10, 40 );
+			egl->printf("Autobaud: %d    ", baud[baudrate] );
+		}
 		ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
 	}
 }
@@ -299,10 +301,10 @@ void Serial::begin(){
 	uart_set_baudrate(uart_num, br);
 
 	int umask = UART_SIGNAL_INV_DISABLE;
-	if( serial1_tx_inverted.get() )
+	if( rs232_polarity.get() == RS232_INVERTED ){
 		umask |= UART_SIGNAL_TXD_INV;
-	if( serial1_rx_inverted.get() )
 		umask |= UART_SIGNAL_RXD_INV;
+	}
 	if( umask ){
 		ESP_ERROR_CHECK( uart_set_line_inverse( uart_num, umask ) );
 		ESP_LOGI(FNAME,"Serial param line inverse" );

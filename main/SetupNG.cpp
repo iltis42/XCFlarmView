@@ -56,3 +56,5 @@ SetupNG<int>  			display_mode("DISPLAY_MODE" , DISPLAY_MULTI );
 SetupNG<int>  			display_non_moving_target("NON_MOVE" , NON_MOVE_HIDE );
 SetupNG<int>  			notify_near( "NOTFNEAR", BUZZ_2KM );
 SetupNG<int>	        log_scale( "LOG_SCALE", 0 );
+SetupNG<int>  			rs232_polarity( "RS232POL", RS232_INVERTED );
+
