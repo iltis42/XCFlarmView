@@ -93,7 +93,7 @@ void SetupMenu::begin(){
 	ESP_LOGI(FNAME,"SetupMenu() begin");
 	setup();
 	if( inch2dot4 )
-		hpos = 240;
+		hpos = 200;
 	else
 		hpos = 120;
 }
@@ -343,13 +343,19 @@ void SetupMenu::options_menu_create_settings( MenuEntry *top ){
 	nmove->addEntry( "Show");
 	top->addEntry( nmove );
 	nmove->setHelp("Select if targets on ground that do not move shall be displayed", hpos );
+
+	SetupMenuSelect * pol = new SetupMenuSelect( "Serial Polarity", RST_NONE, 0, true, &rs232_polarity );
+	pol->addEntry( "Normal");
+	pol->addEntry( "Inverted");
+	top->addEntry( pol );
+	pol->setHelp("Select for Normal for normal RS232 polarity or Inverted for RS232 TTL signals", hpos );
 }
 
 void SetupMenu::setup_create_root(MenuEntry *top ){
 	ESP_LOGI(FNAME,"setup_create_root()");
 	SetupMenu * set = new SetupMenu( "Settings" );
 	top->addEntry( set );
-	set->setHelp( "Setup volume and other modes", 160);
+	set->setHelp( "Setup buzzer, display, RS232 and more", hpos);
 	set->addCreator(options_menu_create_settings);
 
 	SetupMenu * un = new SetupMenu( "Units" );
@@ -366,6 +372,7 @@ void SetupMenu::setup_create_root(MenuEntry *top ){
 	SetupMenuSelect * demo = new SetupMenuSelect( "Traffic Demo", RST_IMMEDIATE, 0, true, &traffic_demo );
 	demo->addEntry( "Cancel");
 	demo->addEntry( "Start");
+	demo->setHelp( "Starts a short traffic demo with some other gliders (reboots)", hpos );
 	top->addEntry( demo );
 
 	// Orientation   _display_orientation
