@@ -60,6 +60,7 @@ private:
 	static int info_timer;
 	static float old_radius;
 	static unsigned int team_id;
+	static Target* theInfoTarget;
 };
 
 #endif /* MAIN_TARGETMANAGER_H_ */

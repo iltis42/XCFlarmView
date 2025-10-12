@@ -32,6 +32,7 @@ int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
 xSemaphoreHandle _display=NULL;
 xSemaphoreHandle _pflaa_receive=NULL;
+Target* TargetManager::theInfoTarget=NULL;
 
 #define INFO_TIME (5*(1000/TASKPERIOD)/DISPLAYTICK)  // all ~10 sec
 
@@ -232,8 +233,13 @@ void TargetManager::longLongPress() {
 		team_id = id_iter->first;
 		ESP_LOGI(FNAME,"long long press: target ID locked: %X", team_id );
 	}else{
-		ESP_LOGI(FNAME,"long long press: nothing selected so fas, use closest: %X", min_id );
-		team_id = min_id;
+		if( theInfoTarget ){
+			ESP_LOGI(FNAME,"long long press: nothing selected so fas, use closest: %X", theInfoTarget->getID() );
+			team_id = theInfoTarget->getID();
+		}else{
+			ESP_LOGI(FNAME,"No target");
+		}
+
 	}
 };
 
@@ -348,6 +354,8 @@ void TargetManager::tick() {
     float min_dist   = 10000.0f;
     float max_climb  = -1000.0f;
     maxcl_id = 0;
+    min_id = 0;
+
     // --- Update timers ---
     if (holddown > 0) holddown--;
     if (id_timer  > 0) id_timer--;
@@ -391,6 +399,7 @@ void TargetManager::tick() {
                 if (tgt.getProximity() < min_dist) {
                     min_dist = tgt.getDist();
                     min_id = kv.first;
+                    id_iter = targets.end(); // deselect again
                 }
             } else if (id_iter != targets.end() && kv.first == id_iter->first) {
                 tgt.nearest(true);
@@ -433,16 +442,7 @@ void TargetManager::tick() {
             for (auto &p : visible) if (p.second->haveAlarm()) { infoTarget = p.second; infoId = p.first; break; }
             // 2) nearest
             if (!infoTarget) for (auto &p : visible) if (p.second->isNearest()) { infoTarget = p.second; infoId = p.first; break; }
-            // 3) closest distance fallback
-            if (!infoTarget) {
-                auto best = visible.front();
-                float bestDist = best.second->getDist();
-                for (auto &p : visible) {
-                    if (p.second->getDist() < bestDist) { best = p; bestDist = p.second->getDist(); bestDist = p.second->getDist(); }
-                }
-                infoTarget = best.second;
-                infoId = best.first;
-            }
+
         }
 
         // --- Draw all normal targets first (without info) ---
@@ -456,10 +456,14 @@ void TargetManager::tick() {
 
         // --- Draw the priority target last (on top) ---
         if (infoTarget) {
+        	theInfoTarget = infoTarget;
             if (redrawNeeded) { infoTarget->redrawInfo(); redrawNeeded = false; }
             infoTarget->drawInfo();  // show info
             infoTarget->draw(false, infoId == team_id);
+            min_id = infoId;
             if (!(_tick % 2)) infoTarget->checkClose();
+        }else{
+        	theInfoTarget = NULL;
         }
     }
     printRX();
