@@ -427,7 +427,7 @@ void TargetManager::tick() {
             } else {
                 // --- Remove invisible / aged-out target ---
                 if (id_iter != targets.end() && it->first == id_iter->first) id_iter++;
-                tgt.drawInfo(true); // only erase info here
+                // tgt.drawInfo(true); // only erase info here
                 tgt.draw(true, it->first == team_id);
                 it = targets.erase(it);
             }
@@ -456,15 +456,33 @@ void TargetManager::tick() {
 
         // --- Draw the priority target last (on top) ---
         if (infoTarget) {
-        	theInfoTarget = infoTarget;
-            if (redrawNeeded) { infoTarget->redrawInfo(); redrawNeeded = false; }
+            // Check if priority target changed
+            if (theInfoTarget && theInfoTarget != infoTarget) {
+                // erase old info
+                theInfoTarget->drawInfo(true);
+            }
+
+            theInfoTarget = infoTarget;
+
+            // Redraw info if needed
+            if (redrawNeeded) {
+                infoTarget->redrawInfo();
+                redrawNeeded = false;
+            }
+
             infoTarget->drawInfo();  // show info
             infoTarget->draw(false, infoId == team_id);
             min_id = infoId;
             if (!(_tick % 2)) infoTarget->checkClose();
-        }else{
-        	theInfoTarget = NULL;
+
+        } else {
+            // no info target, erase previous if exists
+            if (theInfoTarget) {
+                theInfoTarget->drawInfo(true);
+                theInfoTarget = nullptr;
+            }
         }
+
     }
     printRX();
 }
