@@ -343,106 +343,128 @@ void TargetManager::handleFlarmFlags() {
 
 }
 
-
 void TargetManager::tick() {
-    float min_dist = 10000.0f;
-    float max_climb = -1000.0f;
     _tick++;
+    float min_dist   = 10000.0f;
+    float max_climb  = -1000.0f;
+    maxcl_id = 0;
+    min_id   = 0;
 
     // --- Update timers ---
-    if (holddown) holddown--;
-    if (id_timer) id_timer--;
+    if (holddown > 0) holddown--;
+    if (id_timer  > 0) id_timer--;
+    if (info_timer > 0) info_timer--;
 
-    // --- Periodic logging ---
-    if (!(_tick % 20)) { // every 50 ms * 20 = 1 s
-        ESP_LOGI(FNAME, "Num targets: %d", targets.size());
+    // --- Periodic logging / redraw trigger ---
+    if (!(_tick % 20)) { // ~1 s
+        ESP_LOGI(FNAME, "Num targets: %d", (int)targets.size());
     }
-    if (!(_tick % 30)) { // every 50 ms * 30 = 1.5 s
+    if (!(_tick % 30)) { // ~1.5 s
         redrawNeeded = true;
     }
 
-    // --- Main tick block (every 5 ticks) ---
-    if (!(_tick % 5)) {
-        if (SetupMenu::isActive()) return;
-        if (info_timer > 0) info_timer--;
+    // --- Main tick block (every 5 ticks ~250 ms) ---
+    if (_tick % 5 != 0) return;
+    if (SetupMenu::isActive()) return;
 
-        handleFlarmFlags(); // Separate function for all FLARM flag checks
+    handleFlarmFlags();
 
-        // --- Draw own airplane if connected ---
-        if (!info_timer && Flarm::connected()) {
-            drawAirplane(DISPLAY_W / 2, DISPLAY_H / 2, Flarm::getGndCourse());
-        }
-        // --- Pass 1: Determine proximity and max climb ---
-        for (std::map<uint32_t, Target>::iterator it = targets.begin(); it != targets.end(); ++it) {
-            Target &tgt = it->second;
-            tgt.ageTarget();
-
-            if (SetupMenu::isActive()) {
-                return;
-            }
-
-            tgt.nearest(false);
-
-            if (tgt.getAge() < AGEOUT) {
-                if (tgt.haveAlarm()) id_timer = 0;
-
-                if (tgt.getClimb() > max_climb) {
-                    max_climb = tgt.getClimb();
-                    maxcl_id = it->first;
-                }
-
-                if (!id_timer) {
-                    if (tgt.getProximity() < min_dist) {
-                        min_dist = tgt.getDist();
-                        min_id = it->first;
-                    }
-                } else if (id_iter != targets.end() && it->first == id_iter->first) {
-                    tgt.nearest(true);
-                }
-            }
-        }
-
-        // --- Pass 2: Draw targets ---
-        if (!info_timer && Flarm::connected()) {
-            for (std::map<uint32_t, Target>::iterator it = targets.begin(); it != targets.end();) {
-                Target &tgt = it->second;
-
-                if (SetupMenu::isActive()) {
-                    return;
-                }
-
-                tgt.best(it->first == maxcl_id);
-
-                if (!id_timer) tgt.nearest(it->first == min_id);
-
-                bool displayTarget = (tgt.getAge() < AGEOUT) &&
-                    ((display_mode.get() == DISPLAY_MULTI) ||
-                     ((display_mode.get() == DISPLAY_SIMPLE) && tgt.isNearest()));
-
-                if (displayTarget) {
-                    if (tgt.isNearest() || tgt.haveAlarm()) {
-                        if (redrawNeeded) {
-                            tgt.redrawInfo();
-                            redrawNeeded = false;
-                        }
-                        tgt.drawInfo();
-                    }
-
-                    tgt.draw(false, it->first == team_id);
-
-                    if (!(_tick % 2)) tgt.checkClose();
-
-                    ++it;
-                } else {
-                    // Erase / remove target
-                    if (id_iter != targets.end() && it->first == id_iter->first) id_iter++;
-                    if (tgt.isNearest()) tgt.drawInfo(true);
-                    tgt.draw(true, it->first == team_id);
-
-                    it = targets.erase(it);
-                }
-            }
-        }
-        printRX();
+    const bool flarm_ok = (!info_timer && Flarm::connected());
+    if (flarm_ok) {
+        drawAirplane(DISPLAY_W / 2, DISPLAY_H / 2, Flarm::getGndCourse());
     }
+
+    // --- Pass 1: Determine nearest and max climb ---
+    for (auto &kv : targets) {
+        Target &tgt = kv.second;
+        tgt.ageTarget();
+        tgt.nearest(false);
+        tgt.best(false);
+
+        if (tgt.getAge() < AGEOUT) {
+            if (tgt.haveAlarm()) id_timer = 0;
+
+            if (tgt.getClimb() > max_climb) {
+                max_climb = tgt.getClimb();
+                maxcl_id = kv.first;
+            }
+
+            if (!id_timer) {
+                if (tgt.getProximity() < min_dist) {
+                    min_dist = tgt.getDist();
+                    min_id = kv.first;
+                }
+            } else if (id_iter != targets.end() && kv.first == id_iter->first) {
+                tgt.nearest(true);
+            }
+        }
+    }
+
+    // --- Pass 2: Draw all visible targets ---
+    if (flarm_ok) {
+        std::vector<std::pair<uint32_t, Target*>> visible;
+
+        // Collect visible targets
+        for (auto it = targets.begin(); it != targets.end();) {
+            Target &tgt = it->second;
+            tgt.best(it->first == maxcl_id);
+            if (!id_timer) tgt.nearest(it->first == min_id);
+
+            bool displayTarget = (tgt.getAge() < AGEOUT) &&
+                ((display_mode.get() == DISPLAY_MULTI) ||
+                 ((display_mode.get() == DISPLAY_SIMPLE) && tgt.isNearest()));
+
+            if (displayTarget) {
+                visible.emplace_back(it->first, &tgt);
+                ++it;
+            } else {
+                // --- Remove invisible / aged-out target ---
+                if (id_iter != targets.end() && it->first == id_iter->first) id_iter++;
+                tgt.drawInfo(true); // only erase info here
+                tgt.draw(true, it->first == team_id);
+                it = targets.erase(it);
+            }
+        }
+
+        // --- Select exactly one info/priority target ---
+        Target* infoTarget = nullptr;
+        uint32_t infoId = 0;
+
+        if (!visible.empty()) {
+            // 1) alarmed first
+            for (auto &p : visible) if (p.second->haveAlarm()) { infoTarget = p.second; infoId = p.first; break; }
+            // 2) nearest
+            if (!infoTarget) for (auto &p : visible) if (p.second->isNearest()) { infoTarget = p.second; infoId = p.first; break; }
+            // 3) closest distance fallback
+            if (!infoTarget) {
+                auto best = visible.front();
+                float bestDist = best.second->getDist();
+                for (auto &p : visible) {
+                    if (p.second->getDist() < bestDist) { best = p; bestDist = p.second->getDist(); bestDist = p.second->getDist(); }
+                }
+                infoTarget = best.second;
+                infoId = best.first;
+            }
+        }
+
+        // --- Draw all normal targets first (without info) ---
+        for (auto &p : visible) {
+            if (p.first == infoId) continue; // skip priority target
+            Target &tgt = *p.second;
+            tgt.draw(false, p.first == team_id);
+            if (!(_tick % 2)) tgt.checkClose();
+            // Do NOT call drawInfo(false) here — prevents flashing
+        }
+
+        // --- Draw the priority target last (on top) ---
+        if (infoTarget) {
+            if (redrawNeeded) { infoTarget->redrawInfo(); redrawNeeded = false; }
+            infoTarget->drawInfo();  // show info
+            infoTarget->draw(false, infoId == team_id);
+            if (!(_tick % 2)) infoTarget->checkClose();
+        }
+    }
+    printRX();
 }
+
+

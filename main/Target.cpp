@@ -48,6 +48,9 @@ Target::Target(nmea_pflaa_s a_pflaa) {
     tick = 0; last_pflaa_time = -1; _buzzedHoldDown = 0;
     dist = prox = 10000.0; recalc();
     reg = comp = nullptr; age = 0; is_nearest = false; alarm = false; alarm_timer = 0;
+    _isPriority = false;
+    is_best = false;
+    is_nearest = false;
 
     for (int i=0;i<sizeof(flarmnet_db)/sizeof(flarmnet_db[0]);i++){
         if (pflaa.ID == flarmnet_db[i].id){

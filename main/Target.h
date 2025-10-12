@@ -38,12 +38,14 @@ public:
 	void checkClose();
 	inline bool haveAlarm(){ return alarm; };
 	inline bool sameAlt( uint tolerance=150 ) { return( abs( pflaa.relVertical )< tolerance ); };
-	inline void nearest( bool n ) { is_nearest=n; };
+	inline void nearest( bool n ) { is_nearest=n;  updatePriority(); };
 	inline void best( bool n ) { is_best=n; };
 	inline bool isNearest() { return is_nearest; };
-	inline bool isBestClimber() { return is_best; };
-
-
+	inline bool isBestClimber() { return is_best; updatePriority();  };
+	inline void updatePriority() {        // mark as priority if this target is either nearest or has an alarm
+	        _isPriority = is_nearest || alarm;
+	}
+	inline bool isPriority() const { return _isPriority; }
 private:
 	void drawClimb( int x, int y, int size, int climb );
 	void checkAlarm();
@@ -74,6 +76,7 @@ private:
 	char * comp; // competition ID
 
 	bool is_nearest;
+	bool _isPriority; // new: used for draw order priority
 	bool do_follow;
 	bool is_best;
 	bool alarm;
