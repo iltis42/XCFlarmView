@@ -36,8 +36,10 @@ TargetManager TM;
 
 SetupMenu *menu=0;
 bool inch2dot4=false;
+#if( DISPLAY_W == 240 )
 Switch swUp;
 Switch swDown;
+#endif
 Switch swMode;
 float zoom=1.0;
 
@@ -118,12 +120,12 @@ extern "C" void app_main(void)
     Buzzer::play2( BUZZ_C, 500,audio_volume.get(), BUZZ_C, 1000, 0, 1 );
     DM.begin( egl );
 
-    Version V;
-    std::string ver( "SW Ver.: " );
-    ver += V.version();
-
     if( DISPLAY_W == 240 )
-    	inch2dot4 = true;
+       	inch2dot4 = true;
+
+    Version V;
+    std::string ver = std::string("XCF") + (inch2dot4 ? "2.4" : "1.4") + " SW: ";
+    ver += V.version();
 
     if( inch2dot4 )
     	egl->setFont(ucg_font_fub14_hn);
@@ -131,19 +133,17 @@ extern "C" void app_main(void)
     	egl->setFont(ucg_font_fub20_hn);
 
     egl->setColor(COLOR_WHITE);
-    egl->setPrintPos( 10, 25 );
-    egl->print("XCFlarmView 2.0");
     if( serial1_tx_enable.get() ){ // we don't need TX pin, so disable
     	serial1_tx_enable.set(0);
     }
 
-    egl->setPrintPos( 10, 50 );
+    egl->setPrintPos( 10, 30 );
     egl->printf("%s",ver.c_str() );
 
-	showText( 100,  "ID-Button Actions:" );
-	showText( 125,  "Short  (<0.3s): Next ID" );
-	showText( 150,  "Long   (>0.3s): Setup");
-    showText( 175,  "Hold   (>2s)  : Mark Team");
+	showText( 60,  "ID-Button Actions:" );
+	showText( 80,  "Short  (<0.3s): Next ID" );
+	showText( 100,  "Long   (>0.3s): Setup");
+    showText( 120,  "Hold   (>2s)  : Mark Team");
 
     if( serial1_tx_enable.get() ){ // we don't need TX pin, so disable
       	serial1_tx_enable.set(0);
@@ -151,21 +151,29 @@ extern "C" void app_main(void)
 
     egl->setFont(ucg_font_ncenR14_hr);
 
+    const char updatetxt[] = "Press Button for SW-Update";
+    int x,y;
+    if( inch2dot4 ) {x = 0; y = 270;}
+    else    		{x = 10;y = 165;}
+    egl->setPrintPos( x, y );
+    egl->printf(updatetxt);
+
     if( inch2dot4 ){
-    	showText( 270, "Press Button for SW-Update");
+		#if( DISPLAY_W == 240 )
+    	swUp.begin(GPIO_NUM_0, B_UP );
+    	swDown.begin(GPIO_NUM_3, B_DOWN );
+		#endif
+        swMode.begin(GPIO_NUM_34, B_MODE );
+    }else{
+    	swMode.begin(GPIO_NUM_0, B_MODE );
     }
-    else{
-    	egl->setPrintPos( 10, 175 );
-    	egl->printf("Press Button for SW-Update");
-    }
-
-    swUp.begin(GPIO_NUM_0, B_UP );
-    swDown.begin(GPIO_NUM_3, B_DOWN );
-    swMode.begin(GPIO_NUM_34, B_MODE );
-
 
     for(int i=0; i<40; i++){
+#if( DISPLAY_W == 240 )
     	if( swMode.isClosed() || swUp.isClosed() || swDown.isClosed() ){
+#else
+    	if( swMode.isClosed() ){
+#endif
     		egl->clearScreen();
     		ota = new OTA();
     		ota->doSoftwareUpdate();
