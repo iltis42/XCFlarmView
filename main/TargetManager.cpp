@@ -243,20 +243,29 @@ void TargetManager::longLongPress() {
 	}
 };
 
+int rx_old = -1;
+
 void TargetManager::printRX(){
 	// --- RX Flag ---
 	if (Flarm::getRxFlag() ) {
-		xSemaphoreTake(_display,portMAX_DELAY );
 		int rx = Flarm::getRXNum();
-		if( rx > 0 ){
-			egl->setColor(COLOR_GREEN); // G=0 R=255 B=0  RED Color
-		}else{
-			egl->setColor(COLOR_BLACK);
+		if( rx_old != rx ){
+			xSemaphoreTake(_display,portMAX_DELAY );
+			egl->setFont(ucg_font_ncenR14_hr);
+			if( rx_old > 0 ){
+				egl->setPrintPos( 5, 75 );
+				egl->setColor(COLOR_BLACK);
+				egl->printf( "RX %d  ", rx_old );
+				rx_old = -1;
+			}
+			if( rx > 0 ){
+				egl->setPrintPos( 5, 75 );
+				egl->setColor(COLOR_GREEN); // G=0 R=255 B=0  RED Color
+				egl->printf( "RX %d  ", rx );
+				rx_old = rx;
+			}
+			xSemaphoreGive(_display);
 		}
-		egl->setFont(ucg_font_ncenR14_hr);
-		egl->setPrintPos( 5, DISPLAY_H - 60 );
-		egl->printf( "RX %d  ", rx );
-		xSemaphoreGive(_display);
 		Flarm::resetRxFlag();
 	}
 }
