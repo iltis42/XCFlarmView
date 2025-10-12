@@ -348,8 +348,6 @@ void TargetManager::tick() {
     float min_dist   = 10000.0f;
     float max_climb  = -1000.0f;
     maxcl_id = 0;
-    min_id   = 0;
-
     // --- Update timers ---
     if (holddown > 0) holddown--;
     if (id_timer  > 0) id_timer--;
