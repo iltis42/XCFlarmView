@@ -217,8 +217,8 @@ void Target::drawFlarmTarget(int ax,int ay,int bearing,int sideLength,bool erase
        old_x0!=x0 || old_y0!=y0 || old_x1!=x1 || old_y1!=y1 || old_x2!=x2 || old_y2!=y2) {
         egl->setColor(COLOR_BLACK);
         if(old_x0>0) egl->drawTriangle(old_x0,old_y0,old_x1,old_y1,old_x2,old_y2);
-        if(old_closest && old_cirsize>0) egl->drawCircle(old_ax,old_ay,old_cirsize);
-        if(old_cirsizeteam>0) egl->drawCircle(old_ax,old_ay,old_cirsizeteam);
+        if(old_closest && old_cirsize>0){ egl->drawCircle(old_ax,old_ay,old_cirsize); }
+        if(old_cirsizeteam>0){ egl->drawCircle(old_ax,old_ay,old_cirsizeteam); egl->drawCircle(old_ax,old_ay,old_cirsizeteam+1); }
         if(old_climb!=-1000) drawClimb(old_x,old_y,old_size,old_climb);
         old_x0=old_x1=old_x2=-1; old_sidelen=old_climb=old_cirsize=old_cirsizeteam=-1;
     }
@@ -230,7 +230,7 @@ void Target::drawFlarmTarget(int ax,int ay,int bearing,int sideLength,bool erase
         egl->drawTriangle(x0,y0,x1,y1,x2,y2);
         if(is_best){ drawClimb(ax,ay,sideLength,climb); old_climb=climb; old_size=sideLength; old_x=ax; old_y=ay; }
         if(closest){ int len=rint(sideLength*0.75f); egl->drawCircle(ax,ay,len); old_cirsize=len; }
-        if(follow){ int len=rint(sideLength*0.75f+2.0f); egl->setColor(COLOR_RED); egl->drawCircle(ax,ay,len); old_cirsizeteam=len; }
+        if(follow){ int len=rint(sideLength*0.75f+2.0f); egl->setColor(COLOR_RED); egl->drawCircle(ax,ay,len); egl->drawCircle(ax,ay,len+1); old_cirsizeteam=len; }
         old_x0=x0; old_y0=y0; old_x1=x1; old_y1=y1; old_x2=x2; old_y2=y2; old_ax=ax; old_ay=ay; old_closest=closest;
     }
 }
