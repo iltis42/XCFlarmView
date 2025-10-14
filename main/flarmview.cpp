@@ -28,11 +28,13 @@
 #include "Switch.h"
 #include "SetupMenu.h"
 #include "DataMonitor.h"
+#include "esp_task_wdt.h"
 
 AdaptUGC *egl = 0;
 OTA *ota = 0;
 DataMonitor DM;
 TargetManager TM;
+#define WDT_TIMEOUT_S 10
 
 SetupMenu *menu=0;
 bool inch2dot4=false;
@@ -108,6 +110,7 @@ extern "C" void app_main(void)
     printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
 
     delay(100);
+	esp_task_wdt_init(WDT_TIMEOUT_S, true);
     //  serial1_speed.set( 1 );  // test for autoBaud
 
     egl = new AdaptUGC();
@@ -213,9 +216,11 @@ extern "C" void app_main(void)
     	printf("Self Loop Test Failed");
 
     ESP_LOGI(FNAME,"Team ID: %X", team_id.get() );
-
+    esp_task_wdt_add(NULL);
     while(1){
-    	delay(1000);
+    	ESP_LOGI(FNAME,"Free Heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_8BIT) );
+    	esp_task_wdt_reset();
+    	delay(5000);
     }
 
 }

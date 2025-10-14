@@ -3,12 +3,15 @@
 #include "driver/gpio.h"
 #include <algorithm>
 #include <esp_log.h>
+#include <SetupMenu.h>
+#include "esp_task_wdt.h"
 
 #define FNAME "Switch"
 
 std::list<SwitchObserver*> Switch::observers;
 std::list<Switch*> Switch::instances;
 TaskHandle_t Switch::pid = nullptr;
+extern bool inch2dot4;
 
 #define REPEAT_DELAY_MS 500     // Time to first repeat
 #define REPEAT_RATE_MS  200     // Repeat intervall
@@ -67,7 +70,19 @@ void Switch::notifyObserversPress() {
 
 void Switch::sendPress(int dur) {
     ESP_LOGI(FNAME, "Press (%d ms)", dur);
-    notifyObserversPress();
+    if( inch2dot4 ){
+       notifyObserversPress();
+    }else{ // 1.4 inch display
+
+       for (auto& obs : observers){
+    	   if( SetupMenu::isActive() )
+    		   obs->up(1);
+    	   else
+    		   obs->press();
+       	   // obs->press();
+       	   ESP_LOGI(FNAME, "send obs %p press, key-nr: %d", obs, _mode );
+       }
+    }
 }
 
 void Switch::sendLongPress(int dur) {
@@ -145,16 +160,18 @@ void Switch::tick() {
 }
 
 void Switch::switchTask(void* pvParameters) {
-    while (1) {
-        for (auto& sw : instances) {
-            sw->tick();
-        }
-        vTaskDelay(pdMS_TO_TICKS(TASK_PERIOD_MS));
-    }
+	esp_task_wdt_add(NULL);
+	while (1) {
+		for (auto& sw : instances) {
+			sw->tick();
+		}
+		esp_task_wdt_reset();
+		vTaskDelay(pdMS_TO_TICKS(TASK_PERIOD_MS));
+	}
 }
 
 void Switch::startTask() {
-    ESP_LOGI(FNAME, "Starting Switch Task");
-    if (pid == nullptr)
-        xTaskCreatePinnedToCore(&switchTask, "Switch", 6096, NULL, 9, &pid, 0);
+	ESP_LOGI(FNAME, "Starting Switch Task");
+	if (pid == nullptr)
+		xTaskCreatePinnedToCore(&switchTask, "Switch", 6096, NULL, 9, &pid, 0);
 }

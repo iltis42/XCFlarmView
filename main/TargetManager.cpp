@@ -14,6 +14,7 @@
 #include "Switch.h"
 #include "SetupMenu.h"
 #include "flarmview.h"
+#include "esp_task_wdt.h"
 
 std::map< unsigned int, Target> TargetManager::targets;
 std::map< unsigned int, Target>::iterator TargetManager::id_iter = targets.begin();
@@ -44,10 +45,12 @@ void TargetManager::begin(){
 }
 
 void TargetManager::taskTargetMgr(void *pvParameters){
+	esp_task_wdt_add(NULL);
 	while(1){
 		if( !SetupMenu::isActive() ){
 			tick();
 		}
+		esp_task_wdt_reset();
 		delay(TASKPERIOD);
 	}
 }
