@@ -32,14 +32,12 @@ unsigned int TargetManager::team_id = 0;
 int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
 xSemaphoreHandle _display=NULL;
-xSemaphoreHandle _pflaa_receive=NULL;
 Target* TargetManager::theInfoTarget=NULL;
 
 #define INFO_TIME (5*(1000/TASKPERIOD)/DISPLAYTICK)  // all ~10 sec
 
 void TargetManager::begin(){
 	_display=xSemaphoreCreateMutex();
-	_pflaa_receive=xSemaphoreCreateMutex();
 	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 10, &pid, 0);
 	attach( this );
 }
@@ -75,9 +73,11 @@ void TargetManager::receiveTarget( nmea_pflaa_s &pflaa ){
 
 TargetManager::~TargetManager() {
 	// TODO Auto-generated destructor stub
+	vSemaphoreDelete(_display);
 }
 
 void TargetManager::drawN( int x, int y, bool erase, float north, float dist ){
+  if (!egl) return;
   if( SetupMenu::isActive() )
 		return;
 	// ESP_LOGI(FNAME,"drawAirplane x:%d y:%d small:%d", x, y, smallSize );
@@ -136,6 +136,7 @@ void TargetManager::drawAirplane(int x, int y, float north) {
 
 void TargetManager::printAlarm( const char*alarm, int x, int y, bool print, ucg_color_t color ){
 	// ESP_LOGI(FNAME,"printAlarm: %s, x:%d y:%d", alarm, x,y );
+	if (!egl) return;
 	DisplayLock lock(_display);
 	if( print ){
 		egl->setColor( color ); // G=0 R=255 B=0  RED Color
@@ -189,13 +190,14 @@ void TargetManager::nextTarget(int timer){
 }
 
 void TargetManager::printVersions( int x, int y, const char *prefix, const char *ver, int erase ){
+	if (!egl) return;
+	DisplayLock lock(_display);
 	if( erase )
 		egl->setColor(COLOR_BLACK);
 	else{
 		egl->setColor(COLOR_WHITE);
 		info_timer = INFO_TIME;
 	}
-	DisplayLock lock(_display);
 	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos( x, y );
 	egl->printf( "%s %s", prefix, ver );
