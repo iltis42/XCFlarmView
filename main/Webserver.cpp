@@ -4,6 +4,7 @@
 #include "Webserver.h"
 #include "logdef.h"
 #include "coredump_to_server.h"
+#include <algorithm>
 
 cWebserver* cWebserver::m_instance = nullptr;
 extern char * program_version;

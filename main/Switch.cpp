@@ -6,8 +6,6 @@
 #include <SetupMenu.h>
 #include "esp_task_wdt.h"
 
-#define FNAME "Switch"
-
 std::list<SwitchObserver*> Switch::observers;
 std::list<Switch*> Switch::instances;
 TaskHandle_t Switch::pid = nullptr;
