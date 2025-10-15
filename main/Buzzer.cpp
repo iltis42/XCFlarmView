@@ -28,21 +28,21 @@
 #define LEDC_DUTY               (0) // Set duty to 50%. (2 ** 13) * 50% = 4096
 #define LEDC_FREQUENCY          (2700) // Frequency in Hertz. Set frequency at 2.7 kHz
 
-TaskHandle_t Buzzer::pid = 0;
+TaskHandle_t Buzzer::pid = nullptr;
 int Buzzer::freq = 0;
 int Buzzer::dur = 0;
 int Buzzer::vol = 0;
+xQueueHandle Buzzer::queue = nullptr;
 
-xQueueHandle Buzzer::queue = 0;
+typedef struct {
+    uint16_t frequency;   // Hz
+    uint16_t duration;    // ms
+    uint16_t  volume;      // 0..100
+    uint16_t frequency2;
+    uint16_t duration2;
+    uint16_t  volume2;
+} tone_t;
 
-typedef struct s_tone{
-	uint frequency: 12;  // max 4096 Hz
-	uint duration: 12;   // max 4096 mS
-	uint volume:8;       // max 100
-	uint frequency2: 12;  // max 4096 Hz
-	uint duration2: 12;   // max 4096 mS
-	uint volume2:8;       // max 100
-}tone_t;
 
 /* Warning:
  * For ESP32, ESP32S2, ESP32S3, ESP32C3, ESP32C2, ESP32C6, ESP32H2, ESP32P4 targets,
@@ -57,12 +57,16 @@ Buzzer::Buzzer() {
 
 Buzzer::~Buzzer() {
 	// TODO Auto-generated destructor stub
+	if (pid) vTaskDelete(pid);
+	if (queue) vQueueDelete(queue);
+	ledc_stop(LEDC_MODE, LEDC_CHANNEL, 0);
 }
 
 void Buzzer::init(uint freq)
 {
     // Prepare and then apply the LEDC PWM timer configuration
 	ESP_LOGI(FNAME,"Buzzer::init() F=%d", freq );
+	if (queue) vQueueDelete(queue);
     ledc_timer_config_t ledc_timer = {
         .speed_mode       = LEDC_MODE,
         .duty_resolution  = LEDC_DUTY_RES,
@@ -99,16 +103,21 @@ void Buzzer::init(uint freq)
     };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
     volume(0);
-    queue = xQueueCreate(200, sizeof(tone_t));
+    queue = xQueueCreate(40, sizeof(tone_t));
+    if (!queue) {
+    	ESP_LOGE(FNAME, "Failed to create buzzer queue");
+    	return;
+    }
     taskStart();
 }
 
 void Buzzer::frequency( uint f ){
-	ESP_ERROR_CHECK(ledc_set_freq( LEDC_MODE, LEDC_TIMER, f));
+	uint f2 = (f < 50u) ? 50u : (f > 4000u ? 4000u : f);
+	ESP_ERROR_CHECK(ledc_set_freq( LEDC_MODE, LEDC_TIMER, f2));
 	// ESP_LOGI(FNAME,"Buzzer::f=%d", f );
 }
 
-void Buzzer::play2( uint f1, uint d1, uint v1, uint f2, uint d2, uint v2, uint repetition )
+void Buzzer::play2( uint16_t f1, uint16_t d1, uint16_t v1, uint16_t f2, uint16_t d2, uint16_t v2, uint repetition )
 {
 	xQueueReset(queue); // empty queue
 	// ESP_LOGI(FNAME,"Buzzer play2() f:%d d:%d v:%d r:%d", f1, d1, v1, repetition );
@@ -125,13 +134,14 @@ void Buzzer::buzz_task(void *pvParameters)
 		if( xQueueReceive(queue, &t, portMAX_DELAY) == pdTRUE  ){
 			frequency(t.frequency);
 			volume(t.volume);
-    		delay(t.duration);
+			TickType_t xLastWake = xTaskGetTickCount();
+			vTaskDelayUntil(&xLastWake, pdMS_TO_TICKS(t.duration));
     		volume(0);
     		if( t.duration2 )
     		{
     			frequency(t.frequency2);
     			volume(t.volume2);
-    			delay(t.duration2);
+    			vTaskDelay(pdMS_TO_TICKS(t.duration2));
     			volume(0);
     		}
 		}
@@ -139,9 +149,11 @@ void Buzzer::buzz_task(void *pvParameters)
 	}
 }
 
-void Buzzer::play( uint f, uint d, uint v, uint f2, uint d2, uint v2 ) {
+void Buzzer::play( uint16_t f, uint16_t d, uint16_t v, uint16_t f2, uint16_t d2, uint16_t v2 ) {
+	if (!queue) return;
 	tone_t t = { f, d, v, f2, d2, v2 };
-	xQueueSend(queue, &t, 0);
+	if (xQueueSend(queue, &t, 0) != pdTRUE)
+	    ESP_LOGW(FNAME, "Buzzer queue full, tone dropped");
 };
 
 void Buzzer::volume( uint vol ){
