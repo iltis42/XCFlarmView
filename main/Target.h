@@ -19,6 +19,8 @@
                                //  5   * 50  = 250 mS -> 1000 / 250 = 4
 #define AGEOUT (30*((1000/((DISPLAYTICK*TASKPERIOD)))))  // 15 seconds
 
+
+
 class Target {
 public:
 	Target();
@@ -80,6 +82,7 @@ private:
 	bool do_follow;
 	bool is_best;
 	bool alarm;
+	bool firstDraw;
 	int alarm_timer;
 	int old_climb;
 	int old_x;
@@ -88,10 +91,10 @@ private:
 	float tek_climb;
 	int last_groundspeed;
 
-	static char cur_dist[32];
-	static char cur_alt[32];
-	static char cur_id[32];
-	static char cur_var[32];
+	char cur_dist[32];
+	char cur_alt[32];
+	char cur_id[32];
+	char cur_var[32];
 
 	static int old_dist;
 	static unsigned int old_alt;

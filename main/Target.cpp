@@ -18,10 +18,6 @@ extern AdaptUGC *egl;
 #define TARGET_SIZE_MAX 25
 
 // Static members initialization
-char Target::cur_dist[32] = {0};
-char Target::cur_alt[32] = {0};
-char Target::cur_id[32] = {0};
-char Target::cur_var[32] = {0};
 int Target::old_dist = -10000;
 unsigned int Target::old_alt = 100000;
 unsigned int Target::old_id = 0;
@@ -37,7 +33,12 @@ inline T clamp(T val, T minVal, T maxVal) {
     return val;
 }
 
-Target::Target() {}
+Target::Target() {
+	memset(cur_dist, 0, sizeof(cur_dist));
+	memset(cur_alt, 0, sizeof(cur_alt));
+	memset(cur_id, 0, sizeof(cur_id));
+	memset(cur_var, 0, sizeof(cur_var));
+}
 
 Target::Target(nmea_pflaa_s a_pflaa) {
     pflaa = a_pflaa;
@@ -51,6 +52,7 @@ Target::Target(nmea_pflaa_s a_pflaa) {
     _isPriority = false;
     is_best = false;
     is_nearest = false;
+    firstDraw = true;
 
     for (int i=0;i<sizeof(flarmnet_db)/sizeof(flarmnet_db[0]);i++){
         if (pflaa.ID == flarmnet_db[i].id){
@@ -106,9 +108,10 @@ void Target::redrawInfo(){
 
 
 void Target::drawInfo(bool erase) {
+	if(!egl) return;
 	char buf[32] = {0};
 	if (pflaa.ID == 0) return;
-	xSemaphoreTake(_display, portMAX_DELAY);
+	DisplayLock lock(_display);
 
 	// --- Distance ---
 	if ((old_dist != (int)(dist * 100)) || erase) {
@@ -185,7 +188,6 @@ void Target::drawInfo(bool erase) {
 
 	egl->setPrintPos(5, DISPLAY_H - 37);
 	egl->printf("Alt %s", Units::AltitudeUnit());
-	xSemaphoreGive(_display);
 }
 
 
@@ -214,7 +216,8 @@ void Target::drawFlarmTarget(int ax,int ay,int bearing,int sideLength,bool erase
     int climb=int(tek_climb+0.5f);
 
     if(erase || old_closest!=closest || old_climb!=climb || old_sidelen!=sideLength ||
-       old_x0!=x0 || old_y0!=y0 || old_x1!=x1 || old_y1!=y1 || old_x2!=x2 || old_y2!=y2) {
+       old_x0!=x0 || old_y0!=y0 || old_x1!=x1 || old_y1!=y1 || old_x2!=x2 || old_y2!=y2 || firstDraw) {
+    	firstDraw = false;
         egl->setColor(COLOR_BLACK);
         if(old_x0>0) egl->drawTriangle(old_x0,old_y0,old_x1,old_y1,old_x2,old_y2);
         if(old_closest && old_cirsize>0){ egl->drawCircle(old_ax,old_ay,old_cirsize); }
@@ -237,8 +240,9 @@ void Target::drawFlarmTarget(int ax,int ay,int bearing,int sideLength,bool erase
 
 // --- draw ---
 void Target::draw(bool erase, bool follow){
+	if(!egl) return;
     checkAlarm();
-    int size = clamp(10 + int(10.0/dist), TARGET_SIZE_MIN, TARGET_SIZE_MAX);
+    int size = clamp(10 + int(10.0/std::max(dist, 0.001f)), TARGET_SIZE_MIN, TARGET_SIZE_MAX);
     uint8_t brightness = uint8_t(255 - 255.0 * std::min(1.0, age/(double)AGEOUT));
     ucg_color_t color;
     if(dist<1.0 && sameAlt()){

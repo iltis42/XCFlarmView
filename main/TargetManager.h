@@ -13,6 +13,7 @@
 #ifndef MAIN_TARGETMANAGER_H_
 #define MAIN_TARGETMANAGER_H_
 
+
 class TargetManager: public SwitchObserver {
 public:
 	TargetManager();

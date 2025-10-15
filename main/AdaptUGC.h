@@ -84,6 +84,13 @@ extern uint8_t ucg_font_fub11_hn[];
 extern uint8_t eglib_font_free_sansbold_66[];
 
 
+class DisplayLock {
+    xSemaphoreHandle sem;
+public:
+    DisplayLock(xSemaphoreHandle s) : sem(s) { xSemaphoreTake(sem, portMAX_DELAY); }
+    ~DisplayLock() { xSemaphoreGive(sem); }
+};
+
 class AdaptUGC : public Print{
 public:
 	// init

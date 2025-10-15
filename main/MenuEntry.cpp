@@ -193,13 +193,12 @@ void MenuEntry::showhelp( int y ){
 void MenuEntry::clear()
 {
 	// ESP_LOGI(FNAME,"MenuEntry::clear");
-	xSemaphoreTake(_display, portMAX_DELAY);
+	DisplayLock lock(_display);
 	egl->setColor(COLOR_BLACK);
 	egl->drawBox( 0,0,DISPLAY_W,DISPLAY_H );
 	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos( 1, 30 );
 	egl->setColor(COLOR_WHITE);
-	xSemaphoreGive(_display);
 }
 
 
