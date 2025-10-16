@@ -24,6 +24,10 @@ unsigned int Target::old_id = 0;
 int Target::old_var = -10000;
 int Target::blink = 0;
 extern xSemaphoreHandle _display;
+char Target::cur_dist[32] = "\0";
+char Target::cur_alt[32] = "\0";
+char Target::cur_id[32] = "\0";
+char Target::cur_var[32] = "\0";
 
 // Helper clamp for ESP32 (C++11 compatibility)
 template<typename T>
@@ -34,10 +38,7 @@ inline T clamp(T val, T minVal, T maxVal) {
 }
 
 Target::Target() {
-	memset(cur_dist, 0, sizeof(cur_dist));
-	memset(cur_alt, 0, sizeof(cur_alt));
-	memset(cur_id, 0, sizeof(cur_id));
-	memset(cur_var, 0, sizeof(cur_var));
+
 }
 
 Target::Target(nmea_pflaa_s a_pflaa) {
@@ -117,7 +118,7 @@ void Target::drawInfo(bool erase) {
 	if ((old_dist != (int)(dist * 100)) || erase) {
 		if (strlen(cur_dist)) drawDist(COLOR_BLACK);
 		if (!erase) {
-			sprintf(cur_dist, "%.2f", Units::Distance(dist));
+			snprintf(cur_dist, sizeof( cur_dist ), "%.2f", Units::Distance(dist));
 			drawDist(COLOR_WHITE);
 			old_dist = (int)(dist * 100);
 		} else {
@@ -133,7 +134,7 @@ void Target::drawInfo(bool erase) {
 				if (comp) sprintf(cur_id, "%s %s", reg, comp);
 				else      sprintf(cur_id, "%s", reg);
 			} else {
-				sprintf(cur_id, "%06X", pflaa.ID);
+				snprintf(cur_id, sizeof( cur_id ), "%06X", pflaa.ID);
 			}
 			drawID(COLOR_WHITE);
 			old_id = pflaa.ID;
@@ -147,7 +148,7 @@ void Target::drawInfo(bool erase) {
 		if (strlen(cur_alt)) drawAlt(COLOR_BLACK);
 		if (!erase) {
 			int alt = (int)(Units::Altitude(pflaa.relVertical + 0.5));
-			sprintf(cur_alt, "%s%d", (pflaa.relVertical > 0) ? "+" : "", alt);
+			snprintf(cur_alt, sizeof( cur_alt ), "%s%d", (pflaa.relVertical > 0) ? "+" : "", alt);
 			drawAlt(COLOR_WHITE);
 			old_alt = pflaa.relVertical;
 		} else {
@@ -160,7 +161,7 @@ void Target::drawInfo(bool erase) {
 		if (strlen(cur_var)) drawVar(COLOR_BLACK);
 		if (!erase) {
 			float climb = Units::Vario((float)pflaa.climbRate);
-			sprintf(cur_var, "%+.1f", climb);
+			snprintf(cur_var, sizeof( cur_var ), "%+.1f", climb);
 			drawVar(COLOR_WHITE);
 			old_var = (int)(pflaa.climbRate * 10);
 		} else {

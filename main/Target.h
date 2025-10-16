@@ -91,10 +91,10 @@ private:
 	float tek_climb;
 	int last_groundspeed;
 
-	char cur_dist[32];
-	char cur_alt[32];
-	char cur_id[32];
-	char cur_var[32];
+	static char cur_dist[32];
+	static char cur_alt[32];
+	static char cur_id[32];
+	static char cur_var[32];
 
 	static int old_dist;
 	static unsigned int old_alt;

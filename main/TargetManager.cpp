@@ -366,6 +366,7 @@ void TargetManager::tick() {
     if (holddown > 0) holddown--;
     if (id_timer  > 0) id_timer--;
     if (info_timer > 0) info_timer--;
+    heap_caps_check_integrity_all(true);
 
     // --- Periodic logging / redraw trigger ---
     if (!(_tick % 20)) { // ~1 s
