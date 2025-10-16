@@ -38,6 +38,7 @@ some sentences might be lost or truncated.
 
 bool Serial::_selfTest = false;
 EventGroupHandle_t Serial::rxTxNotifier = 0;
+extern xSemaphoreHandle _display;
 
 // Event group bits
 #define RX0_CHAR 1
@@ -62,6 +63,7 @@ RingBufCPP<SString, QUEUE_SIZE> s1_tx_q;
 RingBufCPP<SString, QUEUE_SIZE> s1_rx_q;
 
 static xSemaphoreHandle qMutex=NULL;
+#define SERIAL_BUFLEN 1024
 
 char Serial::framebuffer[512];
 int  Serial::pos = 0;
@@ -151,7 +153,7 @@ void Serial::parse_NMEA( char c ){
 // Serial Handler ttyS1, S1, port 8881
 void Serial::serialHandler(void *pvParameters)
 {
-	char buf[512];  // 6 messages @ 80 byte
+	char buf[SERIAL_BUFLEN];  // 6 messages @ 80 byte
 	// Make a pause, that has avoided core dumps during enable the RX interrupt.
 	delay( 1000 );  // delay a bit serial task startup unit startup of system is through
 	ESP_LOGI(FNAME,"S1 serial handler startup");
@@ -175,17 +177,48 @@ void Serial::serialHandler(void *pvParameters)
 				DM.monitorString( MON_S1, DIR_TX, buf, len );
 			}
 		}
-		// RX part
-		int length = 0;
-		uart_get_buffered_data_len(uart_num, (size_t*)&length);
-		// ESP_LOGI(FNAME,"S1 RX, len=%d", length );
-		if( length ){
-			uint16_t rxBytes = uart_read_bytes( uart_num, (uint8_t*)buf, length, 512);  // read out all characters from the RX queue
-			// ESP_LOGI(FNAME,"S1: RX: read %d bytes, avail were: %d bytes", rxBytes, length );
-			// ESP_LOG_BUFFER_HEXDUMP(FNAME,buf, rxBytes, ESP_LOG_INFO);
-			buf[rxBytes] = 0;
-			process( buf, rxBytes );
-			DM.monitorString( MON_S1, DIR_RX, buf, rxBytes );
+		// --- RX handling (optimized) ---
+		uint8_t buf[SERIAL_BUFLEN];
+		uint16_t rxBytes = 0;
+
+		while (true) {
+		    size_t available = 0;
+		    // Check how many bytes are waiting in the HW buffer
+		    esp_err_t err = uart_get_buffered_data_len(uart_num, &available);
+		    if (err != ESP_OK || available == 0) break;
+
+		    // Limit read length to remaining buffer space
+		    size_t toRead = std::min(available, (size_t)(SERIAL_BUFLEN - rxBytes - 1));
+		    if (toRead == 0) break; // no room left
+
+		    // Read from UART hardware buffer
+		    int bytes = uart_read_bytes(
+		        uart_num,
+		        buf + rxBytes,
+		        toRead,
+		        20 / portTICK_PERIOD_MS   // short timeout
+		    );
+		    if (bytes <= 0) break;
+
+		    // Log the received data BEFORE increasing rxBytes
+		    DM.monitorString(MON_S1, DIR_RX, (char*)(buf + rxBytes), bytes);
+
+		    // Advance pointer
+		    rxBytes += bytes;
+
+		    // Safety: stop if buffer almost full
+		    if (rxBytes >= SERIAL_BUFLEN - 4) {
+		        ESP_LOGW(FNAME, "UART RX buffer nearly full (%d bytes)", rxBytes);
+		        break;
+		    }
+		}
+
+		// Null-terminate for safety (for text/NMEA parsing)
+		buf[rxBytes] = '\0';
+
+		// Process only if something was received
+		if (rxBytes > 0) {
+		    process((char*)buf, rxBytes);
 		}
 		if( Flarm::connected() ){ // normal operation
 			if( serial1_speed.get() != baudrate )    // save when new baudrate has have been detected
@@ -270,9 +303,11 @@ void Serial::huntBaudrate(){
 		}
 		uart_set_baudrate(uart_num, baud[baudrate]);
 		if( !SetupMenu::isActive() ){
+			xSemaphoreTake(_display, portMAX_DELAY);
 			egl->setColor(COLOR_WHITE);
 			egl->setPrintPos( 10, 40 );
 			egl->printf("Autobaud: %d    ", baud[baudrate] );
+			xSemaphoreGive(_display);
 		}
 		ESP_LOGI(FNAME,"Serial Interface ttyS1 next baudrate: %d", baud[baudrate] );
 	}
@@ -352,5 +387,5 @@ void Serial::begin(){
 
 void Serial::taskStart(){
 	ESP_LOGI(FNAME,"Serial::taskStart()" );
-	xTaskCreatePinnedToCore(&serialHandler, "serialHandler1", 4096, NULL, 13, &pid, 0);
+	xTaskCreatePinnedToCore(&serialHandler, "serialHandler1", 6192, NULL, 13, &pid, 0);
 }
