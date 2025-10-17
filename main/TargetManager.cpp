@@ -35,6 +35,7 @@ int TargetManager::info_timer = 0;
 float TargetManager::old_radius=0.0;
 xSemaphoreHandle _display=NULL;
 Target* TargetManager::theInfoTarget=NULL;
+int TargetManager::old_num_targets = 0;
 
 #define INFO_TIME (5*(1000/TASKPERIOD)/DISPLAYTICK)  // all ~10 sec
 
@@ -379,7 +380,11 @@ void TargetManager::tick() {
 
     // --- Periodic logging / redraw trigger ---
     if (!(_tick % 20)) { // ~1 s
-        ESP_LOGI(FNAME, "Num targets: %d", (int)targets.size());
+    	int num=(int)targets.size();
+    	if( num != old_num_targets ){
+    		ESP_LOGI(FNAME, "Num targets: %d", num );
+    		old_num_targets = num;
+    	}
     }
     if (!(_tick % 30)) { // ~1.5 s
         redrawNeeded = true;

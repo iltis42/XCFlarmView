@@ -61,6 +61,7 @@ private:
 	static bool redrawNeeded;
 	static bool erase_info;
 	static int info_timer;
+	static int old_num_targets;
 	static float old_radius;
 	static unsigned int team_id;
 	static Target* theInfoTarget;
