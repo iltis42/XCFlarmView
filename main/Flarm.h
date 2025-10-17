@@ -20,7 +20,7 @@ typedef struct {
 	unsigned int ID;
 	int track;
 	float turnRate;
-	int groundSpeed;
+	float groundSpeed;
 	float climbRate;
 	char acftType[3];
 } nmea_pflaa_s;

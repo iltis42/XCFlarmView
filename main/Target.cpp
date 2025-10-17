@@ -218,6 +218,7 @@ void Target::drawFlarmTarget(int ax,int ay,int bearing,int sideLength,bool erase
 
     if(erase || old_closest!=closest || old_climb!=climb || old_sidelen!=sideLength ||
        old_x0!=x0 || old_y0!=y0 || old_x1!=x1 || old_y1!=y1 || old_x2!=x2 || old_y2!=y2 || firstDraw) {
+    	DisplayLock lock(_display);
     	firstDraw = false;
         egl->setColor(COLOR_BLACK);
         if(old_x0>0) egl->drawTriangle(old_x0,old_y0,old_x1,old_y1,old_x2,old_y2);
@@ -230,6 +231,7 @@ void Target::drawFlarmTarget(int ax,int ay,int bearing,int sideLength,bool erase
     if(x0<=0||x0>=DISPLAY_W||y0<=0||y0>=DISPLAY_H) return;
 
     if(!erase){
+    	DisplayLock lock(_display);
         egl->setColor(color.color[0],color.color[1],color.color[2]);
         egl->drawTriangle(x0,y0,x1,y1,x2,y2);
         if(is_best){ drawClimb(ax,ay,sideLength,climb); old_climb=climb; old_size=sideLength; old_x=ax; old_y=ay; }

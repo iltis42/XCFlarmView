@@ -9,6 +9,7 @@
 #include <map>
 #include "Target.h"
 #include "Switch.h"
+#include <mutex>
 
 #ifndef MAIN_TARGETMANAGER_H_
 #define MAIN_TARGETMANAGER_H_
@@ -18,7 +19,7 @@ class TargetManager: public SwitchObserver {
 public:
 	TargetManager();
 	~TargetManager();
-	static void receiveTarget( nmea_pflaa_s &target );
+	static void receiveTarget( const nmea_pflaa_s &target );
 	static void tick();
 	static void drawAirplane( int x, int y, float north=0.0 );
 	void begin();
@@ -39,6 +40,7 @@ public:
 private:
 	static TargetManager* instance;
 	static std::map< unsigned int, Target> targets;
+	static std::mutex targets_mutex;
 	static std::map< unsigned int, Target>::iterator id_iter;
 	static float oldN;
 	static void drawN( int x, int y, bool erase, float north, float azoom );
