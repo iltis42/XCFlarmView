@@ -252,9 +252,8 @@ void TargetManager::longLongPress() {
 	}
 };
 
-int rx_old = -1;
-
 void TargetManager::printRX(){
+	static int rx_old = -1;
 	// --- RX Flag ---
 	if (Flarm::getRxFlag() ) {
 		DisplayLock lock(_display);
