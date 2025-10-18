@@ -122,7 +122,7 @@ void TargetManager::drawAirplane(int x, int y, float north) {
     // --- Redraw orientation and circle if changed ---
     constexpr float EPS_N = 0.5f;
     float delta = fabsf(fmodf(north - oldN + 540.0f, 360.0f) - 180.0f);
-    bool needRedraw = (oldN == -1.0f) || delta > EPS_N || fabsf(old_radius - new_radius) > 0.5f;
+    bool needRedraw = (oldN == -1.0f) || delta > EPS_N || fabsf(old_radius - new_radius) > 0.5f || !(_tick %20);
 
     if (needRedraw) {
         if (oldN != -1.0f)
