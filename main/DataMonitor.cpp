@@ -7,7 +7,7 @@
 #define SCROLL_TOP      20
 #define SCROLL_BOTTOM  320
 
-xSemaphoreHandle DataMonitor::mutex = 0;
+extern xSemaphoreHandle _display;
 extern bool enable_restart;
 
 DataMonitor::DataMonitor(){
@@ -17,7 +17,6 @@ DataMonitor::DataMonitor(){
 	paused = true;
 	setup = 0;
 	channel = MON_OFF;
-	mutex = xSemaphoreCreateMutex();
 	first=true;
 	rx_total = 0;
 	tx_total = 0;
@@ -64,10 +63,9 @@ void DataMonitor::monitorString( int ch, e_dir_t dir, const char *str, int len )
 		// ESP_LOGI(FNAME,"not active, return started:%d paused:%d", mon_started, paused );
 		return;
 	}
-	xSemaphoreTake(mutex,portMAX_DELAY );
+	DisplayLock lock(_display);
 	bool binary = false;
 	printString( ch, dir, str, binary, len );
-	xSemaphoreGive(mutex);
 }
 
 void DataMonitor::printString( int ch, e_dir_t dir, const char *str, bool binary, int len ){
