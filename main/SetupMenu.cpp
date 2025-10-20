@@ -39,6 +39,7 @@ int SetupMenu::hpos = 240;
 
 int do_display_test(SetupMenuSelect * p){
 	if( display_test.get() ){
+		DisplayLock lock(_display);
 		egl->setColor( COLOR_WHITE );
 		egl->drawBox( 0, 0, DISPLAY_W, DISPLAY_H );
 		while( swMode.isOpen() ){
@@ -130,6 +131,7 @@ void SetupMenu::display( int mode ){
 	clear();
 	int y=25;
 	// ESP_LOGI(FNAME,"Title: %s y=%d child size:%d", selected->_title,y, _childs.size()  );
+	DisplayLock lock(_display);
 	egl->setFont(ucg_font_ncenR14_hr);
 	egl->setPrintPos(1,y);
 	egl->setFontPosBottom();
@@ -156,8 +158,12 @@ void SetupMenu::display( int mode ){
 	showhelp( y );
 }
 
+#if( DISPLAY_W == 240 )
 void SetupMenu::up(int count){
-	if( selected != this ){
+#else
+void SetupMenu::down(int count){
+#endif
+	if( selected != this || focus ){
 		return;
 	}
 	if( !_menu_active ){
@@ -169,6 +175,7 @@ void SetupMenu::up(int count){
 	ESP_LOGI(FNAME,"down %d %d %d", highlight, _childs.size(), focus );
 	if( focus )
 		return;
+	DisplayLock lock(_display);
 	egl->setColor(COLOR_BLACK);
 	egl->drawFrame( 1,(highlight+1)*25+3,DISPLAY_W-2,25 );
 	egl->setColor(COLOR_WHITE);
@@ -181,8 +188,12 @@ void SetupMenu::up(int count){
 	pressed = true;
 }
 
+#if( DISPLAY_W == 240 )
 void SetupMenu::down(int count){
-	if( selected != this)
+#else
+void SetupMenu::up(int count){
+#endif
+	if( selected != this || focus )
 		return;
 	if( !_menu_active ){
 		if( zoom > 0.5 )
@@ -193,6 +204,7 @@ void SetupMenu::down(int count){
 	ESP_LOGI(FNAME,"SetupMenu::up %d %d %d", highlight, _childs.size(), focus );
 	if( focus )
 		return;
+	DisplayLock lock(_display);
 	egl->setColor(COLOR_BLACK);
 	egl->drawFrame( 1,(highlight+1)*25+3,DISPLAY_W-2,25 );
 	egl->setColor(COLOR_WHITE);
@@ -254,20 +266,27 @@ void SetupMenu::longPress(){
 		return;
 	}
 	if( !_menu_active ){     // use long press to start setup in 2.4 inch
+		ESP_LOGI(FNAME,"Menu not active: set true");
 		_menu_active = true;
 		delay(100);
 		clear();
 		showMenu();
 	}else{
-		_menu_active = false;
-		delay(100);
-		clear();
+		ESP_LOGI(FNAME,"Menu active");
+		if( ((_parent == 0) && (highlight == -1)) || inch2dot4 ){  // setup main root also leave by short press
+			ESP_LOGI(FNAME,"Exit condition: set false");
+			_menu_active = false;
+			delay(100);
+			clear();
+		}else{
+			showMenu();
+		}
 	}
 	ESP_LOGI(FNAME,"End Longpress()");
 }
 
 void SetupMenu::press(){
-	// ESP_LOGI(FNAME,"SetupMenu::press(): %s s:%p t:%p pressed:%d menu_active:%d focus:%d", _title, selected, this, pressed, _menu_active, focus );
+	ESP_LOGI(FNAME,"SetupMenu::press(): %s s:%p t:%p pressed:%d menu_active:%d focus:%d", _title, selected, this, pressed, _menu_active, focus );
 	if( focus )
 		return;
 	if( selected != this ){

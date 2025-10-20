@@ -128,6 +128,7 @@ void SetupMenuSelect::display( int mode ){
 		selected = _parent;
 	}else
 	{
+		DisplayLock lock(_display);
 		egl->setPrintPos(1,25);
 		ESP_LOGI(FNAME,"Title: %s ", _title );
 		egl->printf("<< %s",_title);
@@ -150,7 +151,7 @@ void SetupMenuSelect::display( int mode ){
 		showhelp( y );
 		if(mode == 1 && bits._save == true ){
 			egl->setColor( COLOR_BLACK );
-			egl->drawBox( 1,DISPLAY_H-30,DISPLAY_W,40 );
+			egl->drawBox( 1,DISPLAY_H-60,DISPLAY_W,60 );
 			egl->setPrintPos( 1, DISPLAY_H-20 );
 			egl->setColor( COLOR_WHITE );
 			egl->print(PROGMEM"Saved        " );
@@ -160,7 +161,11 @@ void SetupMenuSelect::display( int mode ){
 	}
 }
 
+#if( DISPLAY_W == 240 )
 void SetupMenuSelect::up(int count){
+#else
+void SetupMenuSelect::down(int count){
+#endif
 	if( (selected != this)  )
 		return;
 	if( _numval > 9 ){
@@ -169,10 +174,12 @@ void SetupMenuSelect::up(int count){
 				(_select)--;
 			count--;
 		}
+		DisplayLock lock(_display);
 		egl->setPrintPos( 1, 50 );
 		egl->setFont(ucg_font_ncenR14_hr, true );
 		egl->printf("%s                  ",_values[_select] );
 	}else {
+		DisplayLock lock(_display);
 		egl->setColor(COLOR_BLACK);
 		egl->drawFrame( 1,(_select+1)*25+3,318,25 );  // blank old frame
 		egl->setColor(COLOR_WHITE);
@@ -183,7 +190,11 @@ void SetupMenuSelect::up(int count){
 	}
 }
 
+#if( DISPLAY_W == 240 )
 void SetupMenuSelect::down(int count){
+#else
+void SetupMenuSelect::up(int count){
+#endif
 	if( (selected != this) )
 		return;
 	if( _numval > 9 )
@@ -193,10 +204,12 @@ void SetupMenuSelect::down(int count){
 				(_select)++;
 			count--;
 		}
+		DisplayLock lock(_display);
 		egl->setPrintPos( 1, 50 );
 		egl->setFont(ucg_font_ncenR14_hr, true );
 		egl->printf("%s                   ", _values[_select] );
 	}else {
+		DisplayLock lock(_display);
 		egl->setColor(COLOR_BLACK);
 		egl->drawFrame( 1,(_select+1)*25+3,318,25 );  // blank old frame
 		egl->setColor(COLOR_WHITE);

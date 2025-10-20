@@ -40,7 +40,6 @@ int TargetManager::old_num_targets = 0;
 #define INFO_TIME (5*(1000/TASKPERIOD)/DISPLAYTICK)  // all ~10 sec
 
 void TargetManager::begin(){
-	_display=xSemaphoreCreateMutex();
 	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 10, &pid, 0);
 	attach( this );
 }
