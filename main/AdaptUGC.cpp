@@ -150,8 +150,6 @@ void AdaptUGC::setFont(uint8_t *f, bool filled ){    // adapter
 	}
 };
 
-#define EGL_DISPLAY_TOPDOWN 1
-#define EGL_WHITE_ON_BLACK 1
 
 void  AdaptUGC::begin() {
 	eglib = &myeglib;

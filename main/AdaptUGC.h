@@ -32,6 +32,11 @@ typedef struct _ucg_color_t
 #define UCG_FONT_POS_CENTER 0x03
 #define UCG_FONT_POS_TOP 0x04
 
+#define EGL_DISPLAY_TOPDOWN 1
+#define EGL_DISPLAY_NORMAL  0
+#define EGL_WHITE_ON_BLACK 1
+
+
 typedef enum _e_font_mode { UCG_FONT_MODE_TRANSPARENT, UCG_FONT_MODE_SOLID } e_font_mode;
 
 

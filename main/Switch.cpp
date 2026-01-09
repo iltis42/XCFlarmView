@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <esp_log.h>
 #include <SetupMenu.h>
+#include "AdaptUGC.h"
 #include "esp_task_wdt.h"
 
 std::list<SwitchObserver*> Switch::observers;
@@ -57,13 +58,36 @@ void Switch::detach(SwitchObserver* obs) {
 }
 
 void Switch::notifyObserversPress() {
-    for (auto& obs : observers) {
-        switch (_mode) {
-            case B_MODE: obs->press(); break;
-            case B_UP: obs->up(1); break;
-            case B_DOWN: obs->down(1); break;
-        }
-    }
+	for (auto& obs : observers) {
+		switch (_mode) {
+
+		case B_MODE:
+			obs->press();
+			break;
+
+		case B_UP:
+			switch (display_orientation.get()) {
+			case EGL_DISPLAY_NORMAL:
+				obs->up(1);
+				break;
+			case EGL_DISPLAY_TOPDOWN:
+				obs->down(1);
+				break;
+			}
+			break;
+
+		case B_DOWN:
+			switch (display_orientation.get()) {
+			case EGL_DISPLAY_NORMAL:
+				obs->down(1);
+				break;
+			case EGL_DISPLAY_TOPDOWN:
+				obs->up(1);
+				break;
+			}
+			break;
+		}
+	}
 }
 
 void Switch::sendPress(int dur) {
