@@ -76,6 +76,7 @@ private:
 	int x,y,old_ax, old_ay, old_x0, old_y0, old_x1, old_y1, old_x2, old_y2, old_closest, old_sidelen, old_cirsize, old_cirsizeteam;
 	char * reg;  // registration from flarmnet DB
 	char * comp; // competition ID
+	char * type; // aircraft type/model from flarmnet DB
 
 	bool is_nearest;
 	bool _isPriority; // new: used for draw order priority

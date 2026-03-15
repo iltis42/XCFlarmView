@@ -353,12 +353,11 @@ void SetupMenu::options_menu_create_settings( MenuEntry *top ){
 	top->addEntry( mod );
 	mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
 
-	// Orientation   _display_orientation
-	SetupMenuSelect * diso = new SetupMenuSelect( "Orientation", RST_IMMEDIATE, 0, true, &display_orientation );
-	top->addEntry( diso );
-	diso->setHelp( "Display Orientation. NORMAL means that ID button is on the right side, TOPDOWN on the left (reboots)");
-	diso->addEntry( "NORMAL");
-	diso->addEntry( "TOPDOWN");
+	SetupMenuSelect * aid = new SetupMenuSelect( "Aircraft ID", RST_NONE, 0, true, &aircraft_id );
+	aid->addEntry( "Registr. and CN");
+	aid->addEntry( "Type and CN");
+	top->addEntry( aid );
+	aid->setHelp( "Select whether to display registration or aircraft type with CN", hpos );
 
 	SetupMenuSelect * log = new SetupMenuSelect( "Distance Mode", RST_NONE, 0, true, &log_scale );
 	log->addEntry( "Linear");

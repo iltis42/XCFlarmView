@@ -23,7 +23,7 @@
 #include "OTA.h"
 #include "Version.h"
 #include "Colors.h"
-#include "flarmnetdata.h"
+// #include "flarmnetdata.h"
 #include "TargetManager.h"
 #include "Switch.h"
 #include "SetupMenu.h"

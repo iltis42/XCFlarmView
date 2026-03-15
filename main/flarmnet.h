@@ -5,4 +5,5 @@ typedef const struct s_flarmnet{
 	const uint32_t flarmID;
 	const char*     reg;
 	const char*     comp;
+	const char*     type;
 } t_flarmnet;

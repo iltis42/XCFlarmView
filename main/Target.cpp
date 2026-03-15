@@ -11,6 +11,7 @@
 #include "vector.h"
 #include "flarmnetdata.h"
 #include "flarmview.h"
+#include "SetupNG.h"
 #include "TargetManager.h"
 
 extern AdaptUGC *egl;
@@ -49,7 +50,7 @@ Target::Target(nmea_pflaa_s a_pflaa) {
     tek_climb = 0.0; last_groundspeed = pflaa.groundSpeed;
     tick = 0; last_pflaa_time = -1; _buzzedHoldDown = 0;
     dist = prox = 10000.0; recalc();
-    reg = comp = nullptr; age = 0; is_nearest = false; alarm = false; alarm_timer = 0;
+    reg = comp = type = nullptr; age = 0; is_nearest = false; alarm = false; alarm_timer = 0;
     _isPriority = false;
     is_best = false;
     is_nearest = false;
@@ -59,6 +60,7 @@ Target::Target(nmea_pflaa_s a_pflaa) {
         if (pflaa.ID == flarmnet_db[i].id){
             reg = (char*)flarmnet_db[i].reg;
             comp = (char*)flarmnet_db[i].cn;
+            type = (char*)flarmnet_db[i].type;
         }
     }
 
@@ -83,8 +85,8 @@ void Target::drawID(uint8_t r, uint8_t g, uint8_t b){
     egl->setColor(r,g,b);
     egl->setFont(ucg_font_fub20_hf);
     int w = egl->getStrWidth(cur_id);
-    if(w>150){ egl->setFont(ucg_font_fub17_hf); w=egl->getStrWidth(cur_id); }
-    if(w>150){ egl->setFont(ucg_font_fub14_hf); w=egl->getStrWidth(cur_id); }
+    if(w>200){ egl->setFont(ucg_font_fub17_hf); w=egl->getStrWidth(cur_id); }
+    if(w>200){ egl->setFont(ucg_font_fub14_hf); w=egl->getStrWidth(cur_id); }
     egl->setPrintPos((DISPLAY_W-5)-w,DISPLAY_H-7);
     egl->printf("%s",cur_id);
 }
@@ -130,9 +132,13 @@ void Target::drawInfo(bool erase) {
 	if ((old_id != pflaa.ID) || erase) {
 		if (strlen(cur_id)) drawID(COLOR_BLACK);
 		if (!erase) {
-			if (reg) {
-				if (comp) snprintf(cur_id, sizeof(cur_id), "%s %s", reg, comp);
-				else snprintf(cur_id, sizeof(cur_id), "%s", reg);
+			const char* ac_id = reg;
+			if ((aircraft_id.get() == AIRCRAFT_ID_TYPE) && type && strlen(type)) {
+				ac_id = type;
+			}
+			if (ac_id && strlen(ac_id)) {
+				if (comp && strlen(comp)) sprintf(cur_id, "%s %s", ac_id, comp);
+				else      sprintf(cur_id, "%s", ac_id);
 			} else {
 				snprintf(cur_id, sizeof(cur_id), "%06X", pflaa.ID);
 			}
