@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import datetime
 import csv
+import string
 import requests
 import re
-
-import datetime
 
 HEADER = """\
 /*
  * flarmnet_simple.h - automatisch generiert aus OGN + Flarmnet
- * nur DEVICE_ID, REGISTRATION, CN
+ * nur DEVICE_ID, REGISTRATION, CN, TYPE
  */
 #ifndef FLARMNET_SIMPLE_H
 #define FLARMNET_SIMPLE_H
@@ -19,6 +19,7 @@ typedef struct {
     unsigned int id;
     const char *reg;
     const char *cn;
+    const char *type;
 } flarmnet_entry_t;
 
 static const flarmnet_entry_t flarmnet_db[] = {
@@ -51,8 +52,50 @@ def clean_field(field):
     """Entfernt Quotes, Leerzeichen und prüft Inhalt"""
     return field.strip().strip("'").strip('"')
 
-def valid_entry(reg, cn):
+def clean_ac_type(ac_type):
+    """Entfernt Sonderzeichen und kürzt auf 10 Zeichen"""
+    max_len = 10
+
+    ac_type = ac_type.replace("Towplane", "Tow")
+    ac_type = ac_type.replace("Duo Discus", "DuoDiscus")
+
+    if len(ac_type) > max_len:
+        ac_type = ac_type.translate(str.maketrans("", "", string.punctuation)).strip()
+    if len(ac_type) > max_len:
+        ac_type = ac_type.replace("Discus", "Disc")
+        ac_type = ac_type.replace("Ventus", "Vent")
+        ac_type = ac_type.replace("Astir", "Ast")
+        ac_type = ac_type.replace("Jantar", "Jant")
+        ac_type = ac_type.replace("Glasflugel", "Glasfg")
+    if len(ac_type) > max_len:
+        ac_type = ac_type.replace(" ", "")
+
+    return ac_type[:max_len]
+
+def valid_entry(reg, cn, ac_type):
     """Eintrag nur gültig, wenn REG mindestens 4 alphanumerische Zeichen oder CN nicht leer"""
+    
+    ac_types_to_ignore = [
+        "paraglider",
+        "hang",
+        "drone",
+        "dji",
+        "balloon",
+        "parachute",
+        "motorplane",
+        "ultralight",
+        "helicopter",
+        "gyrocopter",
+        "autogyro",
+        "ground",
+        "ufo",
+        "unknown",
+        "other",
+    ]
+
+    if any(a in ac_type.lower() for a in ac_types_to_ignore):
+        return False
+    
     if cn:
         return True
     alpha_count = len(re.findall(r'[A-Za-z0-9]', reg))
@@ -70,10 +113,12 @@ def load_csv_file(file):
             if len(row) < 5:
                 continue
             fid = row[1]
+            ac_type = row[2]
             reg = row[3]
             cn  = row[4]
-            if valid_entry(reg, cn):
-                data[fid] = {"id": fid, "reg": reg, "cn": cn}
+
+            if valid_entry(reg, cn, ac_type):
+                data[fid] = {"id": fid, "reg": reg, "cn": cn, "type": clean_ac_type(ac_type)}
     return data
 
 def main():
@@ -95,7 +140,7 @@ def main():
     sorted_keys = sorted(ogn_data.keys(), key=lambda x: int(x,16))
     for fid in sorted_keys:
         entry = ogn_data[fid]
-        print(f'    {{0x{int(fid,16):06X}, "{entry["reg"]}", "{entry["cn"]}"}},')
+        print(f'    {{0x{int(fid,16):06X}, "{entry["reg"]}", "{entry["cn"]}", "{entry["type"]}"}},')
     print(FOOTER)
 
 if __name__ == "__main__":

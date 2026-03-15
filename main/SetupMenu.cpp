@@ -353,6 +353,12 @@ void SetupMenu::options_menu_create_settings( MenuEntry *top ){
 	top->addEntry( mod );
 	mod->setHelp( "Normal mode for multiple targets, Simple mode only one", hpos );
 
+	SetupMenuSelect * aid = new SetupMenuSelect( "Aircraft ID", RST_NONE, 0, true, &aircraft_id );
+	aid->addEntry( "Registration and CN");
+	aid->addEntry( "Aircraft Type and CN");
+	top->addEntry( aid );
+	aid->setHelp( "Select whether to display registration or aircraft type with CN", hpos );
+
 	SetupMenuSelect * log = new SetupMenuSelect( "Distance Mode", RST_NONE, 0, true, &log_scale );
 	log->addEntry( "Linear");
 	log->addEntry( "Logarithmic");
