@@ -19,7 +19,7 @@ extern AdaptUGC *egl;
 
 // Static members initialization
 int Target::old_dist = -10000;
-unsigned int Target::old_alt = 100000;
+int Target::old_alt = 100000;
 unsigned int Target::old_id = 0;
 int Target::old_var = -10000;
 int Target::blink = 0;
@@ -131,10 +131,10 @@ void Target::drawInfo(bool erase) {
 		if (strlen(cur_id)) drawID(COLOR_BLACK);
 		if (!erase) {
 			if (reg) {
-				if (comp) sprintf(cur_id, "%s %s", reg, comp);
-				else      sprintf(cur_id, "%s", reg);
+				if (comp) snprintf(cur_id, sizeof(cur_id), "%s %s", reg, comp);
+				else snprintf(cur_id, sizeof(cur_id), "%s", reg);
 			} else {
-				snprintf(cur_id, sizeof( cur_id ), "%06X", pflaa.ID);
+				snprintf(cur_id, sizeof(cur_id), "%06X", pflaa.ID);
 			}
 			drawID(COLOR_WHITE);
 			old_id = pflaa.ID;
@@ -275,7 +275,7 @@ void Target::ageTarget(){
 void Target::recalc(){
     rel_target_heading=rint(Vector::angleDiffDeg((float)pflaa.track,Flarm::getGndCourse()));
     rel_target_dir=Vector::angleDiffDeg(R2D(atan2(pflaa.relEast,pflaa.relNorth)),Flarm::getGndCourse());
-    dist=sqrt(pflaa.relNorth*pflaa.relNorth+pflaa.relEast*pflaa.relEast)/1000.0f;
+    dist = std::hypot(static_cast<double>(pflaa.relNorth), static_cast<double>(pflaa.relEast)) / 1000.0f;
     float relV = pflaa.relVertical/1000.0f;
     prox = sqrt(relV*relV + dist*dist);
     float pix = inch2dot4 ? std::max(20.0f, zoom*(log_scale.get()?log(2+dist):dist)*SCALE)

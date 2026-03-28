@@ -97,7 +97,7 @@ private:
 	static char cur_var[32];
 
 	static int old_dist;
-	static unsigned int old_alt;
+	static int old_alt;
 	static unsigned int old_id;
 	static int old_var;
 	static int blink;
