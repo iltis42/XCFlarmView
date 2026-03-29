@@ -37,7 +37,7 @@ xSemaphoreHandle _display=NULL;
 Target* TargetManager::theInfoTarget=NULL;
 int TargetManager::old_num_targets = 0;
 
-#define INFO_TIME (5*(1000/TASKPERIOD)/DISPLAYTICK)  // all ~10 sec
+#define INFO_TIME (30*(1000/TASKPERIOD)/DISPLAYTICK)  // all 30 sec
 
 void TargetManager::begin(){
 	xTaskCreatePinnedToCore(&taskTargetMgr, "taskTargetMgr", 4096, NULL, 10, &pid, 0);
@@ -388,11 +388,12 @@ void TargetManager::tick() {
         redrawNeeded = true;
     }
 
+    handleFlarmFlags();
+
     // --- Main tick block (every 5 ticks ~250 ms) ---
     if (_tick % 5 != 0) return;
     if (SetupMenu::isActive()) return;
 
-    handleFlarmFlags();
 
     const bool flarm_ok = (!info_timer && Flarm::connected());
     if (flarm_ok) {
