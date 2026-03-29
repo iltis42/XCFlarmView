@@ -271,6 +271,11 @@ bool Serial::selfTest(){
 	}
 	_selfTest = false;
 	std::string r( recv );
+	// after selftest restore config with TX disable
+	ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_36, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));  // dummy pin on TX
+	gpio_set_direction(GPIO_NUM_37, GPIO_MODE_INPUT);     // high impedance on wired TX pin
+	gpio_pullup_dis( GPIO_NUM_37 );
+
 	if( r.find( test ) != std::string::npos )  {
 		ESP_LOGI(FNAME,"Serial Test PASSED");
 		return true;
@@ -348,7 +353,7 @@ void Serial::begin(){
 		gpio_pullup_en( GPIO_NUM_16 );
 		gpio_pullup_en( GPIO_NUM_17 );
 		// Pin 38 is standard IGC RX pin, Pin 37 TX pin
-		if( serial1_pins_twisted.get() ){
+		if( serial1_pins_twisted.get() ){   // not supported in XCFlarmView
 			if( serial1_tx_enable.get() ){
 				ESP_LOGI(FNAME,"Serial pins twisted, TX enabled" );
 				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_38, GPIO_NUM_37, GPIO_NUM_33, GPIO_NUM_34));
@@ -360,16 +365,14 @@ void Serial::begin(){
 			}
 		}
 		else{
-			if( serial1_tx_enable.get() ){
+			if( serial1_tx_enable.get() ){  // default is disable, no other support in XCFV 
 				ESP_LOGI(FNAME,"Serial pins normal, TX enabled" );
 				// Set UART pins(TX, RX, RTS, CTS ) RX, RTS and CTS not wired, dummy
 				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_37, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));
 			}else{
 
-				ESP_LOGI(FNAME,"Serial pins normal, TX disable" );
-				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_36, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));
-				gpio_set_direction(GPIO_NUM_37, GPIO_MODE_INPUT);     // high impedance
-				gpio_pullup_dis( GPIO_NUM_37 );
+				ESP_LOGI(FNAME,"Serial pins normal TX enabled" );
+				ESP_ERROR_CHECK(uart_set_pin(uart_num, GPIO_NUM_37, GPIO_NUM_38, GPIO_NUM_33, GPIO_NUM_34));
 			}
 		}
 	}
