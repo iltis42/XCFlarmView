@@ -101,16 +101,7 @@ void DataMonitor::printString( int ch, e_dir_t dir, const char *str, bool binary
 	}
 	ucg->setColor( COLOR_WHITE );
     header( ch, binary );
-    if( swMode.isClosed() ){
-    	longPressCount++;
-    	ESP_LOGI(FNAME,"Hold count: %d", longPressCount );
-    	if( longPressCount > 3 )
-    		stop();
-    }else{
-    	longPressCount = 0;
-    }
-	//if( !binary )
-	// 	len = len-1;  // ignore the \n in ASCII mode
+
 	int hunklen = 0;
 	int pos=0;
 	do {
@@ -171,8 +162,9 @@ void DataMonitor::press(){
 	ESP_LOGI(FNAME,"press" );
 }
 
-void DataMonitor::longPress(){
+void DataMonitor::longLongPress(){
 	ESP_LOGI(FNAME,"longPress" );
+	stop();
 }
 
 void DataMonitor::start(SetupMenuSelect * p){
